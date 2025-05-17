@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -11,7 +9,7 @@ class UserCreate(BaseModel):
     """
 
     line_user_id: str
-    display_name: Optional[str] = None
+    display_name: str | None = None
 
 
 class User(BaseModel):
@@ -23,7 +21,7 @@ class User(BaseModel):
 
     id: int
     line_user_id: str
-    display_name: Optional[str] = None
+    display_name: str | None = None
     quota: int = 5  # 預設每日查詢額度
     quota_used: int = 0
 
