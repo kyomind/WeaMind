@@ -6,7 +6,7 @@ def create_user(line_user_id: str, display_name: str | None = None) -> dict:
     創建新用戶的業務邏輯
     
     Args:
-        line_user_id (str): LINE用戶的唯一識別碼
+        line_user_id: LINE用戶的唯一識別碼
         display_name (str, optional): 用戶的顯示名稱，預設為None
     
     Returns:
@@ -23,7 +23,7 @@ def get_user_quota(line_user_id: str) -> dict:
     獲取用戶額度的業務邏輯
     
     Args:
-        line_user_id (str): LINE用戶的唯一識別碼
+        line_user_id: LINE用戶的唯一識別碼
     
     Returns:
         dict: 包含用戶額度資訊的字典（目前為佔位符）
