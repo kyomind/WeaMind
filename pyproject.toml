@@ -3,7 +3,7 @@ name = "WeaMind"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12" # 影響 pyupgrade 檢查與自動修正的版本
 dependencies = [
     "fastapi>=0.115.12",
     "httpx>=0.28.1",
@@ -17,3 +17,21 @@ dev = [
     "pre-commit>=4.2.0",
     "ruff>=0.11.9",
 ]
+
+[tool.ruff] # https://docs.astral.sh/ruff/settings/#top-level
+line-length = 100
+
+[tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
+ignore = [
+  "E402", # module level import not at top of file
+]
+select = [
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings
+  "F", # pyflakes
+  "I", # isort
+  "UP", # pyupgrade
+]
+
+[tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
+quote-style = "double" # 引號風格，雙引號是預設值
