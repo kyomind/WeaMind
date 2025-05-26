@@ -1,5 +1,4 @@
 {
-    "exclude": [
-        "migrations"
-    ]
+    "exclude": ["migrations"],
+    "typeCheckingMode": "basic"
 }
