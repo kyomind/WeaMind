@@ -22,6 +22,7 @@ dev = [
 
 [tool.ruff] # https://docs.astral.sh/ruff/settings/#top-level
 line-length = 100
+exclude = ["migrations"]
 
 [tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
 ignore = [
