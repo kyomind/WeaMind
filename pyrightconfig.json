@@ -1,4 +1,7 @@
 {
-    "exclude": ["migrations"],
+    "exclude": [
+        "migrations",
+        ".venv"
+    ],
     "typeCheckingMode": "basic"
 }
