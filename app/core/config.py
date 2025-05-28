@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
     DATABASE_URL: str | None = None
+    POSTGRES_USER: str = ""
+    POSTGRES_PASSWORD: str = ""
+    POSTGRES_SERVER: str = ""
+    POSTGRES_DB: str = ""
 
     class Config:
         env_file = ".env"
