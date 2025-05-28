@@ -26,8 +26,3 @@ repos:
     rev: 0.7.5
     hooks:
       - id: uv-lock
-
-  - repo: https://github.com/fsouza/mirrors-pyright
-    rev: v1.1.401
-    hooks:
-    -   id: pyright
