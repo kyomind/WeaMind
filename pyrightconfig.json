@@ -1,6 +1,4 @@
 {
-    "venvPath": ".",
-    "venv": ".venv",
     "exclude": [
         "migrations",
         ".venv"
