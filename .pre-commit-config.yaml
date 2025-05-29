@@ -27,9 +27,11 @@ repos:
     hooks:
       - id: uv-lock
 
-  - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.401
+  - repo: local
     hooks:
       - id: pyright
-        name: pyright (via pyright-python)
+        name: pyright (local venv)
+        entry: .venv/bin/pyright
+        language: system
         pass_filenames: false
+        types: [python]
