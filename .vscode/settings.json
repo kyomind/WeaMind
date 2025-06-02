@@ -1,5 +1,6 @@
 {
     "cSpell.words": [
+        "autoflush",
         "celerybeat",
         "Connor",
         "Cython",
@@ -8,6 +9,7 @@
         "ipython",
         "mkdocs",
         "nosetests",
+        "onupdate",
         "Pipfile",
         "poolclass",
         "pycache",
