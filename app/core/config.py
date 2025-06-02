@@ -9,11 +9,11 @@ class Settings(BaseSettings):
     APP_NAME: str = "WeaMind API"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
-    DATABASE_URL: str | None = None
-    POSTGRES_USER: str = ""
-    POSTGRES_PASSWORD: str = ""
-    POSTGRES_SERVER: str = ""
-    POSTGRES_DB: str = ""
+    DATABASE_URL: str = "DUMMY_DATABASE_URL"
+    POSTGRES_USER: str = "DUMMY_USER"
+    POSTGRES_PASSWORD: str = "DUMMY_PASSWORD"
+    POSTGRES_HOST: str = "DUMMY_HOST"  # 原本為 POSTGRES_SERVER，改為更直觀的名稱
+    POSTGRES_DB: str = "DUMMY_DB"
 
     class Config:
         env_file = ".env"
