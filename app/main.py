@@ -6,7 +6,7 @@ app = FastAPI(title="WeaMind API", description="API for WeaMind Weather LINE BOT
 
 
 @app.get("/")
-async def root():
+async def root() -> dict:
     """
     歡迎使用 WeaMind API 的根路由
 
