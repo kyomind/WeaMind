@@ -3,7 +3,7 @@ name = "WeaMind"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12" # 影響 pyupgrade 檢查與自動修正的版本
+requires-python = ">=3.12" # 影響 pyupgrade 自動修正的版本，替代 target-version
 dependencies = [
     "fastapi>=0.115.12",
     "httpx>=0.28.1",
@@ -26,15 +26,31 @@ line-length = 100
 exclude = ["migrations"]
 
 [tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
+
+select = ["E", "W", "F", "I", "UP"]
+
+extend-select = [
+  # ★ 全開 ANN / B / ASYNC / TRY / PERF ★
+  "ANN",
+  "B",
+  "ASYNC",
+  "TRY",
+  "PERF",
+
+  # FastAPI 專屬
+  "FAST001", "FAST002",
+
+  # Docstring 規則
+  "D103", "DOC201",
+
+  # 其他
+  "S101", "S110", "ERA001",
+]
+
+# 針對雜訊高的規則做全域排除（示例）
 ignore = [
   "E402", # module level import not at top of file
-]
-select = [
-  "E", # pycodestyle errors
-  "W", # pycodestyle warnings
-  "F", # pyflakes
-  "I", # isort
-  "UP", # pyupgrade
+  "ANN101", # self / cls 無需標註
 ]
 
 [tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
