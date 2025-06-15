@@ -1,7 +1,10 @@
 services:
   db:
     image: postgres:15
-    restart: always
+    container_name: wea_db
+    restart: unless-stopped
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
