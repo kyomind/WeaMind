@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:15
-    container_name: wea_db
+    container_name: wea-db
     restart: unless-stopped
     env_file:
       - .env
