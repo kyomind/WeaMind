@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15
+    image: postgres:17.5-bookworm
     container_name: wea-db
     restart: unless-stopped
     env_file:
