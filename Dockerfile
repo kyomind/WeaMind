@@ -1,37 +1,30 @@
-# Use a Python image with uv pre-installed
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# Install the project into `/app`
 WORKDIR /app
 
-# Enable bytecode compilation
+# 編譯 bytecode、避免軟連結
 ENV UV_COMPILE_BYTECODE=1
-
-# Copy from the cache instead of linking since it's a mounted volume
 ENV UV_LINK_MODE=copy
 
-# Install the project's dependencies using the lockfile and settings
-# 新增 ARG 參數，預設為 false
+# DEV=true 時會連同 dev-deps 一起安裝
 ARG DEV=false
 
-# 根據 DEV 決定是否安裝 dev 套件
+# ---------- layer 1：重依賴 ----------
+# 只有這兩檔案改變才會失效
+COPY pyproject.toml uv.lock ./
+
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     if [ "$DEV" = "true" ]; then \
     uv sync --locked; \
     else \
     uv sync --locked --no-dev; \
     fi
 
-# Then, add the rest of the project source code and install it
-# Installing separately from its dependencies allows optimal layer caching
+# ---------- layer 2：專案程式碼 ----------
 COPY . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev
 
-# Place executables in the environment at the front of the path
+# 把 venv 放到 PATH 最前
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Reset the entrypoint, don't invoke `uv`
+# 不用 uv 當 entrypoint
 ENTRYPOINT []
