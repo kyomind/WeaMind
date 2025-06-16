@@ -1,4 +1,14 @@
 services:
+  app:
+    build: .
+    container_name: wea-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
   db:
     image: postgres:17.5-bookworm
     container_name: wea-db

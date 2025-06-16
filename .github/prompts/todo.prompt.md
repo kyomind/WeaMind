@@ -3,5 +3,5 @@
 - [x] 2.新增 pyright 作為專案的 type checker 2025-05-16
 - [x] 3.db遷移工具設定檔(還沒真的第一次遷移) 2025-05-30
 - [ ] 4.專案容器化（尤其是開發用 db）
-- [ ] 5.設定第一個 api 並成功運行 FastAPI app runtime
+- [x] 5.設定第一個 api 並成功運行 FastAPI app runtime 2025-06-16
 - [x] 6.設定與撰寫基本 api 測試(demo) 2025-06-16
