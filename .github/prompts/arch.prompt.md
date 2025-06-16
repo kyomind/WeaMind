@@ -1,0 +1,8 @@
+## WeaMind 高階架構說明
+- 三元件分離：line-bot(FastAPI app，即本專案), wea-data(定期更新氣象資料), wea-ai(提供 AI 相關功能)
+- wea-ai：獨立部署，只出 intent/schema，不直接存取資料
+- wea-data：獨立部署，負責 ETL，從外部資料來源更新最新的氣象資料
+
+## 專案範圍說明
+- 本 repo 僅包含 **line-bot** 模組程式碼
+- wea-data 與 wea-ai 為獨立元件(微服務)，不在此 repo 中
