@@ -1,38 +1,34 @@
-# 第一階段：建構並安裝 uv 與專案相依
-FROM python:3.12-slim AS builder
+# Use a Python image with uv pre-installed
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
-# 安裝系統工具
-RUN apt update && apt install -y curl && rm -rf /var/lib/apt/lists/*
-
-# 安裝 astral-sh/uv，並把 uv 放到 PATH
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.local/bin:$PATH"
-
+# Install the project into `/app`
 WORKDIR /app
 
-# 複製鎖定檔
-COPY pyproject.toml uv.lock ./
+# Enable bytecode compilation
+ENV UV_COMPILE_BYTECODE=1
 
-# 直接在 system Python 安裝 main dependencies
-RUN export UV_PROJECT_ENVIRONMENT=/usr/local
-RUN uv sync --locked --no-dev
+# Copy from the cache instead of linking since it's a mounted volume
+ENV UV_LINK_MODE=copy
 
-# 第二階段：乾淨映像只帶執行環境
-FROM python:3.12-slim
+# Install the project's dependencies using the lockfile and settings
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project --no-dev
 
-WORKDIR /app
+# Then, add the rest of the project source code and install it
+# Installing separately from its dependencies allows optimal layer caching
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
 
-# 把 builder 階段安裝好的 site-packages 複製過來
-COPY --from=builder /usr/local/lib/python3.12/site-packages \
-    /usr/local/lib/python3.12/site-packages
+# Place executables in the environment at the front of the path
+ENV PATH="/app/.venv/bin:$PATH"
 
-# 確保 PATH 包含全域二進位
-ENV PATH="/usr/local/bin:$PATH"
+# Reset the entrypoint, don't invoke `uv`
+ENTRYPOINT []
 
-# 複製專案程式碼
-COPY . .
-
-EXPOSE 8000
-
-# 最終執行指令
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--workers", "4"]
+# Run the FastAPI application by default
+# Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
+# Uses `--host 0.0.0.0` to allow access from outside the container
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
