@@ -15,17 +15,6 @@
 
 Write a concise and natural commit message summarizing the following code diff in English. Avoid listing specific method or variable names unless essential. Focus on the overall intent of the change. Keep the message short and readable, ideally under 10 words. Do not invent motivations unless explicitly obvious in the code.
 
-## Branch Naming Guidelines
-
-- 語言：英語（English）
-- 格式：小寫+kebab-case（使用連字號 `-` 分隔單字）
-- 示例：
-  - 功能分支：`feature/add-weather-api`
-  - 修復分支：`fix/bug-handle-empty-response`
-  - 重構分支：`refactor/cleanup-line-handlers`
-  - 文檔更新：`docs/update-agents-guidelines`
-- 原則：描述要簡潔明確，最多三到五個單字。
-
 ## WeaMind 高階架構說明
 
 - 三元件分離：line-bot(FastAPI app，即本專案), wea-data(定期更新氣象資料), wea-ai(提供 AI 相關功能)
