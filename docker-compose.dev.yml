@@ -1,0 +1,11 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        DEV: "true"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    volumes:
+      - .:/app
+    environment:
+      - ENV=development
