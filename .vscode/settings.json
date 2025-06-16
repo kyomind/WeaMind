@@ -17,6 +17,7 @@
         "pypa",
         "pypackages",
         "pypirc",
+        "pyrightconfig",
         "pytype",
         "ropeproject",
         "Scrapy",
