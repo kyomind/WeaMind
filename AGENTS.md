@@ -9,7 +9,7 @@
 ## Coding Guidelines
 
 - 使用型別提示（Type Hints）確保 FastAPI 路由與模型的型別安全。
-- 所有函式需包含 docstrings，遵循 `.github/prompts/docstring.prompt.md` 標準。
+- 所有函式需包含 Docstring，遵循 `.github/prompts/docstring.prompt.md` 標準。
 
 ## WeaMind 高階架構說明
 
