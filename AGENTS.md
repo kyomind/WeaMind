@@ -1,4 +1,4 @@
-# AGENTS.md (適用於本專案——WeaMind Line Bot)
+# AGENTS.md
 
 ## 測試命令
 
@@ -10,6 +10,21 @@
 
 - 使用型別提示（Type Hints）確保 FastAPI 路由與模型的型別安全。
 - 所有函式需包含 Docstring，遵循 `.github/prompts/docstring.prompt.md` 標準。
+
+## Commit Message Guidelines
+
+Write a concise and natural commit message summarizing the following code diff in English. Avoid listing specific method or variable names unless essential. Focus on the overall intent of the change. Keep the message short and readable, ideally under 10 words. Do not invent motivations unless explicitly obvious in the code.
+
+## Branch Naming Guidelines
+
+- 語言：英語（English）
+- 格式：小寫+kebab-case（使用連字號 `-` 分隔單字）
+- 示例：
+  - 功能分支：`feature/add-weather-api`
+  - 修復分支：`fix/bug-handle-empty-response`
+  - 重構分支：`refactor/cleanup-line-handlers`
+  - 文檔更新：`docs/update-agents-guidelines`
+- 原則：描述要簡潔明確，最多三到五個單字。
 
 ## WeaMind 高階架構說明
 
