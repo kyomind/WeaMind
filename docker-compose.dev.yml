@@ -7,6 +7,9 @@ services:
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     volumes:
       - .:/app
-      - /app/.venv
+      - /app/.venv # 排除虛擬環境的覆蓋
     environment:
       - ENV=development
+    container_name: wea-app-dev
+  db:
+    container_name: wea-db-dev
