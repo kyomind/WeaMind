@@ -1,3 +1,5 @@
+# WeaMind System Architecture Documentation
+
 ## WeaMind 高階架構說明
 - 三元件分離：line-bot(FastAPI app，即本專案), wea-data(定期更新氣象資料), wea-ai(提供 AI 相關功能)
 - wea-ai：獨立部署，只出 intent/schema，不直接存取資料
