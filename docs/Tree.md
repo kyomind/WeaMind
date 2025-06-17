@@ -5,15 +5,11 @@
 ├── alembic.ini
 ├── app
 │   ├── __init__.py
-│   ├── __pycache__
-│   │   ├── __init__.cpython-312.pyc
-│   │   └── main.cpython-312.pyc
 │   ├── core
 │   │   ├── config.py
 │   │   └── database.py
 │   ├── main.py
 │   └── user
-│       ├── __pycache__
 │       ├── constants.py
 │       ├── models.py
 │       ├── router.py
@@ -41,9 +37,7 @@
 ├── scripts
 │   └── gen_tree.sh
 ├── tests
-│   ├── __pycache__
-│   │   └── test_api.cpython-312-pytest-8.4.0.pyc
 │   └── test_api.py
 └── uv.lock
 
-11 directories, 34 files
+8 directories, 31 files
