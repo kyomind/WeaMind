@@ -66,3 +66,9 @@ source = ["app"]
 
 [tool.coverage.xml]
 output = "coverage.xml"
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-config --strict-markers"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = ["error"]
