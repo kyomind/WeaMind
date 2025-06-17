@@ -28,4 +28,4 @@ Write a concise and natural commit message summarizing the following code diff i
 
 ## Todo List for this Project(important)
 
-目前已完成及待辦事項放在`.github/prompts/todo.prompt.md`。
+目前已完成及待辦事項放在`docs/Todo.md`，請務必查看。
