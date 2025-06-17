@@ -39,16 +39,14 @@ extend-select = [
   "B",
   "ASYNC",
   "TRY",
-  "PERF",
-
-  # FastAPI 專屬
-  "FAST001", "FAST002",
-
-  # Docstring 規則
-  "D103", "DOC201",
-
-  # 其他
-  "S101", "S110", "ERA001",
+  "PERF", # FastAPI 專屬
+  "FAST001",
+  "FAST002", # Docstring 規則
+  "D103",
+  "DOC201", # 其他
+  "S101",
+  "S110",
+  "ERA001",
 ]
 
 # 針對雜訊高的規則做全域排除（示例）
@@ -61,14 +59,31 @@ ignore = [
 quote-style = "double" # 引號風格，雙引號是預設值
 
 [tool.coverage.run]
-branch = false
+branch = true
 source = ["app"]
+
+[tool.coverage.report]
+exclude_also = [
+  "def __repr__",
+  "if self\\.debug",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "class .*\\bProtocol\\):",
+  "@(abc\\.)?abstractmethod",
+]
+ignore_errors = true
 
 [tool.coverage.xml]
 output = "coverage.xml"
 
+[tool.coverage.html]
+directory = "coverage_html_report"
+
 [tool.pytest.ini_options]
-addopts = "-ra --strict-config --strict-markers"
-testpaths = ["tests"]
-python_files = ["test_*.py"]
+addopts = "-ra --strict-config --strict-markers --cov=app --cov-report=xml"
 filterwarnings = ["error"]
+python_files = ["test_*.py"]
+testpaths = ["tests"]

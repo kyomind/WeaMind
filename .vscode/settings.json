@@ -1,10 +1,13 @@
 {
     "cSpell.words": [
+        "abstractmethod",
+        "addopts",
         "autoflush",
         "celerybeat",
         "Connor",
         "Cython",
         "dmypy",
+        "filterwarnings",
         "htmlcov",
         "ipython",
         "mkdocs",
@@ -19,12 +22,14 @@
         "pypirc",
         "pyrightconfig",
         "pytype",
+        "repr",
         "ropeproject",
         "Scrapy",
         "sdist",
         "Spyder",
         "spyderproject",
         "spyproject",
+        "testpaths",
         "webassets"
     ]
 }
