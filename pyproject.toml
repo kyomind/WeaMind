@@ -59,3 +59,10 @@ ignore = [
 
 [tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
 quote-style = "double" # 引號風格，雙引號是預設值
+
+[tool.coverage.run]
+branch = false
+source = ["app"]
+
+[tool.coverage.xml]
+output = "coverage.xml"
