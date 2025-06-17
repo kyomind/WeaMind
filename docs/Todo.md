@@ -1,4 +1,5 @@
 # Todo List for this Project
+
 - [x] 1.Pydantic的FastAPI config設定 2025-05-15
 - [x] 2.🧃新增 pyright 作為專案的 type checker 2025-05-16
 - [x] 3.db遷移工具設定檔(還沒真的第一次遷移) 2025-05-30
@@ -12,6 +13,7 @@
 - [ ] 11.建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求
 
 ## 說明
+
 - 日期格式為 YYYY-MM-DD，代表「已完成日期」，如果沒有日期則代表還沒完成
 - 🍎代表可作為文章素材
 - 🧃代表已撰寫文章
