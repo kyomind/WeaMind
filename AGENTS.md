@@ -26,6 +26,8 @@ Write a concise and natural commit message summarizing the following code diff i
 - 本 repo 僅包含 **line-bot** 模組程式碼
 - wea-data 與 wea-ai 為獨立元件(微服務)，不在此 repo 中
 
-## Todo List for this Project(important)
+## 重要參考資料
 
-目前已完成及待辦事項放在`docs/Todo.md`，請務必查看。
+- 待辦事項清單：`docs/Todo.md`
+- 專案架構與技術決策：`docs/Architecture.md`
+- 專案目錄結構：`docs/Tree.md`
