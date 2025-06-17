@@ -6,6 +6,7 @@
 
 - `docs/Architecture.md` — 專案架構與技術決策。
 - `docs/Todo.md` — 既有（含已完成）Todo 列表。
+- `docs/Tree.md` — 專案目錄結構與檔案說明。
 
 ## 行動（Action）
 1. 分析任務清單(含已完成)與專案 codebase，確定目前的開發狀態與需求。
