@@ -7,5 +7,6 @@
 - [x] 6.設定與撰寫基本 api 測試(demo) 2025-06-16
 - [x] 7.建議部署和開發用的不同版的docker-compose.yml，使用繼承方式 2025-06-16
 - [x] 8.設定好 coverage 測試，cli、xml 等報告 2025-06-17
-- [ ] 9.設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料）
-- [ ] 10.建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求
+- [ ] 9.將todo prompt和arch prompt移至docs目錄下，因為並非真正的prompt，只是補充說明文件
+- [ ] 10.設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料）
+- [ ] 11.建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求
