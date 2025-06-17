@@ -1,33 +1,33 @@
 [project]
-name = "WeaMind"
-version = "0.1.0"
+dependencies = [
+  "fastapi>=0.115.12",
+  "httpx>=0.28.1",
+  "psycopg[binary]>=3.2.9",
+  "pydantic-settings>=2.9.1",
+  "sqlalchemy>=2.0.40",
+  "uvicorn[standard]>=0.34.2",
+]
 description = "Add your description here"
+name = "WeaMind"
 readme = "README.md"
 requires-python = ">=3.12" # 影響 pyupgrade 自動修正的版本，替代 target-version
-dependencies = [
-    "fastapi>=0.115.12",
-    "httpx>=0.28.1",
-    "psycopg[binary]>=3.2.9",
-    "pydantic-settings>=2.9.1",
-    "sqlalchemy>=2.0.40",
-    "uvicorn[standard]>=0.34.2",
-]
+version = "0.1.0"
 
 [dependency-groups]
 dev = [
-    "alembic>=1.16.1",
-    "coverage>=7.9.1",
-    "pre-commit>=4.2.0",
-    "pyright>=1.1.401",
-    "pytest>=8.4.0",
-    "pytest-cov>=6.2.1",
-    "pytest-sugar>=1.0.0",
-    "ruff>=0.11.9",
+  "alembic>=1.16.1",
+  "coverage>=7.9.1",
+  "pre-commit>=4.2.0",
+  "pyright>=1.1.401",
+  "pytest>=8.4.0",
+  "pytest-cov>=6.2.1",
+  "pytest-sugar>=1.0.0",
+  "ruff>=0.11.9",
 ]
 
 [tool.ruff] # https://docs.astral.sh/ruff/settings/#top-level
-line-length = 100
 exclude = ["migrations", ".venv"]
+line-length = 100
 
 [tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
 
@@ -60,6 +60,10 @@ quote-style = "double" # 引號風格，雙引號是預設值
 
 [tool.coverage.run]
 branch = true
+omit = [
+  "tests/*",
+  ".venv/*",
+]
 source = ["app"]
 
 [tool.coverage.report]
@@ -75,15 +79,19 @@ exclude_also = [
   "@(abc\\.)?abstractmethod",
 ]
 ignore_errors = true
+show_missing = true
+# skip_covered = true
 
 [tool.coverage.xml]
 output = "coverage.xml"
 
 [tool.coverage.html]
 directory = "coverage_html_report"
+show_contexts = true
+title = "Coverage Report for WeaMind"
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-config --strict-markers --cov=app --cov-report=xml"
+addopts = "-ra --strict-config --strict-markers --cov=app --cov-report=xml --cov-report=term-missing"
 filterwarnings = ["error"]
 python_files = ["test_*.py"]
 testpaths = ["tests"]
