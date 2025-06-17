@@ -5,6 +5,7 @@
         "autoflush",
         "celerybeat",
         "Connor",
+        "cpython",
         "Cython",
         "dmypy",
         "filterwarnings",

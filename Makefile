@@ -9,3 +9,6 @@ up:
 
 down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+
+tree:
+	zsh scripts/gen_tree.sh
