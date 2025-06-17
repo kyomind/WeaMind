@@ -6,3 +6,6 @@
 - [x] 5.設定第一個 api 並成功運行 FastAPI app runtime 2025-06-16
 - [x] 6.設定與撰寫基本 api 測試(demo) 2025-06-16
 - [x] 7.建議部署和開發用的不同版的docker-compose.yml，使用繼承方式 2025-06-16
+- [ ] 8. 設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料）
+- [ ] 9. 建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求
+- [ ] 10. 撰寫 user 模組與 webhook API 的基本測試（可用 FastAPI TestClient）
