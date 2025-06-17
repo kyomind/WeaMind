@@ -1,5 +1,5 @@
 # Todo List for this Project
-- [x] 1.Pydantic的FastAPI config設定 2025-05-15
+- [x] 1.Pydantic的FastAPI config設定 2025-05-15(完成日期)
 - [x] 2.新增 pyright 作為專案的 type checker 2025-05-16
 - [x] 3.db遷移工具設定檔(還沒真的第一次遷移) 2025-05-30
 - [x] 4.專案容器化（尤其是開發用 db）2025-06-16
