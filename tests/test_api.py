@@ -1,13 +1,19 @@
-"""Tests for demo API endpoints."""
+"""Tests for core API endpoints."""
 
+import os
 import sys
 from pathlib import Path
+
+os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 from fastapi.testclient import TestClient
 
+from app.core.database import Base, engine
 from app.main import app
+from app.user import models  # noqa: F401
 
+Base.metadata.create_all(bind=engine)
 client = TestClient(app)
 
 
@@ -18,23 +24,24 @@ def test_root() -> None:
     assert response.json() == {"message": "Welcome to WeaMind API"}  # noqa: S101
 
 
-def test_get_users() -> None:
-    """Should return placeholder for user retrieval."""
-    response = client.get("/users")
-    assert response.status_code == 200  # noqa: S101
-    assert response.json() == {"message": "用戶資料檢索端點（佔位符）"}  # noqa: S101
+def test_user_crud() -> None:
+    """Should create, read, update and delete a user."""
+    data = {"line_user_id": "U123", "display_name": "Alice"}
+    resp = client.post("/users", json=data)
+    assert resp.status_code == 201  # noqa: S101
+    created = resp.json()
+    assert created["line_user_id"] == "U123"  # noqa: S101
 
+    user_id = created["id"]
+    resp = client.get(f"/users/{user_id}")
+    assert resp.status_code == 200  # noqa: S101
 
-def test_create_user() -> None:
-    """Should return placeholder for user creation."""
-    response = client.post("/users")
-    assert response.status_code == 200  # noqa: S101
-    assert response.json() == {"message": "用戶創建端點（佔位符）"}  # noqa: S101
+    resp = client.patch(f"/users/{user_id}", json={"display_name": "Bob"})
+    assert resp.status_code == 200  # noqa: S101
+    assert resp.json()["display_name"] == "Bob"  # noqa: S101
 
+    resp = client.delete(f"/users/{user_id}")
+    assert resp.status_code == 204  # noqa: S101
 
-def test_get_user_quota() -> None:
-    """Should return placeholder quota info for a user."""
-    user_id = "123"
-    response = client.get(f"/users/{user_id}/quota")
-    assert response.status_code == 200  # noqa: S101
-    assert response.json() == {"message": f"用戶 {user_id} 的額度資訊（佔位符）"}  # noqa: S101
+    resp = client.get(f"/users/{user_id}")
+    assert resp.status_code == 404  # noqa: S101
