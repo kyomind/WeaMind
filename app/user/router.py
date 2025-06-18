@@ -1,9 +1,9 @@
 from fastapi import APIRouter
 
-router = APIRouter()
+router = APIRouter(prefix="/users")
 
 
-@router.get("/users", response_model=dict)
+@router.get("", response_model=dict)
 async def get_users() -> dict[str, str]:
     """
     用戶資料檢索端點的佔位符
@@ -14,7 +14,7 @@ async def get_users() -> dict[str, str]:
     return {"message": "用戶資料檢索端點（佔位符）"}
 
 
-@router.post("/users", response_model=dict)
+@router.post("", response_model=dict)
 async def create_user() -> dict[str, str]:
     """
     創建新用戶的佔位符
@@ -25,7 +25,7 @@ async def create_user() -> dict[str, str]:
     return {"message": "用戶創建端點（佔位符）"}
 
 
-@router.get("/users/{user_id}/quota", response_model=dict)
+@router.get("/{user_id}/quota", response_model=dict)
 async def get_user_quota(user_id: str) -> dict[str, str]:
     """
     檢索用戶額度資訊的佔位符
