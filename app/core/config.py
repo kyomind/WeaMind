@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = "DUMMY_PASSWORD"
     POSTGRES_HOST: str = "DUMMY_HOST"  # 原本為 POSTGRES_SERVER，改為更直觀的名稱
     POSTGRES_DB: str = "DUMMY_DB"
+    POSTGRES_PORT: int = 5432  # 新增此欄位，對應 .env.example
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
