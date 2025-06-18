@@ -17,4 +17,4 @@ async def root() -> dict:
 
 
 # Include routers from modules
-app.include_router(user_router, prefix="/api/v1", tags=["user"])
+app.include_router(user_router, tags=["user"])
