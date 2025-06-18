@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class UserCreate(BaseModel):
@@ -12,7 +12,7 @@ class UserCreate(BaseModel):
     display_name: str | None = None
 
 
-class User(BaseModel):
+class UserRead(BaseModel):
     """
     用戶完整資料模型
 
@@ -25,5 +25,16 @@ class User(BaseModel):
     quota: int = 5  # 預設每日查詢額度
     quota_used: int = 0
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserUpdate(BaseModel):
+    """
+    用戶更新資料模型
+
+    目前僅允許修改顯示名稱
+    """
+
+    display_name: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -1,39 +1,56 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 
-router = APIRouter()
+from app.user import schemas, service
+
+router = APIRouter(prefix="/users")
 
 
-@router.get("/users", response_model=dict)
-async def get_users() -> dict[str, str]:
+@router.post("", response_model=schemas.UserRead, status_code=status.HTTP_201_CREATED)
+async def create_user(user: schemas.UserCreate) -> schemas.UserRead:
     """
-    用戶資料檢索端點的佔位符
+    註冊新用戶
 
     Returns:
-        dict: 端點的佔位符訊息
+        新建立的用戶資料
     """
-    return {"message": "用戶資料檢索端點（佔位符）"}
+    return service.create_user(user)
 
 
-@router.post("/users", response_model=dict)
-async def create_user() -> dict[str, str]:
+@router.get("/{user_id}", response_model=schemas.UserRead)
+async def get_user(user_id: int) -> schemas.UserRead:
     """
-    創建新用戶的佔位符
-
-    Returns:
-        dict: 端點的佔位符訊息
+    取得指定用戶
     """
-    return {"message": "用戶創建端點（佔位符）"}
+    user = service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
 
 
-@router.get("/users/{user_id}/quota", response_model=dict)
-async def get_user_quota(user_id: str) -> dict[str, str]:
+@router.patch("/{user_id}", response_model=schemas.UserRead)
+async def update_user(user_id: int, data: schemas.UserUpdate) -> schemas.UserRead:
     """
-    檢索用戶額度資訊的佔位符
-
-    Args:
-        user_id: 用戶的ID，用於檢索額度資訊
-
-    Returns:
-        dict: 包含用戶額度資訊的佔位符訊息
+    更新用戶資料
     """
-    return {"message": f"用戶 {user_id} 的額度資訊（佔位符）"}
+    user = service.update_user(user_id, data)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
+@router.delete("/{user_id}", response_model=dict)
+async def delete_user(user_id: int) -> dict[str, bool]:
+    """
+    刪除指定用戶
+    """
+    if not service.delete_user(user_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return {"ok": True}
+
+
+@router.get("", response_model=list[schemas.UserRead])
+async def list_users() -> list[schemas.UserRead]:
+    """
+    列出所有用戶
+    """
+    return service.list_users()

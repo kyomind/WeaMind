@@ -18,23 +18,27 @@ def test_root() -> None:
     assert response.json() == {"message": "Welcome to WeaMind API"}  # noqa: S101
 
 
-def test_get_users() -> None:
-    """Should return placeholder for user retrieval."""
-    response = client.get("/api/v1/users")
+def test_user_crud() -> None:
+    """Should handle user CRUD operations."""
+    data = {"line_user_id": "uid123", "display_name": "John"}
+    response = client.post("/users", json=data)
+    assert response.status_code == 201  # noqa: S101
+    created = response.json()
+    assert created["line_user_id"] == data["line_user_id"]  # noqa: S101
+    user_id = created["id"]
+
+    response = client.get(f"/users/{user_id}")
     assert response.status_code == 200  # noqa: S101
-    assert response.json() == {"message": "用戶資料檢索端點（佔位符）"}  # noqa: S101
+    assert response.json()["id"] == user_id  # noqa: S101
 
-
-def test_create_user() -> None:
-    """Should return placeholder for user creation."""
-    response = client.post("/api/v1/users")
+    update = {"display_name": "Jane"}
+    response = client.patch(f"/users/{user_id}", json=update)
     assert response.status_code == 200  # noqa: S101
-    assert response.json() == {"message": "用戶創建端點（佔位符）"}  # noqa: S101
+    assert response.json()["display_name"] == "Jane"  # noqa: S101
 
-
-def test_get_user_quota() -> None:
-    """Should return placeholder quota info for a user."""
-    user_id = "123"
-    response = client.get(f"/api/v1/users/{user_id}/quota")
+    response = client.delete(f"/users/{user_id}")
     assert response.status_code == 200  # noqa: S101
-    assert response.json() == {"message": f"用戶 {user_id} 的額度資訊（佔位符）"}  # noqa: S101
+    assert response.json() == {"ok": True}  # noqa: S101
+
+    response = client.get(f"/users/{user_id}")
+    assert response.status_code == 404  # noqa: S101

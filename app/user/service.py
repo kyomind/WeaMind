@@ -1,38 +1,69 @@
-# 用戶服務邏輯檔案
-# 此檔案將用於定義用戶相關的業務邏輯處理
+from app.user import constants, schemas
+
+_fake_db: dict[int, dict] = {}
 
 
-def create_user(line_user_id: str, display_name: str | None = None) -> dict:
+def create_user(data: schemas.UserCreate) -> dict:
     """
-    創建新用戶的業務邏輯
-
-    Args:
-        line_user_id: LINE用戶的唯一識別碼
-        display_name (str, optional): 用戶的顯示名稱，預設為None
+    建立新用戶並儲存於記憶體
 
     Returns:
-        dict: 包含用戶資訊的字典（目前為佔位符）
+        新建立的用戶資料
     """
-    return {
-        "line_user_id": line_user_id,
-        "display_name": display_name,
-        "message": "用戶已成功創建（佔位符）",
-    }
-
-
-def get_user_quota(line_user_id: str) -> dict:
-    """
-    獲取用戶額度的業務邏輯
-
-    Args:
-        line_user_id: LINE用戶的唯一識別碼
-
-    Returns:
-        dict: 包含用戶額度資訊的字典（目前為佔位符）
-    """
-    return {
-        "line_user_id": line_user_id,
-        "quota": 5,
+    user_id = max(_fake_db) + 1 if _fake_db else 1
+    record = {
+        "id": user_id,
+        "line_user_id": data.line_user_id,
+        "display_name": data.display_name,
+        "quota": constants.DAILY_QUOTA_LIMIT,
         "quota_used": 0,
-        "message": "用戶額度資訊（佔位符）",
+    }
+    _fake_db[user_id] = record
+    return record
+
+
+def get_user(user_id: int) -> dict | None:
+    """
+    取得指定用戶
+    """
+    return _fake_db.get(user_id)
+
+
+def update_user(user_id: int, data: schemas.UserUpdate) -> dict | None:
+    """
+    更新用戶資料
+    """
+    record = _fake_db.get(user_id)
+    if not record:
+        return None
+    if data.display_name is not None:
+        record["display_name"] = data.display_name
+    return record
+
+
+def delete_user(user_id: int) -> bool:
+    """
+    刪除指定用戶
+    """
+    return _fake_db.pop(user_id, None) is not None
+
+
+def list_users() -> list[dict]:
+    """
+    列出所有用戶
+    """
+    return list(_fake_db.values())
+
+
+def get_user_quota(user_id: int) -> dict | None:
+    """
+    回傳指定用戶的額度資訊
+    """
+    record = _fake_db.get(user_id)
+    if not record:
+        return None
+    return {
+        "line_user_id": record["line_user_id"],
+        "quota": record["quota"],
+        "quota_used": record["quota_used"],
     }
