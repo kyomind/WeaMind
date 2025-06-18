@@ -24,14 +24,17 @@ _client = TestClient(app)
 
 @pytest.fixture()
 def client() -> TestClient:
-    """提供 FastAPI 測試 client."""
+    """
+    提供 FastAPI 測試 client
+    """
 
     return _client
 
 
 @pytest.fixture()
-def user(client: TestClient) -> Callable[..., dict]:
-    """Return a helper for creating test users
+def create_user(client: TestClient) -> Callable[..., dict]:
+    """
+    Return a helper for creating test users
 
     採用回傳 helper 函式而非直接回傳 user 物件的理由：
     1. 提高彈性，可依需求建立不同 display_name 或多個 user
