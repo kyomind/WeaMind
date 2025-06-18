@@ -2,7 +2,7 @@
 
 ## 測試命令
 
-- 運行測試：`uv run pytest`(暫無測試)
+- 運行測試：`uv run pytest`
 - 風格檢查：`uv run ruff check .`
 - 格式化：`uv run ruff format .`
 
