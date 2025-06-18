@@ -1,34 +1,37 @@
 # AGENTS.md
 
-## 測試命令
+## Test Commands
 
-- 運行測試：`uv run pytest`
-- 風格檢查：`uv run ruff check .`
-- 格式化：`uv run ruff format .`
+- Run tests: `uv run pytest`
+- Lint check: `uv run ruff check .`
+- Format code: `uv run ruff format .`
 
 ## Coding Guidelines
 
-- 使用型別提示（Type Hints）確保 FastAPI 路由與模型的型別安全。
-- 所有函式需包含 Docstring，遵循 `.github/prompts/docstring.prompt.md` 標準。
+1. Use type hints to ensure type safety for FastAPI routes and models.
+2. Every function must include a docstring; complex ones should follow the `.github/prompts/docstring.prompt.md` standard.
+3. Add comments to special or important parts of the code to help readers understand the design intent. (very important)
+4. When writing a Python docstring with only a summary, place the opening triple quotes, the summary, and the closing triple quotes each on a separate line.
+5. For Router (API) functions, only a summary docstring is required.
 
 ## Commit Message Guidelines
 
 Write a concise and natural commit message summarizing the following code diff in English. Avoid listing specific method or variable names unless essential. Focus on the overall intent of the change. Keep the message short and readable, ideally under 10 words. Do not invent motivations unless explicitly obvious in the code.
 
-## WeaMind 高階架構說明
+## WeaMind High-Level Architecture
 
-- 三元件分離：line-bot(FastAPI app，即本專案), wea-data(定期更新氣象資料), wea-ai(提供 AI 相關功能)
-- wea-ai：獨立部署，只出 intent/schema，不直接存取資料
-- wea-data：獨立部署，負責 ETL，從外部資料來源更新最新的氣象資料
+- Three-component separation: line-bot (FastAPI app, this project), wea-data (periodically updates weather data), wea-ai (provides AI-related features)
+- wea-ai: deployed independently, only provides intent/schema, does not access data directly
+- wea-data: deployed independently, responsible for ETL, updates the latest weather data from external sources
 
-## 專案範圍說明
+## Project Scope
 
-- 本 repo 僅包含 **line-bot** 模組程式碼
-- wea-data 與 wea-ai 為獨立元件(微服務)，不在此 repo 中
+- This repo only contains the **line-bot** module code
+- wea-data and wea-ai are independent components (microservices) and are not included in this repo
 
-## 重要參考資料
+## Key References
 
-- 待辦事項清單：`docs/Todo.md`
-  - 待辦事項範例：`docs/Example.md`
-- 專案架構與技術決策：`docs/Architecture.md`
-- 專案目錄結構：`docs/Tree.md`
+- Todo list: `docs/Todo.md`
+  - Todo example: `docs/Example.md`
+- Project architecture & technical decisions: `docs/Architecture.md`
+- Project directory structure: `docs/Tree.md`
