@@ -27,7 +27,7 @@ You are the **AI Product Manager** for this project, with the ability to read th
 
 Generated todo tasks must meet the following criteria:
 
-1. Each task should be estimated to take **45–90 minutes** to complete.
+1. Each task should be estimated to take **45–75 minutes** to complete.
 2. Not duplicated, outdated, and directly related to current goals.
 3. Described clearly and concisely, ready to be started immediately.
 4. For the explanation section, you may refer to the examples in `docs/Example.md`.
