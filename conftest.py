@@ -1,11 +1,3 @@
-"""Pytest fixtures used across API tests.
-
-This file replaces earlier helper functions with fixtures. It sets up an
-in-memory SQLite database and provides a FastAPI test client. Tests obtain
-user records using the ``user`` fixture, which returns a helper for creating
-users on demand.
-"""
-
 import os
 import sys
 from collections.abc import Callable
@@ -21,9 +13,12 @@ sys.path.append(str(Path(__file__).resolve().parent))
 
 from app.core.database import Base, engine
 from app.main import app
+
+# 為了讓 SQLAlchemy 正確註冊所有 table，必須 import models（即使沒直接用到）
 from app.user import models  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
+# 使用模組級單例，比直接在 fixture 裡建立更有效率
 _client = TestClient(app)
 
 
@@ -35,8 +30,14 @@ def client() -> TestClient:
 
 
 @pytest.fixture()
-def user(client: TestClient) -> Callable[[str], dict]:
-    """Return a helper for creating test users."""
+def user(client: TestClient) -> Callable[..., dict]:
+    """Return a helper for creating test users
+
+    採用回傳 helper 函式而非直接回傳 user 物件的理由：
+    1. 提高彈性，可依需求建立不同 display_name 或多個 user
+    2. 支援同一測試多次建立 user
+    3. 減少 fixture 數量，便於維護與擴充
+    """
 
     def _create(display_name: str = "Alice") -> dict:
         data = {"line_user_id": str(uuid4()), "display_name": display_name}

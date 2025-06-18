@@ -9,24 +9,10 @@
 - [x] 7.🍎建議部署和開發用的不同版的docker-compose.yml，使用繼承方式 2025-06-16
 - [x] 8.🍎設定好 coverage 測試，cli、xml 等報告 2025-06-17
 - [x] 9.將todo prompt和arch prompt移至docs目錄下 2025-06-17
-- [x] 10.設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料） 2025-06-20
-  - **目的**：建立 `user` 模組的 Pydantic schema 與基本 CRUD API，讓系統能正確處理使用者資料的建立、查詢、更新與刪除，並確保資料驗證與型別安全。
-  - **預期成果**：
-    - 在 `app/user/schemas.py` 中完成 `UserCreate`、`UserRead`、`UserUpdate` 等 Pydantic schema。
-    - 在 `app/user/router.py` 中實作註冊、查詢、更新、刪除等 API endpoint，並串接 service 層與資料庫。
-    - API 能正確驗證輸入資料，並回傳正確格式的回應。
-  - **可能的挑戰**：
-    - Schema 設計需兼顧安全性（如密碼處理）、欄位驗證與前後端需求。
-    - CRUD API 要妥善處理例外狀況（如重複註冊、查無此人等）。
-    - FastAPI 路由、依賴注入與 Pydantic schema 的整合。
-  - **實作方向與細節**：
-    1. 設計 `UserCreate`、`UserRead`、`UserUpdate` 等 schema，明確定義欄位型別與驗證規則。
-    2. 在 `app/user/router.py` 中建立對應的 API 路由（POST /users、GET /users/{id}、PATCH /users/{id}、DELETE /users/{id} 等）。
-    3. 撰寫 service 層邏輯，串接資料庫操作，並處理例外狀況。
-    4. 測試 API，確保各種情境下皆能正確回應。
-  - **為何重要**：這是 user 模組的基礎，讓系統具備管理使用者資料的能力，也是後續功能（如登入、權限管理等）的前提。
-- [ ] 11.建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求
-- [ ] 12.執行 Alembic 資料庫遷移，建立 User 表格
+- [x] 10.設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料） 2025-06-18
+- [x] 11.🍎重構測試、建立 fixture 與型別註記，並補充註解說明 2025-06-18
+- [ ] 12.建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求
+- [ ] 13.執行 Alembic 資料庫遷移，建立 User 表格
   - **目的**：為 `user` 模組建立實際的資料庫表格，使已設計的 User Pydantic schema 和 CRUD API 能夠實際儲存和讀取使用者資料。
   - **預期成果**：在開發資料庫中成功建立 `users` 表格，其結構符合 `app/user/models.py` 中的 `User` 模型定義。User CRUD API 可以透過此表格進行資料的建立、讀取、更新和刪除。
   - **可能的挑戰**：

@@ -33,7 +33,7 @@ def test_create_user(client: TestClient) -> None:
     assert body["line_user_id"] == data["line_user_id"]  # noqa: S101
 
 
-def test_get_user(user: Callable[[str], dict], client: TestClient) -> None:
+def test_get_user(user: Callable[..., dict], client: TestClient) -> None:
     """Get an existing user.
 
     Should return the created record.
@@ -46,7 +46,7 @@ def test_get_user(user: Callable[[str], dict], client: TestClient) -> None:
     assert response.json()["id"] == user_id  # noqa: S101
 
 
-def test_update_user(user: Callable[[str], dict], client: TestClient) -> None:
+def test_update_user(user: Callable[..., dict], client: TestClient) -> None:
     """Update user display name.
 
     Confirm the new name persists.
@@ -59,7 +59,7 @@ def test_update_user(user: Callable[[str], dict], client: TestClient) -> None:
     assert response.json()["display_name"] == "Bob"  # noqa: S101
 
 
-def test_delete_user(user: Callable[[str], dict], client: TestClient) -> None:
+def test_delete_user(user: Callable[..., dict], client: TestClient) -> None:
     """Delete a user.
 
     Ensure the record is removed.
