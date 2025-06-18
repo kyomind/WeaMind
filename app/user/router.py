@@ -2,11 +2,13 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.user import schemas, service
 
+
 router = APIRouter(prefix="/users")
 
 
 @router.post("", response_model=schemas.UserRead, status_code=status.HTTP_201_CREATED)
 async def create_user(user: schemas.UserCreate) -> schemas.UserRead:
+
     """
     註冊新用戶
 
@@ -38,10 +40,12 @@ async def update_user(user_id: int, data: schemas.UserUpdate) -> schemas.UserRea
     return user
 
 
+
 @router.delete("/{user_id}", response_model=dict)
 async def delete_user(user_id: int) -> dict[str, bool]:
     """
     刪除指定用戶
+
     """
     if not service.delete_user(user_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
