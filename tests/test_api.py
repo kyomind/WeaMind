@@ -33,39 +33,39 @@ def test_create_user(client: TestClient) -> None:
     assert body["line_user_id"] == data["line_user_id"]  # noqa: S101
 
 
-def test_get_user(create_user: Callable[[str], dict], client: TestClient) -> None:
+def test_get_user(user: Callable[[str], dict], client: TestClient) -> None:
     """Get an existing user.
 
     Should return the created record.
     """
 
-    created = create_user()
+    created = user()
     user_id = created["id"]
     response = client.get(f"/users/{user_id}")
     assert response.status_code == 200  # noqa: S101
     assert response.json()["id"] == user_id  # noqa: S101
 
 
-def test_update_user(create_user: Callable[[str], dict], client: TestClient) -> None:
+def test_update_user(user: Callable[[str], dict], client: TestClient) -> None:
     """Update user display name.
 
     Confirm the new name persists.
     """
 
-    created = create_user()
+    created = user()
     user_id = created["id"]
     response = client.patch(f"/users/{user_id}", json={"display_name": "Bob"})
     assert response.status_code == 200  # noqa: S101
     assert response.json()["display_name"] == "Bob"  # noqa: S101
 
 
-def test_delete_user(create_user: Callable[[str], dict], client: TestClient) -> None:
+def test_delete_user(user: Callable[[str], dict], client: TestClient) -> None:
     """Delete a user.
 
     Ensure the record is removed.
     """
 
-    created = create_user()
+    created = user()
     user_id = created["id"]
     response = client.delete(f"/users/{user_id}")
     assert response.status_code == 204  # noqa: S101

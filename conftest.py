@@ -1,3 +1,11 @@
+"""Pytest fixtures used across API tests.
+
+This file replaces earlier helper functions with fixtures. It sets up an
+in-memory SQLite database and provides a FastAPI test client. Tests obtain
+user records using the ``user`` fixture, which returns a helper for creating
+users on demand.
+"""
+
 import os
 import sys
 from collections.abc import Callable
@@ -27,8 +35,8 @@ def client() -> TestClient:
 
 
 @pytest.fixture()
-def create_user(client: TestClient) -> Callable[[str], dict]:
-    """建立測試用戶並回傳資料."""
+def user(client: TestClient) -> Callable[[str], dict]:
+    """Return a helper for creating test users."""
 
     def _create(display_name: str = "Alice") -> dict:
         data = {"line_user_id": str(uuid4()), "display_name": display_name}
