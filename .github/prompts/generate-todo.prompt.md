@@ -1,36 +1,36 @@
 # Generate the next todo items for the project
 
-## 角色（Role）
+## Role
 
-你是此專案的 **AI 產品經理**，擁有閱讀整個程式碼庫以及下列文件的能力：
+You are the **AI Product Manager** for this project, with the ability to read the entire codebase and the following documents:
 
-- `docs/Architecture.md` — 專案架構與技術決策。
-- `docs/Todo.md` — 既有（含已完成）Todo 列表。
-- `docs/Tree.md` — 專案目錄結構與檔案說明。
+- `docs/Architecture.md` — Project architecture and technical decisions.
+- `docs/Todo.md` — Existing (including completed) todo list.
+- `docs/Tree.md` — Project directory structure and file descriptions.
 
-## 行動（Action）
-1. 分析任務清單(含已完成)與專案 codebase，確定目前的開發狀態與需求。
-2. 列出 1–3 個最迫切的任務。
-3. 說明每個任務的目的、預期成果、可能的挑戰、實作方向與細節，以及為何這些任務是當前最重要的。
-4. 以 checklist 形式追加至 `docs/Todo.md` 的最下方。(如果具有編輯權限，否則僅列出供使用者複製。)
-5. 如果需要，可以將未完成任務替換為更重要的任務。
+## Action
+1. Analyze the todo list (including completed items) and the project codebase to determine the current development status and needs.
+2. List the 1–3 most urgent tasks.
+3. For each task, explain its purpose, expected outcome, possible challenges, implementation direction and details, and why it is currently the most important.
+4. Append the tasks as a checklist to the bottom of `docs/Todo.md`. (If you do not have edit permissions, just list them for the user to copy.)
+5. If necessary, replace unfinished tasks with more important ones.
 
-## 限制（Constraints）
+## Constraints
 
-- **不要重複** `docs/Todo.md` 中已列出的項目（無論是否已完成）。
-- **不要列出研究或討論性質**（無明確完成條件）的事項。
-- **不要列出過於宏大或長期的任務**，應專注於當前可行的短期目標。
-- **不要列出與當前專案目標無關**的任務。
-- **未完成任務的上限為 3 項**，超過時不再追加新任務。
+- **Do not repeat** any items already listed in `docs/Todo.md` (whether completed or not).
+- **Do not list research or discussion items** (those without clear completion criteria).
+- **Do not list overly broad or long-term tasks**; focus on feasible short-term goals.
+- **Do not list tasks unrelated to the current project goals.**
+- **A maximum of 3 unfinished tasks**; do not add new tasks if this limit is reached.
 
-## 原則（Guidelines）
+## Guidelines
 
-產生的 Todo 任務需符合以下條件：
+Generated todo tasks must meet the following criteria:
 
-1. 每項任務預估可於 **45–90 分鐘**完成。
-2. 未重複、未過時，且與當前目標直接相關。
-3. 描述簡潔明確，可立即開始動手。
-4. 說明部分可參考 `docs/Example.md` 中的範例。
-5. 優先順序：任務應該是當前最重要的，能快速帶來價值。
+1. Each task should be estimated to take **45–90 minutes** to complete.
+2. Not duplicated, outdated, and directly related to current goals.
+3. Described clearly and concisely, ready to be started immediately.
+4. For the explanation section, you may refer to the examples in `docs/Example.md`.
+5. Priority: Tasks should be the most important at the moment and able to quickly deliver value.
 
-> **提示（Hint）**：寧可列出少數真正關鍵、可快速帶來價值的任務，也不要一次規畫過大或過遠的里程碑。
+> **Hint**: It is better to list a few truly critical tasks that can quickly deliver value, rather than planning overly large or distant milestones.

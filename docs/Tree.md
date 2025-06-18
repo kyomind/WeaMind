@@ -16,6 +16,7 @@
 │       ├── schemas.py
 │       ├── service.py
 │       └── utils.py
+├── conftest.py
 ├── coverage.xml
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
@@ -23,6 +24,7 @@
 ├── Dockerfile
 ├── docs
 │   ├── Architecture.md
+│   ├── Example.md
 │   ├── Todo.md
 │   └── Tree.md
 ├── LICENSE
@@ -40,4 +42,4 @@
 │   └── test_api.py
 └── uv.lock
 
-8 directories, 31 files
+8 directories, 33 files

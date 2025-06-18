@@ -1,13 +1,13 @@
-撰寫 Python docstring 時，格式原則上遵循 Google style，並遵守以下規則：
+When writing Python docstrings, follow the Google style as the general principle, and adhere to the following rules:
 
-1. 標題需獨立一行，簡明描述函式、類別用途。
-2. 標題與說明之間需有空一行，保持視覺清晰，即使沒有說明也需保留空行。
-3. 說明為"可選"項目，形式不拘，可簡要描述用途、使用情境或設計目的。
-4. 使用 Google style 的參數與回傳值區塊，但不需在 docstring 重複 type hints，因為原始碼中已有。
-5. Docstring 中無須使用中文的「。」或其他標點符號結尾，以保持一致性。
-6. 使用台灣正體中文，並避免使用簡體字。
+1. The summary should be on a separate line, concisely describing the purpose of the function or class.
+2. There must be a blank line between the summary and the description for visual clarity, even if there is no description, the blank line should still be kept.
+3. The description is optional and can briefly explain the usage, context, or design intent in any format.
+4. Use Google style sections for parameters and return values, but do not repeat type hints in the docstring since they are already present in the source code.
+5. Do not end the docstring with a Chinese period or other punctuation, to maintain consistency.
+6. Use Traditional Chinese (Taiwan), and avoid using Simplified Chinese characters.
 
-以下是一個符合規範的例子：
+Here is an example that follows the specification:
 
 ```python
 def get_db() -> typing.Generator[Session, None, None]:
@@ -26,9 +26,20 @@ def get_db() -> typing.Generator[Session, None, None]:
         db.close()
 ```
 
-說明：
+Here is an example for a summary-only docstring (should be three lines):
 
-* 第一行為標題，簡潔明瞭。
-* 第二行空一行，維持格式一致性與可讀性。
-* 說明段格式不限，此處使用「用法」作為範例，實際可依情境調整。
-* 回傳區塊以 `Returns:` 開頭，對應 Google docstring 格式，並未重複 type hints。
+```python
+def ping() -> str:
+    """
+    服務狀態檢查
+    """
+    return "pong"
+```
+
+Explanation:
+
+- The first line is the summary, concise and clear.
+- The second line is a blank line, maintaining consistent formatting and readability.
+- The description section is flexible in format; in the first example, "Usage" is used, but it can be adjusted as needed.
+- The return section starts with `Returns:`, following the Google docstring format, and does not repeat type hints.
+- For summary-only docstrings, the triple quotes, summary, and closing triple quotes should each be on a separate line.
