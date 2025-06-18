@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 
 class UserCreate(BaseModel):
@@ -25,7 +25,7 @@ class UserRead(BaseModel):
     quota: int = 5
     quota_used: int = 0
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {"from_attributes": True}
 
 
 class UserUpdate(BaseModel):

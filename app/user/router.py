@@ -28,7 +28,8 @@ async def create_user(
     """
 
     try:
-        return service.create_user(db, user_in)
+        user = service.create_user(db, user_in)
+        return UserRead.model_validate(user)
     except IntegrityError as exc:  # noqa: B904
         raise HTTPException(status_code=400, detail="User already exists") from exc
 
@@ -52,7 +53,7 @@ async def get_user(
     user = service.get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return UserRead.model_validate(user)
 
 
 @router.patch("/{user_id}")
@@ -76,7 +77,7 @@ async def update_user(
     user = service.update_user(db, user_id, user_in)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return UserRead.model_validate(user)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
