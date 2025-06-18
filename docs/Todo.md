@@ -9,7 +9,7 @@
 - [x] 7.🍎建議部署和開發用的不同版的docker-compose.yml，使用繼承方式 2025-06-16
 - [x] 8.🍎設定好 coverage 測試，cli、xml 等報告 2025-06-17
 - [x] 9.將todo prompt和arch prompt移至docs目錄下 2025-06-17
-- [ ] 10.設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料）
+- [x] 10.設計 user 模組的 Pydantic schema 與基本 CRUD API（如註冊、查詢 user 資料） 2025-06-20
   - **目的**：建立 `user` 模組的 Pydantic schema 與基本 CRUD API，讓系統能正確處理使用者資料的建立、查詢、更新與刪除，並確保資料驗證與型別安全。
   - **預期成果**：
     - 在 `app/user/schemas.py` 中完成 `UserCreate`、`UserRead`、`UserUpdate` 等 Pydantic schema。

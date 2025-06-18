@@ -1,39 +1,96 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
+from app.user import service
+from app.user.schemas import UserCreate, UserRead, UserUpdate
 
 router = APIRouter(prefix="/users")
 
 
-@router.get("", response_model=dict)
-async def get_users() -> dict[str, str]:
+@router.post("", status_code=status.HTTP_201_CREATED)
+async def create_user(
+    user_in: UserCreate,
+    db: Annotated[Session, Depends(get_db)],
+) -> UserRead:
     """
-    用戶資料檢索端點的佔位符
-
-    Returns:
-        dict: 端點的佔位符訊息
-    """
-    return {"message": "用戶資料檢索端點（佔位符）"}
-
-
-@router.post("", response_model=dict)
-async def create_user() -> dict[str, str]:
-    """
-    創建新用戶的佔位符
-
-    Returns:
-        dict: 端點的佔位符訊息
-    """
-    return {"message": "用戶創建端點（佔位符）"}
-
-
-@router.get("/{user_id}/quota", response_model=dict)
-async def get_user_quota(user_id: str) -> dict[str, str]:
-    """
-    檢索用戶額度資訊的佔位符
+    註冊新用戶
 
     Args:
-        user_id: 用戶的ID，用於檢索額度資訊
+        user_in: 用戶註冊資料
+        db: 資料庫 Session 物件
 
     Returns:
-        dict: 包含用戶額度資訊的佔位符訊息
+        建立完成的用戶資料
     """
-    return {"message": f"用戶 {user_id} 的額度資訊（佔位符）"}
+
+    try:
+        return service.create_user(db, user_in)
+    except IntegrityError as exc:  # noqa: B904
+        raise HTTPException(status_code=400, detail="User already exists") from exc
+
+
+@router.get("/{user_id}")
+async def get_user(
+    user_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> UserRead:
+    """
+    取得單一用戶資料
+
+    Args:
+        user_id: 用戶 ID
+        db: 資料庫 Session 物件
+
+    Returns:
+        用戶詳細資料
+    """
+
+    user = service.get_user(db, user_id)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.patch("/{user_id}")
+async def update_user(
+    user_id: int,
+    user_in: UserUpdate,
+    db: Annotated[Session, Depends(get_db)],
+) -> UserRead:
+    """
+    更新用戶資料
+
+    Args:
+        user_id: 用戶 ID
+        user_in: 欲更新的資料
+        db: 資料庫 Session 物件
+
+    Returns:
+        更新後的用戶資料
+    """
+
+    user = service.update_user(db, user_id, user_in)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int,
+    db: Annotated[Session, Depends(get_db)],
+) -> None:
+    """
+    刪除用戶
+
+    Args:
+        user_id: 用戶 ID
+        db: 資料庫 Session 物件
+    """
+
+    if not service.delete_user(db, user_id):
+        raise HTTPException(status_code=404, detail="User not found")
