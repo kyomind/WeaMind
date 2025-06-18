@@ -29,5 +29,6 @@ Write a concise and natural commit message summarizing the following code diff i
 ## 重要參考資料
 
 - 待辦事項清單：`docs/Todo.md`
+  - 待辦事項範例：`docs/Example.md`
 - 專案架構與技術決策：`docs/Architecture.md`
 - 專案目錄結構：`docs/Tree.md`
