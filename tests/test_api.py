@@ -1,7 +1,4 @@
-"""Tests for core API endpoints.
-
-Verify root and user operations.
-"""
+"""測試核心 API 端點"""
 
 from collections.abc import Callable
 from uuid import uuid4
@@ -10,10 +7,7 @@ from fastapi.testclient import TestClient
 
 
 def test_root(client: TestClient) -> None:
-    """Return welcome message.
-
-    Ensure the API root endpoint responds correctly.
-    """
+    """回傳歡迎訊息"""
 
     response = client.get("/")
     assert response.status_code == 200  # noqa: S101
@@ -21,10 +15,7 @@ def test_root(client: TestClient) -> None:
 
 
 def test_create_user(client: TestClient) -> None:
-    """Create a new user.
-
-    Verify that registration succeeds with unique line ID.
-    """
+    """建立新使用者"""
 
     data = {"line_user_id": str(uuid4()), "display_name": "Alice"}
     response = client.post("/users", json=data)
@@ -34,10 +25,7 @@ def test_create_user(client: TestClient) -> None:
 
 
 def test_get_user(create_user: Callable[..., dict], client: TestClient) -> None:
-    """Get an existing user.
-
-    Should return the created record.
-    """
+    """獲取現有使用者"""
 
     created = create_user()
     user_id = created["id"]
@@ -47,10 +35,7 @@ def test_get_user(create_user: Callable[..., dict], client: TestClient) -> None:
 
 
 def test_update_user(create_user: Callable[..., dict], client: TestClient) -> None:
-    """Update user display name.
-
-    Confirm the new name persists.
-    """
+    """更新使用者顯示名稱"""
 
     created = create_user()
     user_id = created["id"]
@@ -60,10 +45,7 @@ def test_update_user(create_user: Callable[..., dict], client: TestClient) -> No
 
 
 def test_delete_user(create_user: Callable[..., dict], client: TestClient) -> None:
-    """Delete a user.
-
-    Ensure the record is removed.
-    """
+    """刪除使用者"""
 
     created = create_user()
     user_id = created["id"]

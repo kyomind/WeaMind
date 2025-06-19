@@ -9,10 +9,16 @@
 ## Coding Guidelines
 
 1. Use type hints to ensure type safety for FastAPI routes and models.
-2. Every function must include a docstring; complex ones should follow the `.github/prompts/docstring.prompt.md` standard.
-3. Add comments to special or important parts of the code to help readers understand the design intent. (very important)
+2. Add comments to special or important parts of the code to help readers understand the design intent. (very important)
+3. Every function must include a docstring; follow the `.github/prompts/docstring.prompt.md` standard.
 4. When writing a Python docstring with only a summary, place the opening triple quotes, the summary, and the closing triple quotes each on a separate line.
 5. For Router (API) functions, only a summary docstring is required.
+
+## Naming Conventions
+
+- pytest fixtures:
+  - return a helper function: start with verb, like a normal function, e.g., `create_user`
+  - return a object: use noun, like a variable, e.g., `user`
 
 ## Commit Message Guidelines
 
