@@ -7,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  quality-check:
+    name: Lint, Format, Type Check, Test
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
@@ -17,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
       - name: Lint (ruff)
-        run: uv run ruff . --fix
+        run: uv run ruff check . --fix
       - name: Format (ruff format)
         run: uv run ruff format .
       - name: Type check (pyright)
