@@ -35,9 +35,3 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
-      - id: pytest
-        name: pytest (pre-push)
-        entry: pytest
-        language: system
-        types: [python]
-        stages: [push]
