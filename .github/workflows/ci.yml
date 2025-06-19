@@ -16,5 +16,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: uv sync --locked
+      - name: Lint (ruff)
+        run: uv run ruff . --fix
+      - name: Format (ruff format)
+        run: uv run ruff format .
+      - name: Type check (pyright)
+        run: uv run pyright
       - name: Run unit tests
         run: uv run pytest
