@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
+os.environ["LINE_CHANNEL_SECRET"] = "TEST_SECRET"
 
 sys.path.append(str(Path(__file__).resolve().parent))
 
