@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## What is WeaMind?
+
+WeaMind is a system that delivers intelligent weather-related services by integrating weather data and AI-powered interactions.
+
+This repository only contains the line-bot (FastAPI) module, which serves as the user-facing entry point and collaborates with other microservices.
+
 ## Test Commands
 
 - Run tests: `uv run pytest`
@@ -16,7 +22,9 @@
 
 - pytest fixtures:
   - return a helper function: start with verb, like a normal function, e.g., `create_user`
-  - return a object: use noun, like a variable, e.g., `user`
+  - return a object or value: use noun, like a variable, e.g., `user`
+- router functions:
+  - the parameter name represents the HTTP request body: use `payload` in any case
 
 ## Commit Message Guidelines
 
