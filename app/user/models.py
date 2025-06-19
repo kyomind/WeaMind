@@ -7,7 +7,7 @@ from app.core.database import Base
 
 class User(Base):
     """
-    用戶資料庫模型
+    Database model for users
     """
 
     __tablename__ = "user"
@@ -15,7 +15,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     line_user_id = Column(String, unique=True, index=True, nullable=False)
     display_name = Column(String, nullable=True)
-    quota = Column(Integer, default=5)  # 預設每日查詢額度
+    quota = Column(Integer, default=5)  # default daily quota
     quota_used = Column(Integer, default=0)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(

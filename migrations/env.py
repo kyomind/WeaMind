@@ -5,7 +5,7 @@ from sqlalchemy.engine import engine_from_config
 from app.core.config import settings
 from app.core.database import Base
 
-# Alembic Config 物件，提供給這個 script 使用
+# Alembic configuration object for this script
 alembic_config = context.config
 
 alembic_config.set_main_option(
