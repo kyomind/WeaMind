@@ -11,7 +11,7 @@
 - [x] 9.將todo prompt和arch prompt移至docs目錄下 2025-06-17
 - [x] 10.設計 user 模組的 Pydantic schema 與基本 CRUD API 2025-06-18
 - [x] 11.🍎重構測試、建立 fixture 與型別註記，並補充註解說明 2025-06-18
-- [x] 12.建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求 2025-06-19
+- [x] 12.🍏建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求 2025-06-19
 - [ ] 13.執行 Alembic 資料庫遷移，建立 User table
   - **目的**：為 `user` 模組建立實際的資料庫表格，使已設計的 User Pydantic schema 和 CRUD API 能夠實際儲存和讀取使用者資料。
   - **預期成果**：在開發資料庫中成功建立 `users` 表格，其結構符合 `app/user/models.py` 中的 `User` 模型定義。User CRUD API 可以透過此表格進行資料的建立、讀取、更新和刪除。
