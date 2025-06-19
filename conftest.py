@@ -15,18 +15,18 @@ sys.path.append(str(Path(__file__).resolve().parent))
 from app.core.database import Base, engine
 from app.main import app
 
-# 為了讓 SQLAlchemy 正確註冊所有 table，必須 import models（即使沒直接用到）
+# Import models so SQLAlchemy registers tables correctly even if unused
 from app.user import models  # noqa: F401
 
 Base.metadata.create_all(bind=engine)
-# 使用模組級單例，比直接在 fixture 裡建立更有效率
+# Use a module-level singleton instead of creating a new client per fixture
 _client = TestClient(app)
 
 
 @pytest.fixture()
 def client() -> TestClient:
     """
-    提供 FastAPI 測試 client
+    Provide a FastAPI test client
     """
 
     return _client
@@ -37,10 +37,10 @@ def create_user(client: TestClient) -> Callable[..., dict]:
     """
     Return a helper for creating test users
 
-    採用回傳 helper 函式而非直接回傳 user 物件的理由：
-    1. 提高彈性，可依需求建立不同 display_name 或多個 user
-    2. 支援同一測試多次建立 user
-    3. 減少 fixture 數量，便於維護與擴充
+    Reasons for returning a helper instead of the user object:
+    1. Flexibility to create different display names or multiple users
+    2. Supports creating users multiple times in one test
+    3. Fewer fixtures to maintain and extend
     """
 
     def _create(display_name: str = "Alice") -> dict:

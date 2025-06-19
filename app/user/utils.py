@@ -1,15 +1,15 @@
-# 用戶模組工具函數檔案
-# 此檔案定義用戶模組中使用的輔助函數
+# Utility functions for the user module
+# This file contains helper functions used by user features
 
 
 def reset_quota_if_needed(user_data: dict) -> bool:
     """
-    檢查並重置用戶額度（如果需要）
+    Check and reset quota if needed
 
     Args:
-        user_data: 包含用戶資訊的字典，包括quota_used欄位
+        user_data: dictionary with user information including quota_used
 
     Returns:
-        bool: 是否執行了額度重置（目前為佔位符）
+        bool: whether the quota was reset (currently placeholder)
     """
-    return False  # 佔位符邏輯，未來將實現
+    return False  # placeholder logic, to be implemented

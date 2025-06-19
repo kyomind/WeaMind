@@ -13,10 +13,10 @@ app = FastAPI(title="WeaMind API", description="API for WeaMind Weather LINE BOT
 
 def verify_line_signature(body: bytes, signature: str) -> bool:
     """
-    Compare HMAC-SHA256 signature with LINE payload
+    Compare HMAC-SHA256 signature with the LINE payload
 
     Returns:
-        bool: 驗證結果
+        bool: verification result
     """
     digest = hmac.new(settings.LINE_CHANNEL_SECRET.encode(), body, hashlib.sha256).digest()
     expected = base64.b64encode(digest).decode()
@@ -26,10 +26,10 @@ def verify_line_signature(body: bytes, signature: str) -> bool:
 @app.get("/")
 async def root() -> dict:
     """
-    歡迎使用 WeaMind API 的根路由
+    Welcome message for the root route
 
     Returns:
-        dict: API 的歡迎訊息
+        dict: API welcome text
     """
     return {"message": "Welcome to WeaMind API"}
 
@@ -44,10 +44,10 @@ async def line_webhook(
     x_line_signature: Annotated[str, Header(...)],
 ) -> dict:
     """
-    接收 LINE webhook 並驗證簽名
+    Receive LINE webhook and verify its signature
     """
     body = await request.body()
     if not verify_line_signature(body, x_line_signature):
         raise HTTPException(status_code=400, detail="Invalid signature")
-    # 未來可在此處理 event
+    # TODO: handle events in the future
     return {"message": "OK"}

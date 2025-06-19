@@ -17,7 +17,7 @@ async def create_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    註冊新用戶
+    Register a new user
     """
     try:
         user = service.create_user(db, payload)
@@ -32,7 +32,7 @@ async def get_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    取得單一用戶資料
+    Retrieve a single user
     """
     user = service.get_user(db, user_id)
     if user is None:
@@ -47,7 +47,7 @@ async def update_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    更新用戶資料
+    Update user information
     """
     user = service.update_user(db, user_id, payload)
     if user is None:
@@ -61,7 +61,7 @@ async def delete_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
-    刪除用戶
+    Delete a user
     """
     if not service.delete_user(db, user_id):
         raise HTTPException(status_code=404, detail="User not found")

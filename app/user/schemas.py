@@ -3,9 +3,9 @@ from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     """
-    用戶創建資料模型
+    Schema for creating a user
 
-    用於處理新用戶註冊時的資料驗證
+    Used to validate data during registration
     """
 
     line_user_id: str
@@ -14,9 +14,9 @@ class UserCreate(BaseModel):
 
 class UserRead(BaseModel):
     """
-    讀取用戶資料模型
+    Schema for reading user data
 
-    回應用戶相關 API 時使用
+    Returned by user-related APIs
     """
 
     id: int
@@ -30,9 +30,9 @@ class UserRead(BaseModel):
 
 class UserUpdate(BaseModel):
     """
-    用戶更新資料模型
+    Schema for updating user data
 
-    提供 PATCH 方法修改用戶資訊
+    Used by the PATCH endpoint
     """
 
     display_name: str | None = None

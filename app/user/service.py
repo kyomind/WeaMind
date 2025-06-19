@@ -1,4 +1,4 @@
-"""用戶服務邏輯."""
+"""User service logic."""
 
 from sqlalchemy.orm import Session
 
@@ -8,14 +8,14 @@ from app.user.schemas import UserCreate, UserUpdate
 
 def create_user(db: Session, user_in: UserCreate) -> User:
     """
-    建立新用戶
+    Create a new user
 
     Args:
-        db: 資料庫 Session 物件
-        user_in: 用戶註冊資料
+        db: database Session object
+        user_in: registration data for the user
 
     Returns:
-        新增後的用戶模型
+        The newly created user model
     """
 
     user = User(line_user_id=user_in.line_user_id, display_name=user_in.display_name)
@@ -26,13 +26,13 @@ def create_user(db: Session, user_in: UserCreate) -> User:
 
 
 def get_user(db: Session, user_id: int) -> User | None:
-    """依 ID 取得用戶."""
+    """Get a user by ID."""
 
     return db.get(User, user_id)
 
 
 def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User | None:
-    """更新並回傳用戶."""
+    """Update and return a user."""
 
     user = db.get(User, user_id)
     if user is None:
@@ -45,7 +45,7 @@ def update_user(db: Session, user_id: int, user_in: UserUpdate) -> User | None:
 
 
 def delete_user(db: Session, user_id: int) -> bool:
-    """刪除用戶，成功回傳 True."""
+    """Delete a user and return True if successful."""
 
     user = db.get(User, user_id)
     if user is None:
