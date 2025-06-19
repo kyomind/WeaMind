@@ -32,13 +32,13 @@ class Base(DeclarativeBase):
 
 def get_db() -> typing.Generator[Session, None, None]:
     """
-    建立資料庫連線 Session
+    Create a database Session
 
-    FastAPI 依賴注入用
-    用法：在路由中加上 Depends(get_db)
+    For FastAPI dependency injection
+    Usage: Add Depends(get_db) in your route
 
-    Returns:
-        一個資料庫 Session 物件，可用於操作資料庫
+    Returns
+        A database Session
     """
     db = SessionLocal()
     try:

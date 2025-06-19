@@ -24,6 +24,7 @@
 ├── Dockerfile
 ├── docs
 │   ├── Architecture.md
+│   ├── Discuss.md
 │   ├── Example.md
 │   ├── Todo.md
 │   └── Tree.md
@@ -32,7 +33,8 @@
 ├── migrations
 │   ├── env.py
 │   ├── README
-│   └── script.py.mako
+│   ├── script.py.mako
+│   └── versions
 ├── pyproject.toml
 ├── pyrightconfig.json
 ├── README.md
@@ -42,4 +44,4 @@
 │   └── test_api.py
 └── uv.lock
 
-8 directories, 33 files
+9 directories, 34 files
