@@ -23,7 +23,7 @@ This repository only contains the line-bot (FastAPI) module, which serves as the
 - pytest fixtures:
   - return a helper function: start with verb, like a normal function, e.g., `create_user`
   - return a object or value: use noun, like a variable, e.g., `user`
-- router functions:
+- FastAPI router functions:
   - the parameter name represents the HTTP request body: use `payload` in any case
 
 ## Commit Message Guidelines
@@ -44,6 +44,5 @@ Write a concise and natural commit message summarizing the following code diff i
 ## Key References
 
 - Todo list: `docs/Todo.md`
-  - Todo example: `docs/Example.md`
 - Project architecture & technical decisions: `docs/Architecture.md`
 - Project directory structure: `docs/Tree.md`
