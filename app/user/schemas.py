@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 
 
@@ -22,8 +24,9 @@ class UserRead(BaseModel):
     id: int
     line_user_id: str
     display_name: str | None = None
-    quota: int = 5
-    quota_used: int = 0
+    is_active: bool = True
+    created_at: datetime
+    updated_at: datetime
 
     model_config = {"from_attributes": True}
 

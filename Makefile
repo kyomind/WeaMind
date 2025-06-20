@@ -11,4 +11,11 @@ down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
 tree:
-	zsh scripts/gen_tree.sh
+        zsh scripts/gen_tree.sh
+
+migrate:
+        uv run alembic upgrade head
+
+revision:
+        uv run alembic revision --autogenerate -m "$(shell git rev-parse --abbrev-ref HEAD)_$(shell date +%Y%m%d_%H%M%S)"
+
