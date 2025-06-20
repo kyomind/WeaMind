@@ -3,6 +3,7 @@
         "abstractmethod",
         "addopts",
         "autoflush",
+        "autoincrement",
         "celerybeat",
         "conftest",
         "Connor",
@@ -35,6 +36,7 @@
         "Spyder",
         "spyderproject",
         "spyproject",
+        "tablename",
         "testpaths",
         "webassets"
     ]

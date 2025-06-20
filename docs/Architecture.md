@@ -1,57 +1,60 @@
 # WeaMind System Documentation
 
-## WeaMind 高階架構說明
+> The architecture is inspired by Domain-Driven Design (DDD) principles.
 
-- 三元件分離：line-bot(FastAPI app，即本專案), wea-data(定期更新氣象資料), wea-ai(提供 AI 相關功能)
-- wea-ai：獨立部署，只出 intent/schema，不直接存取資料
-- wea-data：獨立部署，獨立運作，不和上述二者互動。僅負責 ETL，從外部資料來源更新最新的氣象資料
+## High-Level Architecture Overview
 
-## 專案範圍說明
+- Three-component separation: line-bot (FastAPI app, this project), wea-data (periodically updates weather data), wea-ai (provides AI-related features)
+- wea-ai: Deployed independently, only outputs intent/schema, does not access data directly
+- wea-data: Deployed independently, operates separately from the other two. Responsible only for ETL, updating the latest weather data from external sources
 
-- 本 repo 僅包含 **line-bot** 模組程式碼
-- wea-data 與 wea-ai 為獨立元件(微服務)，不在此 repo 中
+## Project Scope
 
-## 元件互動流程
+- This repo only contains the **line-bot** module code
+- wea-data and wea-ai are independent components (microservices) and are not included in this repo
 
-- line-bot 透過 HTTP API 與 wea-ai 溝通，所有外部請求皆由 line-bot 統一進出。
-- line-bot 處理 LINE webhook 事件，根據 intent 轉發至 wea-ai。
-- wea-data 僅負責定期 ETL，將氣象資料寫入資料庫，不對外提供 API。
-- 所有資料查詢與存取皆由 line-bot 直接操作資料庫。
-- wea-ai 提供意圖判斷與對話 schema，不直接存取資料。
+## Component Interaction Flow
 
-## 主要模組職責
+- line-bot handles all external requests; only interacts with wea-ai via HTTP API when intent analysis or AI features are needed
+- line-bot processes LINE webhook events, and may forward to wea-ai depending on the request type
+- wea-data only performs scheduled ETL, writing weather data into the database, and does not provide any API
+- All data queries and access are performed directly by line-bot via the database
+- wea-ai provides intent detection and dialogue schema, but does not access data directly
 
-- app/core：全域設定、資料庫連線
-- app/user：使用者資料模型、CRUD API、驗證
-- app/main.py：FastAPI app 啟動點，註冊路由
+## Main Module Responsibilities
 
-## 資料流向與持久化
+- app/core: Global configuration, database connection
+- app/user: User data models, CRUD API, validation
+- app/weather: For weather data access and logic (not yet implemented)
+- app/main.py: FastAPI app entry point, router registration
 
-- wea-data 定期將外部氣象資料 ETL 寫入 PostgreSQL
-- line-bot 直接查詢/寫入 PostgreSQL，包含 user 狀態與氣象資料
-- Alembic 負責資料庫 schema 遷移
-- SQLAlchemy 管理所有資料表
+## Data Flow and Persistence
 
-## API 設計原則
+- wea-data periodically ETLs external weather data into PostgreSQL
+- line-bot directly queries/writes PostgreSQL, including user state and weather data
+- Alembic manages database schema migrations
+- SQLAlchemy manages all tables
 
-- 採 RESTful 風格，JSON 為主要 payload 格式
-- 所有 POST/PUT 請求 body 參數統一命名為 payload
-- 需驗證來自 LINE 的 webhook 請求簽章
+## API Design Principles
 
-## 技術選型重點
+- RESTful style, JSON as the main payload format
+- All POST/PUT request body parameters are uniformly named payload
+- Must verify the signature of incoming LINE webhook requests
 
-- FastAPI：高效、型別安全、易於測試
-- Pydantic：資料驗證與序列化
-- SQLAlchemy 2.0：ORM，方便管理資料庫
-- Alembic：資料庫遷移
-- pytest：測試
+## Tech Stack
 
-## 典型請求流程（line webhook 範例）
+- FastAPI: High performance, type safety, easy to test
+- Pydantic: Data validation and serialization
+- SQLAlchemy 2.0: ORM, convenient for database management
+- Alembic: Database migration
+- pytest: Testing
 
-1. LINE 平台推送 webhook 至 /line/webhook
-2. line-bot 驗證簽章，解析事件
-3. 根據事件內容，查詢 user 狀態或呼叫 wea-ai 判斷 intent
-4. 若需氣象資料：
-   - 固定格式查詢：line-bot 直接查詢資料庫
-   - 自然語言查詢：line-bot 先與 wea-ai 互動取得 intent，再查詢資料庫，反覆直到獲得明確結果
-5. 組合回應訊息，回傳給 LINE 平台
+## Typical Request Flow (LINE webhook example)
+
+1. LINE platform pushes a webhook to /line/webhook
+2. line-bot verifies the signature and parses the event
+3. Depending on the event, queries user state or calls wea-ai to determine intent
+4. If weather data is needed:
+   - Fixed-format query: line-bot queries the database directly
+   - Natural language query: line-bot interacts with wea-ai to obtain intent, then queries the database, repeating until a clear result is obtained
+5. Composes the response message and returns it to the LINE platform
