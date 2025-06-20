@@ -14,17 +14,6 @@ This repository only contains the line-bot (FastAPI) module, which serves as the
 - Lint check: `uv run ruff check .`
 - Format code: `uv run ruff format .`
 
-### WeaMind High-Level Architecture
-
-- Three-component separation: line-bot (FastAPI app, this project), wea-data (periodically updates weather data), wea-ai (provides AI-related features)
-- wea-ai: deployed independently, only provides intent/schema, does not access data directly
-- wea-data: deployed independently, responsible for ETL, updates the latest weather data from external sources
-
-### Project Scope
-
-- This repo only contains the **line-bot** module code
-- wea-data and wea-ai are independent components (microservices) and are not included in this repo
-
 ### Key References
 
 - Todo list: `docs/Todo.md`
