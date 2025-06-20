@@ -1,7 +1,5 @@
 # WeaMind System Documentation
 
-> The architecture is inspired by Domain-Driven Design (DDD) principles.
-
 ## High-Level Architecture Overview
 
 - Three-component separation: line-bot (FastAPI app, this project), wea-data (periodically updates weather data), wea-ai (provides AI-related features)
@@ -22,6 +20,8 @@
 - wea-ai provides intent detection and dialogue schema, but does not access data directly
 
 ## Main Module Responsibilities
+
+> Project architecture is inspired by Domain-Driven Design (DDD) principles.
 
 - app/core: Global configuration, database connection
 - app/user: User data models, CRUD API, validation
