@@ -20,7 +20,7 @@ jobs:
         # 確保 pyproject.toml / lockfile 含有 pytest-cov、coverage 等 dev 依賴
         run: uv sync --locked
 
-      - name: Install git
+      - name: Install git and other tools
         run: apt-get update && apt-get install -y git curl gnupg
 
       - name: Lint (ruff)
