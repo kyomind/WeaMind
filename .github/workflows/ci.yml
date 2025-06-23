@@ -21,7 +21,7 @@ jobs:
         run: uv sync --locked
 
       - name: Install git
-        run: apt-get update && apt-get install -y git
+        run: apt-get update && apt-get install -y git curl gnupg
 
       - name: Lint (ruff)
         run: uv run ruff check . --fix
