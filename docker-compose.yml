@@ -13,6 +13,8 @@ services:
     restart: unless-stopped
     env_file:
       - .env
+    ports:
+      - "5433:5432"
     volumes:
       - wea-db-data:/var/lib/postgresql/data
 
