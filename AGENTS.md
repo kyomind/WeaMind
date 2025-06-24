@@ -13,6 +13,7 @@ This repository only contains the line-bot (FastAPI) module, which serves as the
 - Run tests: `uv run pytest`
 - Lint check: `uv run ruff check .`
 - Format code: `uv run ruff format .`
+- Type check: `uv run pyright .`
 
 ### Key References
 
