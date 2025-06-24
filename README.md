@@ -1,6 +1,6 @@
 # WeaMind
 
-[![codecov](https://codecov.io/gh/kyomind/WeaMind/branch/main/graph/badge.svg?style=for-the-badge)](https://codecov.io/gh/kyomind/WeaMind)
+[![codecov](https://codecov.io/gh/kyomind/WeaMind/branch/main/graph/badge.svg)](https://codecov.io/gh/kyomind/WeaMind)
 
 This project uses Docker for local development. Copy `.env.example` to `.env` and start the containers:
 

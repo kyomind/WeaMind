@@ -33,7 +33,7 @@ jobs:
         run: uv run pyright
 
       - name: Run unit tests with coverage
-        # 用 pytest-cov 產生 coverage.xml
+        # 執行單元測試，並用 pytest-cov 產生 coverage.xml
         run: |
           uv run pytest --cov=app --cov-report=xml --cov-report=term-missing
 
