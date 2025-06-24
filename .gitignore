@@ -2,7 +2,7 @@
 info/
 wea-info/
 .DS_Store
-
+.specstory/
 
 
 # Byte-compiled / optimized / DLL files
