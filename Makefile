@@ -1,4 +1,4 @@
-APP_CONTAINER=wea-app-dev
+APP_SERVICE=app
 
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up
@@ -16,10 +16,10 @@ tree:
 	zsh scripts/gen_tree.sh
 
 migrate:
-	docker compose exec $(APP_CONTAINER) uv run alembic upgrade head
+	docker compose exec $(APP_SERVICE) uv run alembic upgrade head
 
 revision:
-	docker compose exec $(APP_CONTAINER) uv run alembic revision --autogenerate -m "$(shell git rev-parse --abbrev-ref HEAD)_$(shell date +%Y%m%d_%H%M%S)"
+	docker compose exec $(APP_SERVICE) uv run alembic revision --autogenerate -m "$(shell git rev-parse --abbrev-ref HEAD)_$(shell date +%Y%m%d_%H%M%S)"
 
 rollback:
-	docker compose exec $(APP_CONTAINER) uv run alembic downgrade -1
+	docker compose exec $(APP_SERVICE) uv run alembic downgrade -1
