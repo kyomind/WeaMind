@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "DUMMY_DB"
     POSTGRES_PORT: int = 5432
     LINE_CHANNEL_SECRET: str = "CHANGE_ME"
+    DATABASE_URL: str | None = None  # 新增，允許直接指定完整連線字串
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
