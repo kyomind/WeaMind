@@ -6,10 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 
-DATABASE_URL = (
-    settings.DATABASE_URL
-    or f"postgresql+psycopg2://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
-)
+DATABASE_URL = f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
 
 connect_args = {}
 poolclass = None

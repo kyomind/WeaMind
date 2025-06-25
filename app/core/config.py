@@ -10,7 +10,6 @@ class Settings(BaseSettings):
     APP_NAME: str = "WeaMind API"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
-    DATABASE_URL: str = "DUMMY_DATABASE_URL"
     POSTGRES_USER: str = "DUMMY_USER"
     POSTGRES_PASSWORD: str = "DUMMY_PASSWORD"
     POSTGRES_HOST: str = "DUMMY_HOST"
