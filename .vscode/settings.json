@@ -6,6 +6,7 @@
         "autoflush",
         "autoincrement",
         "celerybeat",
+        "Certbot",
         "conftest",
         "Connor",
         "cpython",
