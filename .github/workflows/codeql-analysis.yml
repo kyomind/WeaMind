@@ -1,0 +1,43 @@
+name: "CodeQL"
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Every Sunday 00:00 UTC (Taiwan time Sunday 08:00)
+    - cron: "0 0 * * 0"
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  codeql:
+    runs-on: ubuntu-latest
+
+    # Use Astral official uv + Python 3.12 lightweight container
+    container:
+      image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+    steps:
+      # 1. Checkout source code
+      - uses: actions/checkout@v4
+
+      # 2. Initialize CodeQL (declare language and query set first)
+      - name: Init CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: python
+          queries: security-extended # Recommended: scan with extended security rules
+
+      # 3. Custom Build: Use uv to install locked dependencies, then install the project itself
+      - name: Build with uv
+        run: |
+          uv sync --locked
+
+      # 4. Analyze & upload results
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
