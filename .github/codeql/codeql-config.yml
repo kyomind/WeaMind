@@ -1,0 +1,4 @@
+name: WeaMind Default
+paths-ignore:
+  - "migrations/**"
+  - "**/migrations/**"
