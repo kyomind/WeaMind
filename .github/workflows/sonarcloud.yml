@@ -27,10 +27,11 @@ jobs:
           sonar.sources=app
           EOF
 
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # 已開啟自動掃描，不能同時執行這個步驟
+      # - name: SonarCloud Scan
+      #   uses: sonarsource/sonarqube-scan-action@v5
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@v1
