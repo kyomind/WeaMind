@@ -5,6 +5,7 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![Checked with pyright](https://microsoft.github.io/pyright/img/pyright_badge.svg)](https://microsoft.github.io/pyright/)
+[![CodeQL](https://github.com/kyomind/WeaMind/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/kyomind/WeaMind/security/code-scanning)
 
 This project uses Docker for local development. Copy `.env.example` to `.env` and start the containers:
 
