@@ -1,5 +1,7 @@
 # WeaMind
 
+[![CI](https://img.shields.io/github/actions/workflow/status/kyomind/WeaMind/ci.yml?label=WeaMind%20CI)](https://github.com/kyomind/WeaMind/actions/workflows/ci.yml)
+
 [![codecov](https://codecov.io/gh/kyomind/WeaMind/branch/main/graph/badge.svg)](https://codecov.io/gh/kyomind/WeaMind)
 
 This project uses Docker for local development. Copy `.env.example` to `.env` and start the containers:
