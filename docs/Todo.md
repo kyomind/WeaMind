@@ -14,6 +14,7 @@
 - [x] 12.🍏建立 line webhook API endpoint，能正確接收與驗證來自 LINE 的 webhook 請求 2025-06-19
 - [x] 13.🍎CI 加入 Codecov，並在 PR 時自動產出報告(bot) 2025-06-23
 - [x] 14.🍎🍎執行 Alembic 資料庫遷移，建立 user table 2025-06-25
+- [x] 15.🍎加了好幾個badge，與GitHub Actions相關的主要有sonarcloud、codeql 2025-06-26
 
 ## 說明
 
