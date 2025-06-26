@@ -1,4 +1,4 @@
-name: WeaMind CI
+name: CI
 
 on:
   push:
