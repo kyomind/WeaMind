@@ -10,7 +10,7 @@ dependencies = [
 description = "Add your description here"
 name = "WeaMind"
 readme = "README.md"
-requires-python = ">=3.12" # 影響 pyupgrade 自動修正的版本，替代 target-version
+requires-python = ">=3.12" # Affects pyupgrade auto fixes and replaces target-version
 version = "0.1.0"
 
 [dependency-groups]
@@ -34,29 +34,29 @@ line-length = 100
 select = ["E", "W", "F", "I", "UP"]
 
 extend-select = [
-  # ★ 全開 ANN / B / ASYNC / TRY / PERF ★
+  # ★ Enable ANN / B / ASYNC / TRY / PERF ★
   "ANN",
   "B",
   "ASYNC",
   "TRY",
-  "PERF", # FastAPI 專屬
+  "PERF", # FastAPI specific
   "FAST001",
-  "FAST002", # Docstring 規則
+  "FAST002", # Docstring rules
   "D103",
-  "DOC201", # 其他
+  "DOC201", # Others
   "S101",
   "S110",
   "ERA001",
 ]
 
-# 針對雜訊高的規則做全域排除（示例）
+# Globally ignore noisy rules (example)
 ignore = [
   "E402", # module level import not at top of file
-  "ANN101", # self / cls 無需標註
+  "ANN101", # self / cls do not need annotation
 ]
 
 [tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
-quote-style = "double" # 引號風格，雙引號是預設值
+quote-style = "double" # Quote style, double quotes are default
 
 [tool.coverage.run]
 branch = true

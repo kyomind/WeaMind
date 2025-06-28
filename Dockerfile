@@ -2,15 +2,15 @@ FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 WORKDIR /app
 
-# 編譯 bytecode、避免軟連結
+# Compile bytecode and avoid symlinks
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-# DEV=true 時會連同 dev-deps 一起安裝
+# When DEV=true also install dev dependencies
 ARG DEV=false
 
-# ---------- layer 1：重依賴 ----------
-# 只有這兩檔案改變才會失效
+# ---------- layer 1: heavy dependencies ----------
+# Cache only invalidates when these two files change
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -20,11 +20,11 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev; \
     fi
 
-# ---------- layer 2：專案程式碼 ----------
+# ---------- layer 2: application code ----------
 COPY . /app
 
-# 把 venv 放到 PATH 最前
+# Put the venv at the beginning of PATH
 ENV PATH="/app/.venv/bin:$PATH"
 
-# 不用 uv 當 entrypoint
+# Do not use uv as the entrypoint
 ENTRYPOINT []

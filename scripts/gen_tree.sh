@@ -1,5 +1,5 @@
 #!/bin/zsh
-# 產生專案三層樹狀圖並寫入 docs/Tree.md
+# Generate a three-level project tree and write it to docs/Tree.md
 
 echo "# Project Directory Tree (3 Levels)" > docs/Tree.md
 echo "" >> docs/Tree.md
