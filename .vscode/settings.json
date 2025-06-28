@@ -5,6 +5,7 @@
         "autobuild",
         "autoflush",
         "autoincrement",
+        "carryforward",
         "celerybeat",
         "Certbot",
         "conftest",
