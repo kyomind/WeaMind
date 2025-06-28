@@ -15,8 +15,9 @@
 - [x] 13.🍎CI 加入 Codecov，並在 PR 時自動產出報告(bot) 2025-06-23
 - [x] 14.🍎🍎執行 Alembic 資料庫遷移，建立 user table 2025-06-25
 - [x] 15.🍎加了好幾個badge，與GitHub Actions相關的主要有sonarcloud、codeql 2025-06-26
+- [x] 16.🍎新增 Dependabot 與 Codecov 設定 2025-06-28
 
-- [ ] 16.雲端 VM 上 Git 複製專案並啟動 FastAPI（含 Docker Compose）
+- [ ] 17.雲端 VM 上 Git 複製專案並啟動 FastAPI（含 Docker Compose）
   - **目的**：將本地開發完成的 FastAPI 專案部署到雲端 VM，並以 Docker Compose 啟動服務，確保專案能在雲端環境正常執行。
   - **為何重要**：這是專案從本地開發邁向線上服務的第一步，確保 API 能在雲端環境穩定執行，是後續對外服務、整合 Nginx 及 LINE webhook 的基礎。
   - **可能的挑戰**：
@@ -34,7 +35,7 @@
     - 執行 `docker-compose up -d` 後，FastAPI 服務可於 VM 的 8000 port 正常啟動。
     - 使用 `curl` 或瀏覽器連線 VM 的 8000 port（如 http://<vm-ip>:8000/docs）能看到 FastAPI Swagger UI。
 
-- [ ] 17.安裝與設定 Nginx 反向代理＋申請 HTTPS 憑證
+- [ ] 18.安裝與設定 Nginx 反向代理＋申請 HTTPS 憑證
   - **目的**：於雲端 VM 上安裝 Nginx，設定反向代理將外部 HTTPS 請求導向 FastAPI webhook 端點，並申請 Let's Encrypt 憑證，確保 webhook 能被 LINE 平台安全存取。
   - **為何重要**：這是讓 LINE webhook 能安全、穩定對接專案 API 的關鍵步驟，沒有 HTTPS 與正確反向代理，LINE webhook 將無法串接，專案也無法對外服務。
   - **可能的挑戰**：
