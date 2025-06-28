@@ -1,0 +1,12 @@
+# 讓 Codecov 靜音成功留言
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+  require_base: true
+  require_head: true
+  branches: []
+  show_carryforward_flags: false
+  after_n_builds: 1
+  success:
+    message: false
