@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        # 確保 pyproject.toml / lockfile 含有 pytest-cov、coverage 等 dev 依賴
+        # Ensure pyproject.toml / lockfile include pytest-cov, coverage and other dev deps
         run: uv sync --locked
 
       - name: Install git and other tools
@@ -36,7 +36,7 @@ jobs:
         run: uv run pyright
 
       - name: Run unit tests with coverage
-        # 執行單元測試，並用 pytest-cov 產生 coverage.xml
+        # Run tests and generate coverage.xml with pytest-cov
         run: |
           uv run pytest --cov=app --cov-report=xml --cov-report=term-missing
 

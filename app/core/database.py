@@ -6,7 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 
-# 若 settings.DATABASE_URL 有值則優先使用，否則組合 PostgreSQL 連線字串
+# Use settings.DATABASE_URL if provided; otherwise build the PostgreSQL connection string
 DATABASE_URL = (
     settings.DATABASE_URL
     or f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
