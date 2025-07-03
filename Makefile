@@ -23,3 +23,9 @@ revision:
 
 rollback:
 	docker compose exec $(APP_SERVICE) uv run alembic downgrade -1
+
+check:
+	zsh scripts/cleanup_local_branches_preview.sh
+
+prune:
+	zsh scripts/cleanup_local_branches.sh
