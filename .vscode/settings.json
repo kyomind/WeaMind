@@ -33,6 +33,7 @@
         "pyrightconfig",
         "pysqlite",
         "pytype",
+        "redoc",
         "repr",
         "ropeproject",
         "Scrapy",
