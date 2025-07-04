@@ -12,9 +12,6 @@ up:
 down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
-tree:
-	zsh scripts/gen_tree.sh
-
 migrate:
 	docker compose exec $(APP_SERVICE) uv run alembic upgrade head
 
@@ -23,3 +20,12 @@ revision:
 
 rollback:
 	docker compose exec $(APP_SERVICE) uv run alembic downgrade -1
+
+tree:
+	zsh scripts/gen_tree.sh
+
+check:
+	zsh scripts/cleanup_local_branches_preview.sh
+
+prune:
+	zsh scripts/cleanup_local_branches.sh
