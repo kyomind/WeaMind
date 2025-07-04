@@ -8,6 +8,8 @@ services:
       - db
     ports:
       - "8000:8000"
+    networks:
+      - wea-net
   db:
     image: postgres:17.5-bookworm
     restart: unless-stopped
@@ -17,6 +19,12 @@ services:
       - "5433:5432"
     volumes:
       - wea-db-data:/var/lib/postgresql/data
+    networks:
+      - wea-net
 
 volumes:
   wea-db-data:
+
+networks:
+  wea-net:
+    external: true
