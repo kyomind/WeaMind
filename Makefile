@@ -12,6 +12,16 @@ up:
 down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
+build:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+
+restart:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml restart
+
+deploy:
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
 migrate:
 	docker compose exec $(APP_SERVICE) uv run alembic upgrade head
 
