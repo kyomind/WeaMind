@@ -8,7 +8,21 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from app.core.config import settings
 from app.user.router import router as user_router
 
-app = FastAPI(title="WeaMind API", description="API for WeaMind Weather LINE BOT")
+# 根據 FastAPI 最佳實踐：僅在生產環境中隱藏 docs
+if settings.is_development:
+    app = FastAPI(
+        title="WeaMind API",
+        description="API for WeaMind Weather LINE BOT",
+    )
+else:
+    # 生產環境：隱藏所有 API 文檔相關端點
+    app = FastAPI(
+        title="WeaMind API",
+        description="API for WeaMind Weather LINE BOT",
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
+    )
 
 
 def verify_line_signature(body: bytes, signature: str) -> bool:
