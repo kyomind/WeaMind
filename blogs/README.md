@@ -4,4 +4,4 @@
 
 | 文章標題                           | 標籤                                                                                                           | 發文日期   |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------- |
-| [GitHub Actions CI/CD 實戰解析](#) | [blog/github-actions-2025-07-05@v1](https://github.com/kyomind/WeaMind/tree/blog/github-actions-2025-07-05@v1) | 2025-07-05 |
+| [GitHub Actions CI/CD 實戰解析](#) | [blog/github-actions-2025-07-05-v1](https://github.com/kyomind/WeaMind/tree/blog/github-actions-2025-07-05-v1) | 2025-07-05 |
