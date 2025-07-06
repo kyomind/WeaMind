@@ -1,5 +1,6 @@
 APP_SERVICE=app
 
+# === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 
@@ -22,6 +23,7 @@ deploy:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
+# === Database Migration ===
 migrate:
 	docker compose exec $(APP_SERVICE) uv run alembic upgrade head
 
@@ -31,6 +33,7 @@ revision:
 rollback:
 	docker compose exec $(APP_SERVICE) uv run alembic downgrade -1
 
+# === Local Utility Scripts ===
 tree:
 	zsh scripts/gen_tree.sh
 
