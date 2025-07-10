@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "DUMMY_DB"
     POSTGRES_PORT: int = 5432
     LINE_CHANNEL_SECRET: str = "CHANGE_ME"
+    LINE_CHANNEL_ACCESS_TOKEN: str = "CHANGE_ME"
     DATABASE_URL: str | None = None  # New: allows specifying the full connection string directly
 
     # 新增環境判斷的便利屬性
