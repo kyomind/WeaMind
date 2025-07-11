@@ -1,30 +1,21 @@
 APP_SERVICE=app
 
+.PHONY: dev-up dev-down up down deploy migrate revision rollback tree check prune
 # === Container & Image Management ===
 dev-up:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 dev-down:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 up:
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build
 
 down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
-build:
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
-
-dev-build:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml build
-
-restart:
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml restart
-
 deploy:
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 
 # === Database Migration ===
 migrate:
