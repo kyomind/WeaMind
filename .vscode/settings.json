@@ -2,6 +2,7 @@
     "cSpell.words": [
         "abstractmethod",
         "addopts",
+        "asyncio",
         "autobuild",
         "autoflush",
         "autoincrement",
@@ -12,6 +13,7 @@
         "Connor",
         "cpython",
         "Cython",
+        "deptry",
         "dmypy",
         "docstrings",
         "filterwarnings",
