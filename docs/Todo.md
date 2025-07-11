@@ -17,7 +17,7 @@
 - [x] 15.🍎加了好幾個badge，與GitHub Actions相關的主要有sonarcloud、codeql 2025-06-26
 - [x] 16.🍎新增 Dependabot 與 Codecov 設定 2025-06-28
 - [x] 17.雲端 VM 部署 FastAPI 並設定 Nginx 反向代理與 HTTPS 憑證 2025-07-04
-- [ ] 18.LINE Developers 平台建立 channel 並取得 token
+- [x] 18.LINE Developers 平台建立 channel 並取得 token 2025-07-10
   - **目的**：於 LINE Developers 平台建立 Messaging API channel，取得 channel secret 與 access token，並設定於專案環境。
   - **為何重要**：這是專案能與 LINE 平台串接的前置條件，沒有正確的 channel 資訊與 token，webhook 無法驗證、API 也無法推播訊息。
   - **可能的挑戰**：

@@ -21,6 +21,7 @@ dev = [
   "pre-commit>=4.2.0",
   "pyright>=1.1.401",
   "pytest>=8.4.0",
+  "pytest-asyncio>=0.24.0",
   "pytest-cov>=6.2.1",
   "pytest-sugar>=1.0.0",
   "ruff>=0.11.9",
@@ -55,6 +56,9 @@ ignore = [
   "E402", # module level import not at top of file
   "ANN101", # self / cls do not need annotation
 ]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"] # Allow assert statements in tests
 
 [tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
 quote-style = "double" # Quote style, double quotes are default
@@ -94,5 +98,8 @@ title = "Coverage Report for WeaMind"
 [tool.pytest.ini_options]
 addopts = "-ra --strict-config --strict-markers --cov=app --cov-report=xml --cov-report=term-missing"
 filterwarnings = ["error"]
+markers = [
+  "asyncio: marks tests as asyncio tests",
+]
 python_files = ["test_*.py"]
 testpaths = ["tests"]
