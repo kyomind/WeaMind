@@ -34,7 +34,7 @@ async def line_webhook(
     # 驗證內容類型
     content_type = request.headers.get("content-type", "")
     if not content_type.startswith("application/json"):
-        logger.warning(f"Invalid content type: {content_type}")
+        logger.warning("Invalid content type received")
         raise HTTPException(status_code=400, detail="Invalid content type")
 
     body = await request.body()
