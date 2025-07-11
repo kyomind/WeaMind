@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Header, HTTPException, Request
 
 from app.line.service import process_webhook_body
-from app.line.utils import should_skip_signature_verification, verify_line_signature
+from app.line.utils import verify_line_signature
 
 router = APIRouter(prefix="/line")
 
@@ -30,12 +30,7 @@ async def line_webhook(
     """
     body = await request.body()
 
-    # 如果是開發環境或者環境變數還是預設值，跳過簽名驗證
-    if should_skip_signature_verification():
-        print("Development mode or default secret: skipping signature verification")
-        await process_webhook_body(body)
-        return {"message": "OK"}
-
+    # 驗證 LINE 簽名
     if not verify_line_signature(body, x_line_signature):
         raise HTTPException(status_code=400, detail="Invalid signature")
 
