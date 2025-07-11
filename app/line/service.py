@@ -97,3 +97,4 @@ async def process_webhook_body(body: bytes) -> None:
         await handle_line_events(webhook_body)
     except Exception:
         logger.exception("Error processing LINE webhook")
+        raise
