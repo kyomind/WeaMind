@@ -16,6 +16,9 @@ down:
 build:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml build
 
+dev-build:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml build
+
 restart:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml restart
 
