@@ -15,6 +15,7 @@ When writing Python docstrings, follow the Google style as the general principle
 1. For Router (API) functions and test functions, only a summary docstring is required.
 2. For database-related functions, include a description of the connection or session handling if applicable.
 3. For utility functions, provide examples of usage if the function is complex or non-intuitive.
+4. For module-level docstrings, include a brief overview of the module's purpose and functionality.
 
 ## Examples
 
