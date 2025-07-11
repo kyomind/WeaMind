@@ -3,8 +3,11 @@
 import base64
 import hashlib
 import hmac
+import logging
 
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 def verify_line_signature(body: bytes, signature: str) -> bool:

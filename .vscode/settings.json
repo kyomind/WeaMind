@@ -15,6 +15,7 @@
         "dmypy",
         "docstrings",
         "filterwarnings",
+        "GDXCTA",
         "HMAC",
         "htmlcov",
         "ipython",
