@@ -36,19 +36,20 @@ line-length = 100
 select = ["E", "W", "F", "I", "UP"]
 
 extend-select = [
-  # ★ Enable ANN / B / ASYNC / TRY / PERF ★
-  "ANN",
-  "B",
-  "ASYNC",
-  "TRY",
-  "PERF", # FastAPI specific
-  "FAST001",
-  "FAST002", # Docstring rules
-  "D103",
-  "DOC201", # Others
-  "S101",
-  "S110",
-  "ERA001",
+  "ANN",     # flake8-annotations – type-hint coverage
+  "B",       # flake8-bugbear – likely bugs & bad practices
+  "ASYNC",   # flake8-async – async / await correctness
+  "TRY",     # tryceratops – try / except anti-patterns
+  "PERF",    # perflint – micro-performance optimizations
+  "FAST001", # fast-api-redundant-response-model
+  "FAST002", # fast-api-non-annotated-dependency
+  "D103",    # undocumented-public-function
+  "D213",    # multi-line-summary-second-line
+  "D400",    # missing-trailing-period
+  "DOC201",  # docstring-missing-returns section
+  "S101",    # assert detected (security risk)
+  "S110",    # try-except-pass (swallowing exceptions)
+  "ERA001",  # commented-out-code
 ]
 
 # Globally ignore noisy rules (example)

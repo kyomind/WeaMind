@@ -26,6 +26,7 @@
         "mkdocs",
         "nosetests",
         "onupdate",
+        "perflint",
         "Pipfile",
         "poolclass",
         "pycache",
@@ -50,6 +51,7 @@
         "spyproject",
         "tablename",
         "testpaths",
+        "tryceratops",
         "webassets"
     ]
 }
