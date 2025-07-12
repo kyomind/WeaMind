@@ -33,27 +33,28 @@ line-length = 100
 
 [tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
 select = [
-  "B", # flake8-bugbear – likely bugs & bad practices
-  "E", # pycodestyle - errors
-  "F", # Pyflakes
-  "I", # isort (import ordering)
-  "S", # flake8-security – security issues
-  "W", # pycodestyle - warnings
-  "UP", # pyupgrade (syntax modernization)
+  "B",  # flake8-bugbear
+  "E",  # pycodestyle
+  "F",  # pyflakes
+  "I",  # isort
+  "S",  # bandit
+  "W",  # pycodestyle
+  "UP",  # pyupgrade
+  "C4",  # flake8-comprehensions
+  "ANN",  # flake8-annotations
+  "TRY",  # tryceratops
+  "PERF",  # perflint
+  "ASYNC",  # flake8-async
 ]
 extend-select = [
-  "ANN", # flake8-annotations – type-hint coverage
-  "ASYNC", # flake8-async – async / await correctness
-  "TRY", # tryceratops – try / except anti-patterns
-  "PERF", # perflint – micro-performance optimizations
-  "FAST001", # fast-api-redundant-response-model
-  "FAST002", # fast-api-non-annotated-dependency
-  "D103", # undocumented-public-function
-  "D213", # multi-line-summary-second-line
-  "D400", # missing-trailing-period
-  "S101", # assert detected (security risk)
-  "S110", # try-except-pass (swallowing exceptions)
-  "ERA001", # commented-out-code
+  "FAST001",  # fast-api-redundant-response-model
+  "FAST002",  # fast-api-non-annotated-dependency
+  "D101",  # undocumented-public-class
+  "D102",  # missing-class-docstring
+  "D103",  # undocumented-public-function
+  "D213",  # multi-line-summary-second-line
+  "D400",  # missing-trailing-period
+  "ERA001",  # commented-out-code
 ]
 
 # Globally ignore noisy rules (example)
