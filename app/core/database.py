@@ -1,3 +1,5 @@
+"""Database connection and session management for the app."""
+
 import typing
 
 from sqlalchemy import create_engine

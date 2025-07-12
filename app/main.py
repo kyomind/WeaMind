@@ -1,3 +1,5 @@
+"""FastAPI application entry point and router registration."""
+
 from fastapi import FastAPI
 
 from app.core.config import settings
