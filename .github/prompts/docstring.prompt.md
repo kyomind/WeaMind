@@ -4,11 +4,10 @@ When writing Python docstrings, follow the Google style as the general principle
 
 ## Rules
 
-1. The summary should be on a separate line, concisely describing the purpose of the function or class.
-2. There must be a blank line between the summary and the description for visual clarity, even if there is no description, the blank line should still be kept.
-3. Use Google style sections for parameters and return values, but do not repeat type hints in the docstring since they are already present in the source code.
-4. The description is optional and can briefly explain the usage, context, or design intent in any format.
-5. Do not end the docstring with any punctuation for consistency.
+1. The summary should be on the second line(Ruff D213), concisely describing the purpose of the function or class.
+2. Use Google style for parameters and return values. Do not repeat type hints in the docstring.
+3. The description is optional and can briefly explain the usage, context, or design intent in any format.
+4. There must be a blank line between the summary and the description (if present) for visual clarity.
 
 ## Component-Specific Guidelines
 
@@ -24,12 +23,12 @@ Here is an example that follows the specification:
 ```python
 def get_db() -> typing.Generator[Session, None, None]:
     """
-    Create a database session
+    Create a database session.
 
-    Usage: Add Depends(get_db) in your route
+    Usage: Add Depends(get_db) in your route.
 
     Returns:
-        Database session object for database operations
+        Database session object for database operations.
     """
     db = SessionLocal()
     try:
@@ -43,7 +42,7 @@ Here is an example for a summary-only docstring (should be three lines):
 ```python
 def ping() -> str:
     """
-    Service health check
+    Service health check.
     """
     return "pong"
 ```
@@ -53,7 +52,7 @@ Here is an example for a test function:
 ```python
 def test_ping() -> None:
     """
-    Test service health check
+    Test service health check.
     """
     assert ping() == "pong"
 ```
