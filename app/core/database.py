@@ -28,6 +28,8 @@ SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, futu
 
 
 class Base(DeclarativeBase):
+    """SQLAlchemy base class for all ORM models."""
+
     pass
 
 

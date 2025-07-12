@@ -18,7 +18,7 @@ When writing Python docstrings, follow the Google style as the general principle
 
 ## Examples
 
-Here is an example that follows the specification:
+Here are examples that follow the specification:
 
 ```python
 def get_db() -> typing.Generator[Session, None, None]:
@@ -37,18 +37,12 @@ def get_db() -> typing.Generator[Session, None, None]:
         db.close()
 ```
 
-Here is an example for a summary-only docstring (should be three lines):
-
+One line or three lines are enough for simple functions:
 ```python
 def ping() -> str:
-    """
-    Service health check.
-    """
+    """Service health check."""
     return "pong"
 ```
-
-Here is an example for a test function:
-
 ```python
 def test_ping() -> None:
     """
