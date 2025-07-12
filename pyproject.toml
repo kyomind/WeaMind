@@ -50,6 +50,7 @@ select = [
 extend-select = [
   "FAST001",  # fast-api-redundant-response-model
   "FAST002",  # fast-api-non-annotated-dependency
+  "D100",  # missing-module-docstring
   "D101",  # undocumented-public-class
   "D102",  # missing-class-docstring
   "D103",  # undocumented-public-function
