@@ -1,3 +1,5 @@
+"""User database models and SQLAlchemy table definitions."""
+
 from datetime import UTC, datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String

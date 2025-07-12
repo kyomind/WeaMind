@@ -1,5 +1,4 @@
-# Utility functions for the user module
-# This file contains helper functions used by user features
+"""Utility functions for user module operations."""
 
 
 def reset_quota_if_needed(user_data: dict) -> bool:

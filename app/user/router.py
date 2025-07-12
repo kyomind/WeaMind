@@ -1,3 +1,5 @@
+"""User management API routes and endpoints."""
+
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status

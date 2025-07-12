@@ -1,5 +1,4 @@
-# Constants for user management
-# These values are used throughout the user module
+"""Constants for user management and quota control."""
 
 DAILY_QUOTA_LIMIT = 5
 """
