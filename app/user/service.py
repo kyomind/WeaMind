@@ -8,7 +8,7 @@ from app.user.schemas import UserCreate, UserUpdate
 
 def create_user(db: Session, user_in: UserCreate) -> User:
     """
-    Create a new user
+    Create a new user.
 
     Args:
         db: database Session object

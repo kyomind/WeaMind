@@ -17,7 +17,7 @@ async def create_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    Register a new user
+    Register a new user.
     """
     try:
         user = service.create_user(db, payload)
@@ -32,7 +32,7 @@ async def get_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    Retrieve a single user
+    Retrieve a single user.
     """
     user = service.get_user(db, user_id)
     if user is None:
@@ -47,7 +47,7 @@ async def update_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> UserRead:
     """
-    Update user information
+    Update user information.
     """
     user = service.update_user(db, user_id, payload)
     if user is None:
@@ -61,7 +61,7 @@ async def delete_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     """
-    Delete a user
+    Delete a user.
     """
     if not service.delete_user(db, user_id):
         raise HTTPException(status_code=404, detail="User not found")

@@ -33,7 +33,7 @@ class Base(DeclarativeBase):
 
 def get_db() -> typing.Generator[Session, None, None]:
     """
-    Create a database Session
+    Create a database Session.
 
     For FastAPI dependency injection
     Usage: Add Depends(get_db) in your route

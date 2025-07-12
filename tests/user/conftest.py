@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 @pytest.fixture()
 def create_user(client: TestClient) -> Callable[..., dict]:
     """
-    Return a helper for creating test users
+    Return a helper for creating test users.
 
     Reasons for returning a helper instead of the user object:
     1. Flexibility to create different display names or multiple users

@@ -4,7 +4,7 @@
 
 def reset_quota_if_needed(user_data: dict) -> bool:
     """
-    Check and reset quota if needed
+    Check and reset quota if needed.
 
     Args:
         user_data: dictionary with user information including quota_used

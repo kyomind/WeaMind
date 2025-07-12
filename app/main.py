@@ -24,7 +24,7 @@ else:
 @app.get("/")
 async def root() -> dict:
     """
-    Welcome message for the root route
+    Welcome message for the root route.
 
     Returns:
         dict: API welcome text

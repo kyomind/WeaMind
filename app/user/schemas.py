@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     """
-    Schema for creating a user
+    Schema for creating a user.
 
     Used to validate data during registration
     """
@@ -16,7 +16,7 @@ class UserCreate(BaseModel):
 
 class UserRead(BaseModel):
     """
-    Schema for reading user data
+    Schema for reading user data.
 
     Returned by user-related APIs
     """
@@ -33,7 +33,7 @@ class UserRead(BaseModel):
 
 class UserUpdate(BaseModel):
     """
-    Schema for updating user data
+    Schema for updating user data.
 
     Used by the PATCH endpoint
     """

@@ -25,6 +25,6 @@ _client = TestClient(app)
 @pytest.fixture()
 def client() -> TestClient:
     """
-    Provide a FastAPI test client
+    Provide a FastAPI test client.
     """
     return _client

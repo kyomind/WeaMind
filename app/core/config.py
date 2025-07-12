@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """
     This class is used to manage environment variables and configuration
-    settings for the application
+    settings for the application.
     """
 
     APP_NAME: str = "WeaMind API"
@@ -22,12 +22,12 @@ class Settings(BaseSettings):
     # 新增環境判斷的便利屬性
     @property
     def is_development(self) -> bool:
-        """檢查是否為開發環境"""
+        """檢查是否為開發環境."""
         return self.ENV.lower() in ("development", "dev")
 
     @property
     def is_production(self) -> bool:
-        """檢查是否為生產環境"""
+        """檢查是否為生產環境."""
         return self.ENV.lower() in ("production", "prod")
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")

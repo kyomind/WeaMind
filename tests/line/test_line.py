@@ -15,10 +15,10 @@ from app.line.service import (
 
 
 class TestLineWebhook:
-    """Test LINE webhook endpoint"""
+    """Test LINE webhook endpoint."""
 
     def test_invalid_content_type(self, client: TestClient) -> None:
-        """Test webhook with invalid content type"""
+        """Test webhook with invalid content type."""
         response = client.post(
             "/line/webhook",
             content=b"{}",
@@ -30,7 +30,7 @@ class TestLineWebhook:
     def test_webhook_processing_error(
         self, client: TestClient, generate_line_signature: Callable[[bytes], str]
     ) -> None:
-        """Test webhook processing error handling"""
+        """Test webhook processing error handling."""
         body = b'{"invalid": "json"}'
         signature = generate_line_signature(body)
 
@@ -45,11 +45,11 @@ class TestLineWebhook:
 
 
 class TestLineService:
-    """Test LINE service functions"""
+    """Test LINE service functions."""
 
     @pytest.mark.asyncio
     async def test_send_reply_message_dev_mode(self) -> None:
-        """Test send_reply_message in development mode"""
+        """Test send_reply_message in development mode."""
         # Should not make actual HTTP request in dev mode
         await send_reply_message("test_token", "test_message")
         # No exception should be raised
@@ -58,7 +58,7 @@ class TestLineService:
     async def test_send_reply_message_success(
         self, mock_line_api_response: Callable[..., AsyncMock]
     ) -> None:
-        """Test successful reply message sending"""
+        """Test successful reply message sending."""
         mock_response = mock_line_api_response(200)
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
@@ -74,7 +74,7 @@ class TestLineService:
     async def test_send_reply_message_api_error(
         self, mock_line_api_response: Callable[..., AsyncMock]
     ) -> None:
-        """Test reply message with API error"""
+        """Test reply message with API error."""
         mock_response = mock_line_api_response(400, "Bad Request")
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
@@ -84,7 +84,7 @@ class TestLineService:
 
     @pytest.mark.asyncio
     async def test_send_reply_message_exception(self) -> None:
-        """Test reply message with network exception"""
+        """Test reply message with network exception."""
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
             with patch("httpx.AsyncClient.post", side_effect=Exception("Network error")):
                 # Should not raise exception, just log error
@@ -92,21 +92,21 @@ class TestLineService:
 
     @pytest.mark.asyncio
     async def test_handle_line_events_with_text_message(self, line_text_message_data: dict) -> None:
-        """Test handling LINE events with text message"""
+        """Test handling LINE events with text message."""
         with patch("app.line.service.send_reply_message") as mock_send:
             await handle_line_events(line_text_message_data)
             mock_send.assert_called_once_with("test_token", "Hello")
 
     @pytest.mark.asyncio
     async def test_handle_line_events_non_text_message(self, line_image_message_data: dict) -> None:
-        """Test handling LINE events with non-text message"""
+        """Test handling LINE events with non-text message."""
         with patch("app.line.service.send_reply_message") as mock_send:
             await handle_line_events(line_image_message_data)
             mock_send.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_handle_line_events_non_message_event(self, line_follow_event_data: dict) -> None:
-        """Test handling LINE events with non-message event"""
+        """Test handling LINE events with non-message event."""
         with patch("app.line.service.send_reply_message") as mock_send:
             await handle_line_events(line_follow_event_data)
             mock_send.assert_not_called()
@@ -115,13 +115,13 @@ class TestLineService:
     async def test_handle_line_events_invalid_webhook(
         self, line_invalid_webhook_data: dict
     ) -> None:
-        """Test handling invalid webhook body"""
+        """Test handling invalid webhook body."""
         # Should not raise exception, just log error and return
         await handle_line_events(line_invalid_webhook_data)
 
     @pytest.mark.asyncio
     async def test_process_webhook_body_success(self, line_text_message_data: dict) -> None:
-        """Test processing webhook body successfully"""
+        """Test processing webhook body successfully."""
         body = json.dumps(line_text_message_data).encode("utf-8")
 
         with patch("app.line.service.handle_line_events") as mock_handle:
@@ -130,7 +130,7 @@ class TestLineService:
 
     @pytest.mark.asyncio
     async def test_process_webhook_body_invalid_json(self) -> None:
-        """Test processing invalid JSON webhook body"""
+        """Test processing invalid JSON webhook body."""
         invalid_body = b"invalid json"
 
         # Should raise JSONDecodeError

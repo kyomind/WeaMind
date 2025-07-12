@@ -7,7 +7,7 @@ from app.core.database import Base
 
 class User(Base):
     """
-    Database model for users
+    Database model for users.
     """
 
     __tablename__ = "user"
