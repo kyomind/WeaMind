@@ -4,9 +4,9 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Request
+from linebot.v3.exceptions import InvalidSignatureError
 
-from app.line.service import process_webhook_body
-from app.line.utils import verify_line_signature
+from app.line.service import webhook_handler
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ async def line_webhook(
     x_line_signature: Annotated[str, Header(alias="X-Line-Signature")],
 ) -> dict:
     """
-    Receive LINE webhook and verify its signature.
+    Receive LINE webhook and verify its signature using official SDK.
 
     Args:
         request: The FastAPI request object
@@ -39,17 +39,17 @@ async def line_webhook(
 
     body = await request.body()
 
-    # 驗證 LINE 簽名
-    if not verify_line_signature(body, x_line_signature):
-        logger.warning("Invalid LINE signature received")
-        raise HTTPException(status_code=400, detail="Invalid signature")
-
-    # 處理 webhook 事件
+    # 使用官方 SDK 處理 webhook 事件
     try:
-        await process_webhook_body(body)
-    except Exception as e:
+        webhook_handler.handle(body.decode("utf-8"), x_line_signature)
+    except InvalidSignatureError:
+        logger.warning("Invalid LINE signature received")
+        raise HTTPException(status_code=400, detail="Invalid signature") from None
+    except Exception:
         logger.exception("Error processing webhook")
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        # 對於其他錯誤，返回 200 以防止 LINE 重試
+        # 這包括無效的 webhook 數據格式等
+        return {"message": "OK"}
     else:
         logger.info("LINE webhook processed successfully")
         return {"message": "OK"}

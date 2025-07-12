@@ -1,17 +1,12 @@
 """Test LINE webhook and service functionality."""
 
-import json
 from collections.abc import Callable
-from unittest.mock import AsyncMock, patch
+from unittest.mock import Mock, patch
 
-import pytest
 from fastapi.testclient import TestClient
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
-from app.line.service import (
-    handle_line_events,
-    process_webhook_body,
-    send_reply_message,
-)
+from app.line.service import handle_default_event, handle_message_event
 
 
 class TestLineWebhook:
@@ -43,96 +38,106 @@ class TestLineWebhook:
         assert response.status_code == 200
         assert response.json() == {"message": "OK"}
 
+    def test_webhook_processing_success(
+        self, client: TestClient, generate_line_signature: Callable[[bytes], str]
+    ) -> None:
+        """Test successful webhook processing."""
+        # Valid LINE webhook payload with text message
+        body = (
+            b'{"events":[{"type":"message","replyToken":"test_token",'
+            b'"message":{"type":"text","text":"Hello"}}]}'
+        )
+        signature = generate_line_signature(body)
+
+        # Mock the webhook handler to not raise any exceptions
+        with patch("app.line.service.webhook_handler.handle"):
+            response = client.post(
+                "/line/webhook",
+                content=body,
+                headers={"X-Line-Signature": signature, "Content-Type": "application/json"},
+            )
+            assert response.status_code == 200
+            assert response.json() == {"message": "OK"}
+
+    def test_webhook_invalid_signature(self, client: TestClient) -> None:
+        """Test webhook with invalid signature."""
+        body = b'{"events":[]}'
+
+        response = client.post(
+            "/line/webhook",
+            content=body,
+            headers={"X-Line-Signature": "invalid_signature", "Content-Type": "application/json"},
+        )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Invalid signature"
+
 
 class TestLineService:
-    """Test LINE service functions."""
+    """Test LINE webhook handler functions."""
 
-    @pytest.mark.asyncio
-    async def test_send_reply_message_dev_mode(self) -> None:
-        """Test send_reply_message in development mode."""
-        # Should not make actual HTTP request in dev mode
-        await send_reply_message("test_token", "test_message")
+    def test_handle_message_event_non_text_message(self) -> None:
+        """Test handling non-text message events."""
+        # Create mock event with non-text message
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.message = Mock()  # Not TextMessageContent
+        mock_event.reply_token = "test_token"
+
+        # Should return early without processing
+        handle_message_event(mock_event)
         # No exception should be raised
 
-    @pytest.mark.asyncio
-    async def test_send_reply_message_success(
-        self, mock_line_api_response: Callable[..., AsyncMock]
-    ) -> None:
-        """Test successful reply message sending."""
-        mock_response = mock_line_api_response(200)
+    def test_handle_message_event_empty_reply_token(self) -> None:
+        """Test handling events with empty reply token."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "Hello"
+        mock_event.reply_token = None
+
+        # Should return early without processing
+        handle_message_event(mock_event)
+        # No exception should be raised
+
+    def test_handle_message_event_dev_mode(self) -> None:
+        """Test handling message events in development mode."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "Hello"
+        mock_event.reply_token = "test_token"
+
+        # In dev mode (CHANGE_ME token), should just log
+        handle_message_event(mock_event)
+        # No exception should be raised
+
+    def test_handle_message_event_api_success(self) -> None:
+        """Test successful message handling with real API token."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "Hello"
+        mock_event.reply_token = "test_token"
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("httpx.AsyncClient.post", return_value=mock_response) as mock_post:
-                await send_reply_message("test_token", "test_message")
+            with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
+                handle_message_event(mock_event)
+                mock_reply.assert_called_once()
 
-                mock_post.assert_called_once()
-                args, kwargs = mock_post.call_args
-                assert kwargs["json"]["replyToken"] == "test_token"
-                assert kwargs["json"]["messages"][0]["text"] == "test_message"
-
-    @pytest.mark.asyncio
-    async def test_send_reply_message_api_error(
-        self, mock_line_api_response: Callable[..., AsyncMock]
-    ) -> None:
-        """Test reply message with API error."""
-        mock_response = mock_line_api_response(400, "Bad Request")
+    def test_handle_message_event_api_error(self) -> None:
+        """Test message handling with API error."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "Hello"
+        mock_event.reply_token = "test_token"
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("httpx.AsyncClient.post", return_value=mock_response):
+            with patch(
+                "app.line.service.MessagingApi.reply_message", side_effect=Exception("API Error")
+            ):
                 # Should not raise exception, just log error
-                await send_reply_message("test_token", "test_message")
+                handle_message_event(mock_event)
 
-    @pytest.mark.asyncio
-    async def test_send_reply_message_exception(self) -> None:
-        """Test reply message with network exception."""
-        with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("httpx.AsyncClient.post", side_effect=Exception("Network error")):
-                # Should not raise exception, just log error
-                await send_reply_message("test_token", "test_message")
+    def test_handle_default_event(self) -> None:
+        """Test handling default events."""
+        mock_event = {"type": "follow", "replyToken": "test_token"}
 
-    @pytest.mark.asyncio
-    async def test_handle_line_events_with_text_message(self, line_text_message_data: dict) -> None:
-        """Test handling LINE events with text message."""
-        with patch("app.line.service.send_reply_message") as mock_send:
-            await handle_line_events(line_text_message_data)
-            mock_send.assert_called_once_with("test_token", "Hello")
-
-    @pytest.mark.asyncio
-    async def test_handle_line_events_non_text_message(self, line_image_message_data: dict) -> None:
-        """Test handling LINE events with non-text message."""
-        with patch("app.line.service.send_reply_message") as mock_send:
-            await handle_line_events(line_image_message_data)
-            mock_send.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_handle_line_events_non_message_event(self, line_follow_event_data: dict) -> None:
-        """Test handling LINE events with non-message event."""
-        with patch("app.line.service.send_reply_message") as mock_send:
-            await handle_line_events(line_follow_event_data)
-            mock_send.assert_not_called()
-
-    @pytest.mark.asyncio
-    async def test_handle_line_events_invalid_webhook(
-        self, line_invalid_webhook_data: dict
-    ) -> None:
-        """Test handling invalid webhook body."""
-        # Should not raise exception, just log error and return
-        await handle_line_events(line_invalid_webhook_data)
-
-    @pytest.mark.asyncio
-    async def test_process_webhook_body_success(self, line_text_message_data: dict) -> None:
-        """Test processing webhook body successfully."""
-        body = json.dumps(line_text_message_data).encode("utf-8")
-
-        with patch("app.line.service.handle_line_events") as mock_handle:
-            await process_webhook_body(body)
-            mock_handle.assert_called_once_with(line_text_message_data)
-
-    @pytest.mark.asyncio
-    async def test_process_webhook_body_invalid_json(self) -> None:
-        """Test processing invalid JSON webhook body."""
-        invalid_body = b"invalid json"
-
-        # Should raise JSONDecodeError
-        with pytest.raises(json.JSONDecodeError):
-            await process_webhook_body(invalid_body)
+        # Should just log the event without raising exception
+        handle_default_event(mock_event)
+        # No exception should be raised

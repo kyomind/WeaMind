@@ -1,100 +1,71 @@
-"""Service layer for LINE Bot operations."""
+"""Service layer for LINE Bot operations using official SDK."""
 
-import json
 import logging
 
-import httpx
+from linebot.v3 import WebhookHandler
+from linebot.v3.messaging import (
+    ApiClient,
+    Configuration,
+    MessagingApi,
+    ReplyMessageRequest,
+    TextMessage,
+)
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 from app.core.config import settings
-from app.line.schemas import LineWebhook
 
 logger = logging.getLogger(__name__)
 
+# Configure LINE Bot SDK
+configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
+webhook_handler = WebhookHandler(settings.LINE_CHANNEL_SECRET)
 
-async def send_reply_message(reply_token: str, message: str) -> None:
+
+@webhook_handler.add(MessageEvent, message=TextMessageContent)
+def handle_message_event(event: MessageEvent) -> None:
     """
-    Send a reply message using LINE Messaging API.
+    Handle text message events with echo bot functionality.
 
     Args:
-        reply_token: The reply token from LINE webhook event
-            Example: "nHuyWiB7yP5Zw52FIkcQobQuGDXCTA"
-        message: The message text to send
-            Example: "Hello, World!"
+        event: The LINE message event
     """
-    if settings.LINE_CHANNEL_ACCESS_TOKEN == "CHANGE_ME":
-        logger.info(f"Would reply with token {reply_token}: {message}")
+    # 確保消息內容是文本類型
+    if not isinstance(event.message, TextMessageContent):
+        logger.warning(f"Received non-text message: {type(event.message)}")
         return
 
-    url = "https://api.line.me/v2/bot/message/reply"
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {settings.LINE_CHANNEL_ACCESS_TOKEN}",
-    }
+    # 確保 reply_token 不為空
+    if not event.reply_token:
+        logger.warning("Reply token is empty")
+        return
 
-    payload = {"replyToken": reply_token, "messages": [{"type": "text", "text": message}]}
+    if settings.LINE_CHANNEL_ACCESS_TOKEN == "CHANGE_ME":
+        logger.info(f"Would reply with token {event.reply_token}: {event.message.text}")
+        return
 
-    async with httpx.AsyncClient() as client:
+    with ApiClient(configuration) as api_client:
+        line_bot_api = MessagingApi(api_client)
         try:
-            response = await client.post(url, headers=headers, json=payload)
-            if response.status_code != 200:
-                logger.error(f"LINE API error: {response.status_code} - {response.text}")
+            line_bot_api.reply_message(
+                # NOTE: Pyright doesn't fully support Pydantic field aliases yet.
+                # Snake_case params work at runtime but static analysis only sees camelCase.
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,  # type: ignore[call-arg]
+                    messages=[TextMessage(text=event.message.text)],  # type: ignore
+                    notification_disabled=False,  # type: ignore[call-arg]
+                )
+            )
+            logger.info(f"Echo reply sent: {event.message.text}")
         except Exception:
             logger.exception("Error sending LINE message")
 
 
-async def handle_line_events(webhook_body: dict) -> None:
+@webhook_handler.default()
+def handle_default_event(event: object) -> None:
     """
-    Handle LINE webhook events (echo bot functionality).
+    Handle events that don't have specific handlers.
 
     Args:
-        webhook_body: The parsed webhook request body
-            Example: {
-                "events": [
-                    {
-                        "type": "message",
-                        "replyToken": "nHuyWiB7yP5Zw52FIkcQobQuGDXCTA",
-                        "source": {
-                            "userId": "U4af4980629...",
-                            "type": "user"
-                        },
-                        "timestamp": 1462629479859,
-                        "message": {
-                            "type": "text",
-                            "id": "444573844083572737",
-                            "text": "Hello, world"
-                        }
-                    }
-                ]
-            }
+        event: The LINE event
     """
-    try:
-        webhook = LineWebhook(**webhook_body)
-    except Exception:
-        logger.exception("Error parsing webhook body")
-        return
-
-    for event in webhook.events:
-        # 處理訊息事件
-        if event.type == "message" and event.message and event.message.type == "text":
-            if event.replyToken and event.message.text:
-                # 應聲蟲功能：原樣回覆收到的訊息
-                await send_reply_message(event.replyToken, event.message.text)
-                logger.info(f"Echo reply sent: {event.message.text}")
-
-
-async def process_webhook_body(body: bytes) -> None:
-    """
-    Process LINE webhook body and handle events.
-
-    Args:
-        body: The raw request body as bytes
-            Example: b'{"events":[{"type":"message","replyToken":"nHuyWiB7yP5Zw52FIkcQobQuGDXCTA",
-                       "source":{"userId":"U4af4980629...","type":"user"},"timestamp":1462629479859,
-                       "message":{"type":"text","id":"444573844083572737","text":"Hello, world"}}]}'
-    """
-    try:
-        webhook_body: dict = json.loads(body.decode("utf-8"))
-        await handle_line_events(webhook_body)
-    except Exception:
-        logger.exception("Error processing LINE webhook")
-        raise
+    logger.info(f"Received unhandled event: {event}")

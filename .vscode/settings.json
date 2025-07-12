@@ -23,6 +23,7 @@
         "ipython",
         "kyomind",
         "LIFF",
+        "linebot",
         "mkdocs",
         "nosetests",
         "onupdate",
