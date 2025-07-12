@@ -1,3 +1,5 @@
+"""Test fixtures for LINE Bot module testing."""
+
 import base64
 import hashlib
 import hmac

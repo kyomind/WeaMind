@@ -1,3 +1,5 @@
+"""Global test configuration and fixtures for WeaMind test suite."""
+
 import os
 import sys
 from pathlib import Path

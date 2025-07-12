@@ -1,4 +1,4 @@
-"""Test core API endpoints."""
+"""Test user module API endpoints."""
 
 import base64
 import hashlib

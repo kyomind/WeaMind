@@ -1,3 +1,5 @@
+"""Test fixtures for user module testing."""
+
 from collections.abc import Callable
 from uuid import uuid4
 
