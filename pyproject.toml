@@ -6,12 +6,12 @@ dependencies = [
   "pydantic-settings>=2.9.1",
   "sqlalchemy>=2.0.40",
   "uvicorn[standard]>=0.34.2",
-]
-description = "Add your description here"
-name = "WeaMind"
-readme = "README.md"
+] 
+description = "Add your description here" 
+name = "WeaMind" 
+readme = "README.md" 
 requires-python = ">=3.12" # Affects pyupgrade auto fixes and replaces target-version
-version = "0.1.0"
+version = "0.1.0" 
 
 [dependency-groups]
 dev = [
@@ -32,30 +32,34 @@ exclude = ["migrations", ".venv"]
 line-length = 100
 
 [tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
-
-select = ["E", "W", "F", "I", "UP"]
-
+select = [
+  "B", # flake8-bugbear – likely bugs & bad practices
+  "E", # pycodestyle - errors
+  "F", # Pyflakes
+  "I", # isort (import ordering)
+  "S", # flake8-security – security issues
+  "W", # pycodestyle - warnings
+  "UP", # pyupgrade (syntax modernization)
+]
 extend-select = [
-  "ANN",     # flake8-annotations – type-hint coverage
-  "B",       # flake8-bugbear – likely bugs & bad practices
-  "ASYNC",   # flake8-async – async / await correctness
-  "TRY",     # tryceratops – try / except anti-patterns
-  "PERF",    # perflint – micro-performance optimizations
+  "ANN", # flake8-annotations – type-hint coverage
+  "ASYNC", # flake8-async – async / await correctness
+  "TRY", # tryceratops – try / except anti-patterns
+  "PERF", # perflint – micro-performance optimizations
   "FAST001", # fast-api-redundant-response-model
   "FAST002", # fast-api-non-annotated-dependency
-  "D103",    # undocumented-public-function
-  "D213",    # multi-line-summary-second-line
-  "D400",    # missing-trailing-period
-  "DOC201",  # docstring-missing-returns section
-  "S101",    # assert detected (security risk)
-  "S110",    # try-except-pass (swallowing exceptions)
-  "ERA001",  # commented-out-code
+  "D103", # undocumented-public-function
+  "D213", # multi-line-summary-second-line
+  "D400", # missing-trailing-period
+  "S101", # assert detected (security risk)
+  "S110", # try-except-pass (swallowing exceptions)
+  "ERA001", # commented-out-code
 ]
 
 # Globally ignore noisy rules (example)
 ignore = [
   "E402", # module level import not at top of file
-  "ANN101", # self / cls do not need annotation
+  "S105", # hardcoded password (acceptable for development defaults)
 ]
 
 [tool.ruff.lint.per-file-ignores]
