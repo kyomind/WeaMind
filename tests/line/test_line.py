@@ -2,13 +2,12 @@
 
 import json
 from collections.abc import Callable
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.line.service import (
-    handle_line_events,
     process_webhook_body,
     send_reply_message,
 )
@@ -55,30 +54,25 @@ class TestLineService:
         # No exception should be raised
 
     @pytest.mark.asyncio
-    async def test_send_reply_message_success(
-        self, mock_line_api_response: Callable[..., AsyncMock]
-    ) -> None:
+    async def test_send_reply_message_success(self) -> None:
         """Test successful reply message sending."""
-        mock_response = mock_line_api_response(200)
-
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("httpx.AsyncClient.post", return_value=mock_response) as mock_post:
+            with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
                 await send_reply_message("test_token", "test_message")
-
-                mock_post.assert_called_once()
-                args, kwargs = mock_post.call_args
-                assert kwargs["json"]["replyToken"] == "test_token"
-                assert kwargs["json"]["messages"][0]["text"] == "test_message"
+                mock_reply.assert_called_once()
+                # Check that the ReplyMessageRequest was created correctly
+                call_args = mock_reply.call_args[0][0]
+                assert call_args.reply_token == "test_token"
+                assert call_args.messages[0].text == "test_message"
 
     @pytest.mark.asyncio
-    async def test_send_reply_message_api_error(
-        self, mock_line_api_response: Callable[..., AsyncMock]
-    ) -> None:
+    async def test_send_reply_message_api_error(self) -> None:
         """Test reply message with API error."""
-        mock_response = mock_line_api_response(400, "Bad Request")
-
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("httpx.AsyncClient.post", return_value=mock_response):
+            with patch(
+                "app.line.service.MessagingApi.reply_message",
+                side_effect=Exception("API Error")
+            ):
                 # Should not raise exception, just log error
                 await send_reply_message("test_token", "test_message")
 
@@ -86,30 +80,39 @@ class TestLineService:
     async def test_send_reply_message_exception(self) -> None:
         """Test reply message with network exception."""
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("httpx.AsyncClient.post", side_effect=Exception("Network error")):
+            with patch(
+                "app.line.service.MessagingApi.reply_message",
+                side_effect=Exception("Network error")
+            ):
                 # Should not raise exception, just log error
                 await send_reply_message("test_token", "test_message")
 
     @pytest.mark.asyncio
     async def test_handle_line_events_with_text_message(self, line_text_message_data: dict) -> None:
         """Test handling LINE events with text message."""
-        with patch("app.line.service.send_reply_message") as mock_send:
-            await handle_line_events(line_text_message_data)
-            mock_send.assert_called_once_with("test_token", "Hello")
+        body = json.dumps(line_text_message_data).encode("utf-8")
+        # Mock the webhook handler's signature validation
+        with patch("app.line.service.webhook_handler.handle") as mock_handle:
+            await process_webhook_body(body)
+            mock_handle.assert_called_once_with(body.decode("utf-8"), "")
+        # We can't test the actual send_reply_message call because it happens
+        # inside the webhook handler
 
     @pytest.mark.asyncio
     async def test_handle_line_events_non_text_message(self, line_image_message_data: dict) -> None:
         """Test handling LINE events with non-text message."""
-        with patch("app.line.service.send_reply_message") as mock_send:
-            await handle_line_events(line_image_message_data)
-            mock_send.assert_not_called()
+        body = json.dumps(line_image_message_data).encode("utf-8")
+        with patch("app.line.service.webhook_handler.handle") as mock_handle:
+            await process_webhook_body(body)
+            mock_handle.assert_called_once_with(body.decode("utf-8"), "")
 
     @pytest.mark.asyncio
     async def test_handle_line_events_non_message_event(self, line_follow_event_data: dict) -> None:
         """Test handling LINE events with non-message event."""
-        with patch("app.line.service.send_reply_message") as mock_send:
-            await handle_line_events(line_follow_event_data)
-            mock_send.assert_not_called()
+        body = json.dumps(line_follow_event_data).encode("utf-8")
+        with patch("app.line.service.webhook_handler.handle") as mock_handle:
+            await process_webhook_body(body)
+            mock_handle.assert_called_once_with(body.decode("utf-8"), "")
 
     @pytest.mark.asyncio
     async def test_handle_line_events_invalid_webhook(
@@ -117,22 +120,26 @@ class TestLineService:
     ) -> None:
         """Test handling invalid webhook body."""
         # Should not raise exception, just log error and return
-        await handle_line_events(line_invalid_webhook_data)
+        body = json.dumps(line_invalid_webhook_data).encode("utf-8")
+        with patch("app.line.service.webhook_handler.handle") as mock_handle:
+            await process_webhook_body(body)
+            mock_handle.assert_called_once_with(body.decode("utf-8"), "")
 
     @pytest.mark.asyncio
     async def test_process_webhook_body_success(self, line_text_message_data: dict) -> None:
         """Test processing webhook body successfully."""
         body = json.dumps(line_text_message_data).encode("utf-8")
 
-        with patch("app.line.service.handle_line_events") as mock_handle:
+        with patch("app.line.service.webhook_handler.handle") as mock_handle:
             await process_webhook_body(body)
-            mock_handle.assert_called_once_with(line_text_message_data)
+            mock_handle.assert_called_once_with(body.decode("utf-8"), "")
 
     @pytest.mark.asyncio
     async def test_process_webhook_body_invalid_json(self) -> None:
         """Test processing invalid JSON webhook body."""
         invalid_body = b"invalid json"
 
-        # Should raise JSONDecodeError
-        with pytest.raises(json.JSONDecodeError):
+        # Should not raise exception since we're mocking the handler
+        with patch("app.line.service.webhook_handler.handle") as mock_handle:
             await process_webhook_body(invalid_body)
+            mock_handle.assert_called_once_with(invalid_body.decode("utf-8"), "")

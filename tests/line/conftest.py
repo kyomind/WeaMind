@@ -2,7 +2,6 @@ import base64
 import hashlib
 import hmac
 from collections.abc import Callable
-from unittest.mock import AsyncMock
 
 import pytest
 
@@ -60,18 +59,3 @@ def line_invalid_webhook_data() -> dict:
     Return an invalid webhook body for testing error handling.
     """
     return {"invalid": "data"}
-
-
-@pytest.fixture()
-def mock_line_api_response() -> Callable[..., AsyncMock]:
-    """
-    Create a mock LINE API response for testing.
-    """
-
-    def _create(status_code: int = 200, text: str = "OK") -> AsyncMock:
-        mock_response = AsyncMock()
-        mock_response.status_code = status_code
-        mock_response.text = text
-        return mock_response
-
-    return _create
