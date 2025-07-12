@@ -16,7 +16,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# 配置 LINE Bot SDK
+# Configure LINE Bot SDK
 configuration = Configuration(access_token=settings.LINE_CHANNEL_ACCESS_TOKEN)
 webhook_handler = WebhookHandler(settings.LINE_CHANNEL_SECRET)
 
@@ -71,7 +71,7 @@ def handle_default_event(event: object) -> None:
     logger.info(f"Received unhandled event: {event}")
 
 
-# 保留舊的函數用於向後兼容（可選）
+# Legacy function for backward compatibility (optional)
 async def send_reply_message(reply_token: str, message: str) -> None:
     """
     Send a reply message using LINE Messaging API (legacy function).
