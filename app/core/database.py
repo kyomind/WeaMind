@@ -8,11 +8,8 @@ from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
 
-# Use settings.DATABASE_URL if provided; otherwise build the PostgreSQL connection string
-DATABASE_URL = (
-    settings.DATABASE_URL
-    or f"postgresql+psycopg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
-)
+# 使用簡化的配置結構
+DATABASE_URL = settings.database_url
 
 connect_args = {}
 poolclass = None

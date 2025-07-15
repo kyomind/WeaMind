@@ -6,16 +6,16 @@ from app.core.config import settings
 from app.line.router import router as line_router
 from app.user.router import router as user_router
 
-# 根據 FastAPI 最佳實踐：僅在生產環境中隱藏 docs
+# 根據環境建立 FastAPI 應用程式
 if settings.is_development:
     app = FastAPI(
-        title="WeaMind API",
+        title=settings.APP_NAME,
         description="API for WeaMind Weather LINE BOT",
     )
 else:
-    # 生產環境：隱藏所有 API 文檔相關端點
+    # 生產環境：隱藏 API 文檔
     app = FastAPI(
-        title="WeaMind API",
+        title=settings.APP_NAME,
         description="API for WeaMind Weather LINE BOT",
         docs_url=None,
         redoc_url=None,
