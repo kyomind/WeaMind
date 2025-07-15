@@ -4,6 +4,10 @@ wea-info/
 .DS_Store
 .specstory/
 
+# Log files
+logs/
+*.log
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
