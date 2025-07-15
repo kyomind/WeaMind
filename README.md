@@ -14,4 +14,4 @@ Your smart LINE assistant for instant, AI-powered weather updates.
 
 整個專案的開發過程將持續撰寫技術文章，記錄實作的關鍵步驟和技術決策。
 
-👉 [查看技術文章](blogs/)，了解完整的開發經驗分享。
+👉 [查看技術文章](blogs/README.md)，了解完整的開發經驗分享。
