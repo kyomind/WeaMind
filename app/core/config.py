@@ -1,38 +1,59 @@
 """Application settings and environment variable management."""
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Base directory of the project (similar to Django's BASE_DIR)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
-    """
-    This class is used to manage environment variables and configuration
-    settings for the application.
-    """
+    """Application settings class."""
 
+    # Basic application settings
     APP_NAME: str = "WeaMind API"
     DEBUG: bool = False
-    ENV: str = "development"  # 改為與 Docker Compose 一致的變數名稱
-    POSTGRES_USER: str = "DUMMY_USER"
-    POSTGRES_PASSWORD: str = "DUMMY_PASSWORD"
-    POSTGRES_HOST: str = "DUMMY_HOST"
-    POSTGRES_DB: str = "DUMMY_DB"
-    POSTGRES_PORT: int = 5432
-    LINE_CHANNEL_SECRET: str = "CHANGE_ME"
-    LINE_CHANNEL_ACCESS_TOKEN: str = "CHANGE_ME"
-    DATABASE_URL: str | None = None  # New: allows specifying the full connection string directly
+    ENV: str = "development"
 
-    # 新增環境判斷的便利屬性
+    # Database settings
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOST: str
+    POSTGRES_DB: str
+    POSTGRES_PORT: int = 5432
+    DATABASE_URL: str | None = None
+
+    # LINE Bot settings
+    LINE_CHANNEL_SECRET: str
+    LINE_CHANNEL_ACCESS_TOKEN: str
+
+    @property
+    def logs_dir(self) -> Path:
+        """Get the logs directory path."""
+        return BASE_DIR / "logs"
+
     @property
     def is_development(self) -> bool:
-        """檢查是否為開發環境."""
+        """Check if current environment is development."""
         return self.ENV.lower() in ("development", "dev")
 
     @property
     def is_production(self) -> bool:
-        """檢查是否為生產環境."""
+        """Check if current environment is production."""
         return self.ENV.lower() in ("production", "prod")
+
+    @property
+    def database_url(self) -> str:
+        """Get the database connection URL."""
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        return (
+            f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
-settings = Settings()
+settings = Settings()  # type: ignore
