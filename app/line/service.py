@@ -29,12 +29,12 @@ def handle_message_event(event: MessageEvent) -> None:
     Args:
         event: The LINE message event
     """
-    # 確保消息內容是文本類型
+    # Ensure the message content is text type
     if not isinstance(event.message, TextMessageContent):
         logger.warning(f"Received non-text message: {type(event.message)}")
         return
 
-    # 確保 reply_token 不為空
+    # Ensure reply_token is not empty
     if not event.reply_token:
         logger.warning("Reply token is empty")
         return

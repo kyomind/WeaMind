@@ -4,14 +4,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """應用程式設定類別."""
+    """Application settings class."""
 
-    # 基本應用設定
+    # Basic application settings
     APP_NAME: str = "WeaMind API"
     DEBUG: bool = False
     ENV: str = "development"
 
-    # 資料庫設定
+    # Database settings
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str
@@ -19,24 +19,24 @@ class Settings(BaseSettings):
     POSTGRES_PORT: int = 5432
     DATABASE_URL: str | None = None
 
-    # LINE Bot 設定
+    # LINE Bot settings
     LINE_CHANNEL_SECRET: str
     LINE_CHANNEL_ACCESS_TOKEN: str
 
-    # 環境判斷的便利屬性
+    # Convenient environment check properties
     @property
     def is_development(self) -> bool:
-        """檢查是否為開發環境."""
+        """Check if current environment is development."""
         return self.ENV.lower() in ("development", "dev")
 
     @property
     def is_production(self) -> bool:
-        """檢查是否為生產環境."""
+        """Check if current environment is production."""
         return self.ENV.lower() in ("production", "prod")
 
     @property
     def database_url(self) -> str:
-        """取得資料庫連線URL."""
+        """Get the database connection URL."""
         if self.DATABASE_URL:
             return self.DATABASE_URL
         return (
