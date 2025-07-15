@@ -1,6 +1,11 @@
 """Application settings and environment variable management."""
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Base directory of the project (similar to Django's BASE_DIR)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class Settings(BaseSettings):
@@ -23,7 +28,11 @@ class Settings(BaseSettings):
     LINE_CHANNEL_SECRET: str
     LINE_CHANNEL_ACCESS_TOKEN: str
 
-    # Convenient environment check properties
+    @property
+    def logs_dir(self) -> Path:
+        """Get the logs directory path."""
+        return BASE_DIR / "logs"
+
     @property
     def is_development(self) -> bool:
         """Check if current environment is development."""

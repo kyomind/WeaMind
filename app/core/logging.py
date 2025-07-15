@@ -19,14 +19,20 @@ def setup_logging() -> None:
     # Optimized format: date, level, logger name, line number, message
     log_format = "%(asctime)s | %(levelname)-8s | %(name)-20s | L%(lineno)d | %(message)s"
 
+    # Ensure logs directory exists
+    logs_dir = settings.logs_dir
+    logs_dir.mkdir(exist_ok=True)
+
+    # Setup handlers: console and file
+    console_handler = logging.StreamHandler(sys.stdout)
+    file_handler = logging.FileHandler(logs_dir / "app.log", encoding="utf-8")
+
     # Basic logging configuration
     logging.basicConfig(
         level=log_level,
         format=log_format,
         datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-        ],
+        handlers=[console_handler, file_handler],
     )
 
     # Set SQLAlchemy logging level based on DEBUG setting
