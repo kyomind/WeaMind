@@ -6,16 +6,17 @@
 ├── app
 │   ├── __init__.py
 │   ├── core
+│   │   ├── __init__.py
 │   │   ├── config.py
-│   │   └── database.py
+│   │   ├── database.py
+│   │   └── logging.py
 │   ├── line
 │   │   ├── __init__.py
 │   │   ├── router.py
-│   │   ├── schemas.py
-│   │   ├── service.py
-│   │   └── utils.py
+│   │   └── service.py
 │   ├── main.py
 │   └── user
+│       ├── __init__.py
 │       ├── constants.py
 │       ├── models.py
 │       ├── router.py
@@ -24,7 +25,6 @@
 │       └── utils.py
 ├── blogs
 │   └── README.md
-├── conftest.py
 ├── coverage.xml
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
@@ -32,11 +32,14 @@
 ├── Dockerfile
 ├── docs
 │   ├── Architecture.md
+│   ├── Config-Refactor-Simple.md
 │   ├── Discuss.md
 │   ├── Example.md
 │   ├── Todo.md
 │   └── Tree.md
 ├── LICENSE
+├── logs
+│   └── app.log
 ├── Makefile
 ├── migrations
 │   ├── env.py
@@ -52,8 +55,17 @@
 │   ├── cleanup_local_branches.sh
 │   └── gen_tree.sh
 ├── tests
-│   ├── test_line.py
-│   └── test_user.py
+│   ├── conftest.py
+│   ├── core
+│   │   ├── conftest.py
+│   │   ├── test_config.py
+│   │   └── test_logging.py
+│   ├── line
+│   │   ├── conftest.py
+│   │   └── test_line.py
+│   └── user
+│       ├── conftest.py
+│       └── test_user.py
 └── uv.lock
 
-11 directories, 44 files
+15 directories, 52 files
