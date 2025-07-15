@@ -7,12 +7,12 @@ dependencies = [
   "pydantic-settings>=2.9.1",
   "sqlalchemy>=2.0.40",
   "uvicorn[standard]>=0.34.2",
-] 
-description = "Add your description here" 
-name = "WeaMind" 
-readme = "README.md" 
+]
+description = "Add your description here"
+name = "WeaMind"
+readme = "README.md"
 requires-python = ">=3.12" # Affects pyupgrade auto fixes and replaces target-version
-version = "0.1.0" 
+version = "0.1.0"
 
 [dependency-groups]
 dev = [
@@ -33,30 +33,30 @@ exclude = ["migrations", ".venv"]
 line-length = 100
 
 [tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
-select = [
-  "B",  # flake8-bugbear
-  "E",  # pycodestyle
-  "F",  # pyflakes
-  "I",  # isort
-  "S",  # bandit
-  "W",  # pycodestyle
-  "UP",  # pyupgrade
-  "C4",  # flake8-comprehensions
-  "ANN",  # flake8-annotations
-  "TRY",  # tryceratops
-  "PERF",  # perflint
-  "ASYNC",  # flake8-async
-]
 extend-select = [
-  "FAST001",  # fast-api-redundant-response-model
-  "FAST002",  # fast-api-non-annotated-dependency
-  "D100",  # missing-module-docstring
-  "D101",  # undocumented-public-class
-  "D102",  # missing-class-docstring
-  "D103",  # undocumented-public-function
-  "D213",  # multi-line-summary-second-line
-  "D400",  # missing-trailing-period
-  "ERA001",  # commented-out-code
+  "FAST001", # fast-api-redundant-response-model
+  "FAST002", # fast-api-non-annotated-dependency
+  "D100", # missing-module-docstring
+  "D101", # undocumented-public-class
+  "D102", # missing-class-docstring
+  "D103", # undocumented-public-function
+  "D213", # multi-line-summary-second-line
+  "D400", # missing-trailing-period
+  "ERA001", # commented-out-code
+]
+select = [
+  "B", # flake8-bugbear
+  "E", # pycodestyle
+  "F", # pyflakes
+  "I", # isort
+  "S", # bandit
+  "W", # pycodestyle
+  "UP", # pyupgrade
+  "C4", # flake8-comprehensions
+  "ANN", # flake8-annotations
+  "TRY", # tryceratops
+  "PERF", # perflint
+  "ASYNC", # flake8-async
 ]
 
 # Globally ignore noisy rules (example)
@@ -66,7 +66,10 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"] # Allow assert statements in tests
+"tests/*" = [
+  "S101", # Allow use of assert statements in tests
+  "S106", # Allow hardcoded passwords in tests (e.g., test passwords)
+]
 
 [tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
 quote-style = "double" # Quote style, double quotes are default
