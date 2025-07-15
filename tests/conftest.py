@@ -10,6 +10,11 @@ from fastapi.testclient import TestClient
 # Test environment setup
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["LINE_CHANNEL_SECRET"] = "TEST_SECRET"
+os.environ["LINE_CHANNEL_ACCESS_TOKEN"] = "TEST_ACCESS_TOKEN"
+os.environ["POSTGRES_USER"] = "test_user"
+os.environ["POSTGRES_PASSWORD"] = "test_password"
+os.environ["POSTGRES_HOST"] = "localhost"
+os.environ["POSTGRES_DB"] = "test_db"
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
