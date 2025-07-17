@@ -1,5 +1,7 @@
 """FastAPI application entry point and router registration."""
 
+import logging
+
 from fastapi import FastAPI
 
 from app.core.config import settings
@@ -10,12 +12,16 @@ from app.user.router import router as user_router
 # Setup logging
 setup_logging()
 
+# Get logger for this module
+logger = logging.getLogger(__name__)
+
 # Create FastAPI app based on environment
 if settings.is_development:
     app = FastAPI(
         title=settings.APP_NAME,
         description="API for WeaMind Weather LINE BOT",
     )
+    logger.info("FastAPI app created in development mode")
 else:
     # Hide API docs in production
     app = FastAPI(
@@ -25,6 +31,7 @@ else:
         redoc_url=None,
         openapi_url=None,
     )
+    logger.info("FastAPI app created in production mode")
 
 
 @app.get("/")
@@ -41,3 +48,5 @@ async def root() -> dict:
 # Register routers from modules
 app.include_router(user_router, tags=["user"])
 app.include_router(line_router, tags=["line"])
+
+logger.info("All routers registered successfully")

@@ -43,9 +43,18 @@ def setup_logging() -> None:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
     # Set uvicorn logging level
-    logging.getLogger("uvicorn").setLevel(logging.INFO)
-    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+    uvicorn_logger = logging.getLogger("uvicorn")
+    uvicorn_access_logger = logging.getLogger("uvicorn.access")
+
+    uvicorn_logger.setLevel(logging.INFO)
+    uvicorn_access_logger.setLevel(logging.INFO)
+
+    # Add file handler to uvicorn loggers so they also write to file
+    uvicorn_logger.addHandler(file_handler)
+    uvicorn_access_logger.addHandler(file_handler)
 
     # Log startup info
     logger = logging.getLogger(__name__)
     logger.info(f"Logging configured for {settings.ENV} environment")
+    logger.info(f"Log level set to: {logging.getLevelName(log_level)}")
+    logger.info(f"Logs directory: {logs_dir}")
