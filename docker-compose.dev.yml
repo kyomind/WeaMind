@@ -7,13 +7,16 @@ services:
       # The local .venv would be mounted into the container with .:/code
       # Local .venv executables have host-specific shebangs, which are incompatible with the container
       # A named volume ensures the container uses its own, correctly built virtual environment
-      - app_venv:/code/.venv
+      - app-venv-dev:/code/.venv
       - ./logs:/code/logs # Bind mount logs directory
     environment:
       - ENV=development
     container_name: wea-app-dev
   db:
     container_name: wea-db-dev
+    volumes:
+      - wea-db-data-dev:/var/lib/postgresql/data
 
 volumes:
-  app_venv:
+  app-venv-dev:
+  wea-db-data-dev:

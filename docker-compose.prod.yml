@@ -4,7 +4,13 @@ services:
     environment:
       - ENV=production
     container_name: wea-app-prod
-    restart: always
+    restart: unless-stopped
   db:
     container_name: wea-db-prod
-    restart: always
+    restart: unless-stopped
+    volumes:
+      - wea-db-data-prod:/var/lib/postgresql/data
+
+volumes:
+  wea-db-data-prod:
+    external: true

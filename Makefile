@@ -1,12 +1,19 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down up down deploy migrate revision rollback tree check prune
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod
 # === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 dev-down:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+dev-clean:
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
+
+setup-prod:
+	docker volume create wea-db-data-prod
+	docker network create wea-net || true
 
 up:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build

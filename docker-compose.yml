@@ -2,7 +2,6 @@ services:
   app:
     image: wea-image
     build: .
-    restart: unless-stopped
     env_file:
       - .env
     depends_on:
@@ -13,18 +12,12 @@ services:
       - wea-net
   db:
     image: postgres:17.5-bookworm
-    restart: unless-stopped
     env_file:
       - .env
     ports:
       - "5433:5432"
-    volumes:
-      - wea-db-data:/var/lib/postgresql/data
     networks:
       - wea-net
-
-volumes:
-  wea-db-data:
 
 networks:
   wea-net:
