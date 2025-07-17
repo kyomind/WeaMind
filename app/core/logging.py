@@ -16,8 +16,9 @@ def setup_logging() -> None:
     else:
         log_level = logging.INFO
 
-    # Optimized format: date, level, logger name, line number, message
-    log_format = "%(asctime)s | %(levelname)-8s | %(name)-20s | L%(lineno)d | %(message)s"
+    # Using a more readable log format: tight and concise
+    # eg. "2025-07-17 17:26:54 INFO [app.module:line:123] Message processed"
+    log_format = "%(asctime)s %(levelname)s [%(name)s:%(lineno)d] %(message)s"
 
     # Ensure logs directory exists
     logs_dir = settings.logs_dir
