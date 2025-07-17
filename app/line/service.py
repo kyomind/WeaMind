@@ -28,6 +28,10 @@ def handle_message_event(event: MessageEvent) -> None:
 
     Args:
         event: The LINE message event
+        attributes: (partial)
+            - reply_token: Token to reply to the message
+            - message: The message content, expected to be TextMessageContent
+            - type: The type of the message, expected to be 'text'
     """
     # Ensure reply_token is not empty
     if not event.reply_token:
@@ -41,9 +45,9 @@ def handle_message_event(event: MessageEvent) -> None:
         return
 
     with ApiClient(configuration) as api_client:
-        line_bot_api = MessagingApi(api_client)
+        messaging_api_client = MessagingApi(api_client)
         try:
-            line_bot_api.reply_message(
+            messaging_api_client.reply_message(
                 # NOTE: Pyright doesn't fully support Pydantic field aliases yet.
                 # Snake_case params work at runtime but static analysis only sees camelCase.
                 ReplyMessageRequest(
