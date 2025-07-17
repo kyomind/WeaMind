@@ -1242,6 +1242,7 @@ name = "weamind"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "alembic" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "line-bot-sdk" },
@@ -1253,7 +1254,6 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "alembic" },
     { name = "coverage" },
     { name = "deptry" },
     { name = "pre-commit" },
@@ -1267,6 +1267,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "alembic", specifier = ">=1.16.1" },
     { name = "fastapi", specifier = ">=0.115.12" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "line-bot-sdk", specifier = ">=3.17.1" },
@@ -1278,7 +1279,6 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "alembic", specifier = ">=1.16.1" },
     { name = "coverage", specifier = ">=7.9.1" },
     { name = "deptry", specifier = ">=0.23.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
