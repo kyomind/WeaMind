@@ -1,5 +1,6 @@
 [project]
 dependencies = [
+  "alembic>=1.16.1",
   "fastapi>=0.115.12",
   "httpx>=0.28.1",
   "line-bot-sdk>=3.17.1",
@@ -16,7 +17,6 @@ version = "0.1.0"
 
 [dependency-groups]
 dev = [
-  "alembic>=1.16.1",
   "coverage>=7.9.1",
   "deptry>=0.23.0",
   "pre-commit>=4.2.0",

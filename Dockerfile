@@ -6,19 +6,12 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-# When DEV=true also install dev dependencies
-ARG DEV=false
-
 # ---------- layer 1: heavy dependencies ----------
 # Cache only invalidates when these two files change
 COPY pyproject.toml uv.lock ./
 
 RUN --mount=type=cache,target=/root/.cache/uv \
-    if [ "$DEV" = "true" ]; then \
-    uv sync --locked; \
-    else \
-    uv sync --locked --no-dev; \
-    fi
+    uv sync --locked --no-dev
 
 # ---------- layer 2: application code ----------
 COPY . /app
