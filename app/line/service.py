@@ -29,18 +29,15 @@ def handle_message_event(event: MessageEvent) -> None:
     Args:
         event: The LINE message event
     """
-    # Ensure the message content is text type
-    if not isinstance(event.message, TextMessageContent):
-        logger.warning(f"Received non-text message: {type(event.message)}")
-        return
-
     # Ensure reply_token is not empty
     if not event.reply_token:
         logger.warning("Reply token is empty")
         return
 
-    if settings.LINE_CHANNEL_ACCESS_TOKEN == "CHANGE_ME":
-        logger.info(f"Would reply with token {event.reply_token}: {event.message.text}")
+    # Type assertion since webhook_handler decorator ensures this is TextMessageContent
+    message = event.message
+    if not isinstance(message, TextMessageContent):
+        logger.warning(f"Unexpected message type: {type(message)}")
         return
 
     with ApiClient(configuration) as api_client:
@@ -51,11 +48,11 @@ def handle_message_event(event: MessageEvent) -> None:
                 # Snake_case params work at runtime but static analysis only sees camelCase.
                 ReplyMessageRequest(
                     reply_token=event.reply_token,  # type: ignore[call-arg]
-                    messages=[TextMessage(text=event.message.text)],  # type: ignore
+                    messages=[TextMessage(text=message.text)],  # type: ignore
                     notification_disabled=False,  # type: ignore[call-arg]
                 )
             )
-            logger.info(f"Echo reply sent: {event.message.text}")
+            logger.info(f"Echo reply sent: {message.text}")
         except Exception:
             logger.exception("Error sending LINE message")
 
