@@ -4,5 +4,7 @@ services:
     environment:
       - ENV=production
     container_name: wea-app-prod
+    restart: always
   db:
     container_name: wea-db-prod
+    restart: always
