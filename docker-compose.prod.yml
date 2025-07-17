@@ -5,6 +5,8 @@ services:
       - ENV=production
     container_name: wea-app-prod
     restart: unless-stopped
+    volumes:
+      - ./logs:/code/logs # Bind mount logs directory (比照 dev)
   db:
     container_name: wea-db-prod
     restart: unless-stopped
