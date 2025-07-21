@@ -32,7 +32,6 @@
 ├── Dockerfile
 ├── docs
 │   ├── Architecture.md
-│   ├── Config-Refactor-Simple.md
 │   ├── Discuss.md
 │   ├── Example.md
 │   ├── Todo.md
@@ -68,4 +67,4 @@
 │       └── test_user.py
 └── uv.lock
 
-15 directories, 52 files
+15 directories, 51 files
