@@ -14,7 +14,7 @@
 ## Component Interaction Flow
 
 - line-bot handles all external requests; only interacts with wea-ai via HTTP API when intent analysis or AI features are needed
-- line-bot processes LINE webhook events, and may forward to wea-ai depending on the request type
+- line-bot processes LINE webhook events, and may forward to wea-ai depending on the request type (the wea-ai will not be implemented before the line-bot is fully functional)
 - wea-data only performs scheduled ETL, writing weather data into the database, and does not provide any API
 - All data queries and access are performed directly by line-bot via the database
 - wea-ai provides intent detection and dialogue schema, but does not access data directly
@@ -24,6 +24,7 @@
 > Project architecture is inspired by Domain-Driven Design (DDD) principles.
 
 - app/core: Global configuration, database connection
+- app/line: Handles LINE webhook requests, processes events
 - app/user: User data models, CRUD API, validation
 - app/weather: For weather data access and logic (not yet implemented)
 - app/main.py: FastAPI app entry point, router registration
@@ -35,15 +36,9 @@
 - Alembic manages database schema migrations
 - SQLAlchemy manages all tables
 
-## API Design Principles
-
-- RESTful style, JSON as the main payload format
-- All POST/PUT request body parameters are uniformly named payload
-- Must verify the signature of incoming LINE webhook requests
-
 ## Tech Stack
 
-- FastAPI: High performance, type safety, easy to test
+- FastAPI: LINE bot framework, provides async support
 - Pydantic: Data validation and serialization
 - SQLAlchemy 2.0: ORM, convenient for database management
 - Alembic: Database migration
@@ -53,8 +48,8 @@
 
 1. LINE platform pushes a webhook to /line/webhook
 2. line-bot verifies the signature and parses the event
-3. Depending on the event, queries user state or calls wea-ai to determine intent
+3. Depending on the event, queries user state or calls wea-ai to determine intent (will not before v1.0)
 4. If weather data is needed:
-   - Fixed-format query: line-bot queries the database directly
-   - Natural language query: line-bot interacts with wea-ai to obtain intent, then queries the database, repeating until a clear result is obtained
+   - Fixed-format query: line-bot queries the database directly (v1.0)
+   - Natural language query: line-bot interacts with wea-ai to obtain intent, then queries the database, repeating until a clear result is obtained (will not before v1.0)
 5. Composes the response message and returns it to the LINE platform
