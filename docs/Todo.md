@@ -3,8 +3,8 @@
 - [x] 1.Pydantic的FastAPI config設定 2025-05-15
 - [x] 2.🧃新增 pyright 作為專案的 type checker 2025-05-16
 - [x] 3.db遷移工具設定檔(還沒真的第一次遷移) 2025-05-30
-- [x] 4.🍎🍎專案容器化（尤其是開發用 db）2025-06-16
-- [x] 5.🍎hello api、設定uvicorn並成功運行 FastAPI app runtime 2025-06-16
+- [x] 4.🧃(uv)🍎專案容器化（尤其是開發用 db）2025-06-16
+- [x] 5.🍎(介紹uvicorn)hello api、設定uvicorn並成功運行 FastAPI app runtime 2025-06-16
 - [x] 6.設定與撰寫基本 api 測試(demo) 2025-06-16
 - [x] 7.🍎建議部署和開發用的不同版的docker-compose.yml，使用繼承方式 2025-06-16
 - [x] 8.🍎設定好 coverage 測試，cli、xml 等報告 2025-06-17
