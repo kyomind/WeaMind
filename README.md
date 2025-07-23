@@ -8,7 +8,7 @@
 [![Checked with pyright](https://microsoft.github.io/pyright/img/pyright_badge.svg)](https://microsoft.github.io/pyright/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-Your smart LINE assistant for instant, AI-powered weather updates.
+Your smart LINE assistant for instant weather updates.
 
 ## 📚 技術文章索引
 
