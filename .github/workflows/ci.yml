@@ -51,7 +51,17 @@ jobs:
   docker-build-validate:
     name: Validate Docker build
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build . --file Dockerfile --tag weamind-ci-test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (validation only)
+        run: |
+          docker buildx build \
+            --file Dockerfile \
+            --tag weamind-ci-test:${{ github.sha }} \
+            --progress=plain \
+            --load .

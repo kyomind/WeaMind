@@ -6,6 +6,7 @@
         "autobuild",
         "autoflush",
         "autoincrement",
+        "buildx",
         "carryforward",
         "celerybeat",
         "Certbot",
