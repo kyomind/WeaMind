@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   code-quality-check:
-    name: Lint, Format, Type Check, Test & Coverage
+    name: Code Quality & Tests
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
