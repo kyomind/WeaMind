@@ -17,7 +17,7 @@
 - Type check: `uv run pyright .`
 
 ## Important Conventions & Rules
-- All API POST/PUT request bodies must be named `payload`.
+- All API request bodies must be named `payload`.
 - Every function must have a docstring, following the `.github/prompts/docstring.prompt.md` standard.
 - pytest fixture naming:
   - For helper functions: use a verb prefix, e.g., `create_user`
@@ -28,8 +28,6 @@
 ## Integrations & External Dependencies
 - Main dependencies: FastAPI, Pydantic, SQLAlchemy, Alembic, pytest, Ruff, Pyright
 - PostgreSQL is the default database; schema migrations are managed by Alembic
-- LINE webhook requests must have signature verification
-- wea-ai is only responsible for intent detection and schema; all data queries are handled directly by line-bot
 
 ## Reference Documents
 - Architecture & technical decisions: `docs/Architecture.md`
