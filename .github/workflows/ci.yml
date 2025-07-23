@@ -40,6 +40,9 @@ jobs:
         run: |
           uv run pytest --cov=app --cov-report=xml --cov-report=term-missing
 
+      - name: Build Docker image (validate Dockerfile)
+        run: docker build . --file Dockerfile --tag weamind-ci-test
+
       - name: Upload coverage to Codecov
         # Upload coverage report to Codecov
         uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
