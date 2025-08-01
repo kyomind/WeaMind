@@ -12,6 +12,8 @@ services:
       - --proxy-headers
       - --loop
       - uvloop
+      - --http
+      - httptools
     environment:
       - ENV=production
     container_name: wea-app-prod
