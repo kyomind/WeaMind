@@ -1,6 +1,6 @@
 services:
   app:
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--loop", "asyncio"]
     volumes:
       - .:/code
       # Critical: Use a named volume to isolate the container's virtual environment
