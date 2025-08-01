@@ -54,6 +54,7 @@
         "tablename",
         "testpaths",
         "tryceratops",
+        "uvloop",
         "weamind",
         "webassets"
     ]
