@@ -114,3 +114,12 @@ markers = [
 ]
 python_files = ["test_*.py"]
 testpaths = ["tests"]
+
+[tool.pyright]
+exclude = [
+  "migrations",
+  ".venv",
+]
+typeCheckingMode = "basic"
+venv = ".venv"
+venvPath = "."

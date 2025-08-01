@@ -1,9 +1,0 @@
-{
-    "venvPath": ".",
-    "venv": ".venv",
-    "exclude": [
-        "migrations",
-        ".venv"
-    ],
-    "typeCheckingMode": "basic"
-}
