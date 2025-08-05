@@ -6,7 +6,7 @@
 - The architecture follows Domain-Driven Design (DDD) principles. Main directories:
   - `app/core`: Global configuration, database connection
   - `app/user`: User data models, CRUD API, validation
-  - `app/line`: LINE webhook handling, AI interaction
+  - `app/line`: LINE webhook handling
   - `app/main.py`: FastAPI entry point, router registration
 - Other microservices (wea-ai, wea-data) are not included in this repo and interact only via HTTP API.
 
