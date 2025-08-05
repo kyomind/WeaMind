@@ -7,7 +7,8 @@
   - `app/core`: Global configuration, database connection
   - `app/user`: User data models, CRUD API, validation
   - `app/line`: LINE webhook handling
-  - `app/main.py`: FastAPI entry point, router registration
+-  - `app/main.py`: FastAPI entry point, router registration
+  - `prd/`: 產品需求文件（PRD）集中存放處，僅供內部參考。
 - Other microservices (wea-ai, wea-data) are not included in this repo and interact only via HTTP API.
 
 ## Key Development Workflows
@@ -30,11 +31,7 @@
 - PostgreSQL is the default database; schema migrations are managed by Alembic
 
 ## Reference Documents
-- Architecture & technical decisions: `docs/Architecture.md`
-- Directory structure: `docs/Tree.md`
-- Todo & progress: `docs/Todo.md`
-- Technical blog articles: `blogs/README.md`
-
+Product requirements (private, not committed): `prd/weamind-prd-v1.md` 等
 ---
 
 > These instructions are specific to the WeaMind project. Please follow the above conventions and structure for development, refactoring, and debugging. If anything is unclear, refer to `docs/Architecture.md` and the source code as the primary references.

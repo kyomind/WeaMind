@@ -46,8 +46,9 @@
 │   ├── script.py.mako
 │   └── versions
 │       └── b05ddf47e04e_create_user_table.py
+├── prd
+│   └── weamind-prd-v1.md
 ├── pyproject.toml
-├── pyrightconfig.json
 ├── README.md
 ├── scripts
 │   ├── cleanup_local_branches_preview.sh
@@ -67,4 +68,4 @@
 │       └── test_user.py
 └── uv.lock
 
-15 directories, 51 files
+16 directories, 51 files

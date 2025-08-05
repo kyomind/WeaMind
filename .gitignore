@@ -1,3 +1,5 @@
+# Ignore all PRD documents
+prd/
 .vscode/.copilot-instructions.md
 info/
 wea-info/
