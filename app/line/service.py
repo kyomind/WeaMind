@@ -10,9 +10,11 @@ from linebot.v3.messaging import (
     ReplyMessageRequest,
     TextMessage,
 )
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
 
 from app.core.config import settings
+from app.core.database import get_db
+from app.user.service import create_user_if_not_exists, deactivate_user
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,85 @@ def handle_message_event(event: MessageEvent) -> None:
             logger.info(f"Echo reply sent: {message.text}")
         except Exception:
             logger.exception("Error sending LINE message")
+
+
+@webhook_handler.add(FollowEvent)
+def handle_follow_event(event: FollowEvent) -> None:
+    """
+    Handle follow events - create or reactivate user record.
+
+    Args:
+        event: The LINE follow event
+    """
+    try:
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        if not user_id:
+            logger.warning("Follow event without user_id")
+            return
+
+        # Get database session
+        db = next(get_db())
+        try:
+            # Create user if not exists or reactivate if inactive
+            user = create_user_if_not_exists(db, user_id)
+            logger.info(f"User {user_id} followed - user record created/activated (ID: {user.id})")
+
+            # Send welcome message if reply token exists
+            if event.reply_token:
+                with ApiClient(configuration) as api_client:
+                    messaging_api_client = MessagingApi(api_client)
+                    try:
+                        messaging_api_client.reply_message(
+                            ReplyMessageRequest(
+                                reply_token=event.reply_token,  # type: ignore[call-arg]
+                                messages=[
+                                    TextMessage(
+                                        text="歡迎使用本服務！您可以開始與我互動了。",
+                                        quick_reply=None,  # type: ignore[call-arg]
+                                        quote_token=None,  # type: ignore[call-arg]
+                                    )
+                                ],  # type: ignore
+                                notification_disabled=False,  # type: ignore[call-arg]
+                            )
+                        )
+                        logger.info(f"Welcome message sent to user {user_id}")
+                    except Exception:
+                        logger.exception(f"Error sending welcome message to user {user_id}")
+        finally:
+            db.close()
+
+    except Exception:
+        logger.exception("Error handling follow event")
+
+
+@webhook_handler.add(UnfollowEvent)
+def handle_unfollow_event(event: UnfollowEvent) -> None:
+    """
+    Handle unfollow events - deactivate user record.
+
+    Args:
+        event: The LINE unfollow event
+    """
+    try:
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        if not user_id:
+            logger.warning("Unfollow event without user_id")
+            return
+
+        # Get database session
+        db = next(get_db())
+        try:
+            # Deactivate user
+            user = deactivate_user(db, user_id)
+            if user:
+                logger.info(f"User {user_id} unfollowed - user record deactivated (ID: {user.id})")
+            else:
+                logger.warning(f"Unfollow event for unknown user {user_id}")
+        finally:
+            db.close()
+
+    except Exception:
+        logger.exception("Error handling unfollow event")
 
 
 @webhook_handler.default()
