@@ -13,7 +13,7 @@
 - [x] 11.🍎重構測試、建立 fixture 與型別註記，並補充註解說明 2025-06-18
 - [x] 12.建立 line webhook API endpoint 2025-06-19
 - [x] 13.🍎CI 加入 Codecov，並在 PR 時自動產出報告(bot) 2025-06-23
-- [x] 14.🍎🍎執行 Alembic 資料庫遷移，建立 user table 2025-06-25
+- [x] 14.執行 Alembic 資料庫遷移，建立 user table 2025-06-25
 - [x] 15.🍎加了好幾個badge，與GitHub Actions相關的主要有sonarcloud、codeql 2025-06-26
 - [x] 16.🍎新增 Dependabot 與 Codecov 設定 2025-06-28
 - [x] 17.🍎雲端 VM 部署 FastAPI 並設定 Nginx 反向代理與 HTTPS 憑證 2025-07-04
@@ -24,6 +24,6 @@
 ## 說明
 
 - 日期格式為 YYYY-MM-DD，代表「已完成日期」，如果沒有日期則代表還沒完成
-- 🍎代表可作為文章素材
+- 🍎代表可作為文章素材(由作者決定，預設無)
 - 🧃代表已撰寫文章
-- 每一個 todo 應限制可在 45-75 分鐘內完成
+- 每一個 todo 應限制可在 45-75 分鐘內完成，格式細節請參考 `docs/Example.md`
