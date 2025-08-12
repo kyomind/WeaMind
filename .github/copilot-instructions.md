@@ -25,6 +25,7 @@ WeaMind delivers intelligent weather services through AI-powered interactions. T
 - Architecture: `docs/Architecture.md`
 - Directory structure: `docs/Tree.md`
 - PRD documents: `prd/` (internal only)
+- Makefile: `Makefile`
 
 ## Development Commands
 - Tests: `uv run pytest`
