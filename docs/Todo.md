@@ -17,8 +17,9 @@
 - [x] 15.🍎加了好幾個badge，與GitHub Actions相關的主要有sonarcloud、codeql 2025-06-26
 - [x] 16.🍎新增 Dependabot 與 Codecov 設定 2025-06-28
 - [x] 17.🍎雲端 VM 部署 FastAPI 並設定 Nginx 反向代理與 HTTPS 憑證 2025-07-04
-- [x] 18.🍎LINE Developers 平台建立 channel 並取得 token 2025-07-10
-- [x] 19.🍎webhook URL 設定、驗證與應聲蟲訊息測試 2025-07-11
+- [x] 18.LINE Developers 平台建立 channel 並取得 token 2025-07-10
+- [x] 19.webhook URL 設定、驗證與應聲蟲訊息測試 2025-07-11
+- [x] 20.實作 LINE Bot follow/unfollow 事件處理與自動建立用戶記錄功能 2025-08-11
 
 ## 說明
 
