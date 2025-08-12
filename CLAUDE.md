@@ -1,42 +1,33 @@
-# AGENTS.md
+# WeaMind Coding Agent Instructions
 
-## Information
+## Project Overview
+WeaMind delivers intelligent weather services through AI-powered interactions. This repository contains only the line-bot (FastAPI) module that serves as the user entry point and collaborates with other microservices (wea-ai, wea-data) via HTTP APIs.
 
-### What is WeaMind?
+## Architecture
+- **DDD Structure**: `app/core` (config, DB), `app/user` (user CRUD), `app/line` (LINE webhook), `app/main.py` (entry point)
+- **Database**: PostgreSQL with Alembic migrations
+- **Dependencies**: FastAPI, Pydantic, SQLAlchemy, pytest, Ruff, Pyright
 
-WeaMind is a system that delivers intelligent weather-related services by integrating weather data and AI-powered interactions.
-
-This repository only contains the line-bot (FastAPI) module, which serves as the user-facing entry point and collaborates with other microservices.
-
-### Test Commands
-
-- Run tests: `uv run pytest`
-- Lint check: `uv run ruff check .`
-- Format code: `uv run ruff format .`
-- Type check: `uv run pyright .`
-
-### Key References
-
-- Todo list: `docs/Todo.md`
-- Project architecture & technical decisions: `docs/Architecture.md`
-- Project directory structure: `docs/Tree.md`
-
-## Guidelines
-
-### Coding Guidelines
-
-1. Use type hints to ensure type safety.
-2. Add comments to special or important parts of the code to help readers understand the design intent. (very important)
-3. Every function must include a docstring; follow the `.github/prompts/docstring.prompt.md` standard.
+## Coding Standards
+1. **Type Safety**: Always use type hints
+2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring.prompt.md`)
+3. **Comments**: Add comments for important logic to explain design intent
+4. **Commit Messages**: Write concise, natural messages focusing on the overall intent of changes (under 10 words, avoid listing specific method names)
 
 ### Naming Conventions
+- **API Naming**: Request body parameter must be named `payload`
+- **Pytest Fixtures**:
+  - Helper functions: verb prefix (e.g., `create_user`)
+  - Objects/values: noun (e.g., `user`)
 
-- pytest fixtures:
-  - when returning a helper function: start with verb, like a normal function, e.g., `create_user`
-  - when returning a object or value: use noun, like a variable, e.g., `user`
-- FastAPI router functions:
-  - the parameter name represents the HTTP request body: use `payload` in any case
+## References
+- Todo: `docs/Todo.md` (includes completed and pending tasks)
+- Architecture: `docs/Architecture.md`
+- Directory structure: `docs/Tree.md`
+- PRD documents: `prd/` (internal only)
 
-### Commit Message Guidelines
-
-Write a concise and natural commit message summarizing the following code diff in English. Avoid listing specific method or variable names unless essential. Focus on the overall intent of the change. Keep the message short and readable, ideally under 10 words. Do not invent motivations unless explicitly obvious in the code.
+## Development Commands
+- Tests: `uv run pytest`
+- Lint: `uv run ruff check .`
+- Format: `uv run ruff format .`
+- Type check: `uv run pyright .`

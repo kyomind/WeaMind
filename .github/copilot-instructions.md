@@ -1,34 +1,33 @@
+# WeaMind Coding Agent Instructions
 
-# Copilot Coding Agent Instructions for WeaMind
+## Project Overview
+WeaMind delivers intelligent weather services through AI-powered interactions. This repository contains only the line-bot (FastAPI) module that serves as the user entry point and collaborates with other microservices (wea-ai, wea-data) via HTTP APIs.
 
-## Project Architecture & Core Concepts
-- This repository contains only the line-bot (FastAPI) module, which serves as the entry point for LINE users and collaborates with other microservices (wea-ai, wea-data).
-- The architecture follows Domain-Driven Design (DDD) principles. Main directories:
-  - `app/core`: Global configuration, database connection
-  - `app/user`: User data models, CRUD API, validation
-  - `app/line`: LINE webhook handling
-  - `app/main.py`: FastAPI entry point, router registration
-- Other microservices (wea-ai, wea-data) are not included in this repo and interact only via HTTP API.
+## Architecture
+- **DDD Structure**: `app/core` (config, DB), `app/user` (user CRUD), `app/line` (LINE webhook), `app/main.py` (entry point)
+- **Database**: PostgreSQL with Alembic migrations
+- **Dependencies**: FastAPI, Pydantic, SQLAlchemy, pytest, Ruff, Pyright
 
-## Key Development Workflows
-- Run tests: `uv run pytest`
+## Coding Standards
+1. **Type Safety**: Always use type hints
+2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring.prompt.md`)
+3. **Comments**: Add comments for important logic to explain design intent
+4. **Commit Messages**: Write concise, natural messages focusing on the overall intent of changes (under 10 words, avoid listing specific method names)
+
+### Naming Conventions
+- **API Naming**: Request body parameter must be named `payload`
+- **Pytest Fixtures**:
+  - Helper functions: verb prefix (e.g., `create_user`)
+  - Objects/values: noun (e.g., `user`)
+
+## References
+- Todo: `docs/Todo.md` (includes completed and pending tasks)
+- Architecture: `docs/Architecture.md`
+- Directory structure: `docs/Tree.md`
+- PRD documents: `prd/` (internal only)
+
+## Development Commands
+- Tests: `uv run pytest`
 - Lint: `uv run ruff check .`
-- Format code: `uv run ruff format .`
+- Format: `uv run ruff format .`
 - Type check: `uv run pyright .`
-
-## Important Conventions & Rules
-- All API request bodies must be named `payload`.
-- Every function must have a docstring, following the `.github/prompts/docstring.prompt.md` standard.
-- pytest fixture naming:
-  - For helper functions: use a verb prefix, e.g., `create_user`
-  - For objects/values: use a noun, e.g., `user`
-- Add comments to important logic to explain design intent.
-- Commit messages should be concise, focused on the intent of the change, and avoid unnecessary details.
-
-## Integrations & External Dependencies
-- Main dependencies: FastAPI, Pydantic, SQLAlchemy, Alembic, pytest, Ruff, Pyright
-- PostgreSQL is the default database; schema migrations are managed by Alembic
-
-## Reference Documents
-- Product Requirements Documents (PRD): `prd/`, for internal reference only and not committed to the public repo.
-- Other documentation: `docs/`.
