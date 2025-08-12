@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.core.database import get_session
 
 
 @pytest.fixture()
@@ -31,6 +31,6 @@ def create_user(client: TestClient) -> Callable[..., dict]:
 
 
 @pytest.fixture()
-def db() -> Session:
+def session() -> Session:
     """Provide a database session for testing."""
-    return next(get_db())
+    return next(get_session())

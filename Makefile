@@ -1,6 +1,6 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright
 # === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -33,6 +33,11 @@ revision:
 
 rollback:
 	docker compose exec $(APP_SERVICE) uv run alembic downgrade -1
+
+# === Package Management ===
+upgrade-pyright:
+	uv lock --upgrade-package pyright
+	uv sync
 
 # === Local Utility Scripts ===
 tree:
