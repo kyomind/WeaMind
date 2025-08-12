@@ -5,6 +5,9 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
+
+from app.core.database import get_db
 
 
 @pytest.fixture()
@@ -25,3 +28,9 @@ def create_user(client: TestClient) -> Callable[..., dict]:
         return response.json()
 
     return _create
+
+
+@pytest.fixture()
+def db() -> Session:
+    """Provide a database session for testing."""
+    return next(get_db())

@@ -4,9 +4,14 @@ from collections.abc import Callable
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
 
-from app.line.service import handle_default_event, handle_message_event
+from app.line.service import (
+    handle_default_event,
+    handle_follow_event,
+    handle_message_event,
+    handle_unfollow_event,
+)
 
 
 class TestLineWebhook:
@@ -136,8 +141,140 @@ class TestLineService:
 
     def test_handle_default_event(self) -> None:
         """Test handling default events."""
-        mock_event = {"type": "follow", "replyToken": "test_token"}
+        mock_event = {"type": "unknown", "replyToken": "test_token"}
 
         # Should just log the event without raising exception
         handle_default_event(mock_event)
+        # No exception should be raised
+
+    def test_handle_follow_event_success(self) -> None:
+        """Test successful follow event handling."""
+        mock_event = Mock(spec=FollowEvent)
+        mock_event.reply_token = "test_token"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.get_db") as mock_get_db:
+            mock_db = Mock()
+            mock_get_db.return_value = iter([mock_db])
+
+            with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
+                mock_user = Mock()
+                mock_user.id = 1
+                mock_create_user.return_value = mock_user
+
+                with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
+                    handle_follow_event(mock_event)
+
+                    mock_create_user.assert_called_once_with(mock_db, "test_user_id")
+                    mock_reply.assert_called_once()
+                    mock_db.close.assert_called_once()
+
+    def test_handle_follow_event_no_user_id(self) -> None:
+        """Test follow event without user_id."""
+        mock_event = Mock(spec=FollowEvent)
+        mock_event.source = None
+        mock_event.reply_token = "test_token"
+
+        # Should return early without processing
+        handle_follow_event(mock_event)
+        # No exception should be raised
+
+    def test_handle_follow_event_no_reply_token(self) -> None:
+        """Test follow event without reply token."""
+        mock_event = Mock(spec=FollowEvent)
+        mock_event.reply_token = None
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.get_db") as mock_get_db:
+            mock_db = Mock()
+            mock_get_db.return_value = iter([mock_db])
+
+            with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
+                mock_user = Mock()
+                mock_user.id = 1
+                mock_create_user.return_value = mock_user
+
+                handle_follow_event(mock_event)
+
+                mock_create_user.assert_called_once_with(mock_db, "test_user_id")
+                mock_db.close.assert_called_once()
+
+    def test_handle_follow_event_api_error(self) -> None:
+        """Test follow event with messaging API error."""
+        mock_event = Mock(spec=FollowEvent)
+        mock_event.reply_token = "test_token"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.get_db") as mock_get_db:
+            mock_db = Mock()
+            mock_get_db.return_value = iter([mock_db])
+
+            with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
+                mock_user = Mock()
+                mock_user.id = 1
+                mock_create_user.return_value = mock_user
+
+                with patch(
+                    "app.line.service.MessagingApi.reply_message",
+                    side_effect=Exception("API Error"),
+                ):
+                    # Should not raise exception, just log error
+                    handle_follow_event(mock_event)
+
+                    mock_create_user.assert_called_once_with(mock_db, "test_user_id")
+                    mock_db.close.assert_called_once()
+
+    def test_handle_unfollow_event_success(self) -> None:
+        """Test successful unfollow event handling."""
+        mock_event = Mock(spec=UnfollowEvent)
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.get_db") as mock_get_db:
+            mock_db = Mock()
+            mock_get_db.return_value = iter([mock_db])
+
+            with patch("app.line.service.deactivate_user") as mock_deactivate_user:
+                mock_user = Mock()
+                mock_user.id = 1
+                mock_deactivate_user.return_value = mock_user
+
+                handle_unfollow_event(mock_event)
+
+                mock_deactivate_user.assert_called_once_with(mock_db, "test_user_id")
+                mock_db.close.assert_called_once()
+
+    def test_handle_unfollow_event_user_not_found(self) -> None:
+        """Test unfollow event for unknown user."""
+        mock_event = Mock(spec=UnfollowEvent)
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.get_db") as mock_get_db:
+            mock_db = Mock()
+            mock_get_db.return_value = iter([mock_db])
+
+            with patch("app.line.service.deactivate_user") as mock_deactivate_user:
+                mock_deactivate_user.return_value = None
+
+                handle_unfollow_event(mock_event)
+
+                mock_deactivate_user.assert_called_once_with(mock_db, "test_user_id")
+                mock_db.close.assert_called_once()
+
+    def test_handle_unfollow_event_no_user_id(self) -> None:
+        """Test unfollow event without user_id."""
+        mock_event = Mock(spec=UnfollowEvent)
+        mock_event.source = None
+
+        # Should return early without processing
+        handle_unfollow_event(mock_event)
         # No exception should be raised
