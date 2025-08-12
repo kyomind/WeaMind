@@ -1,0 +1,284 @@
+{
+    "success": "true",
+    "result": {
+        "fields": [
+            {
+                "id": "DatasetDescription",
+                "type": "String"
+            },
+            {
+                "id": "LocationsName",
+                "type": "String"
+            },
+            {
+                "id": "Dataid",
+                "type": "String"
+            },
+            {
+                "id": "LocationName",
+                "type": "String"
+            },
+            {
+                "id": "Geocode",
+                "type": "String"
+            },
+            {
+                "id": "Latitude",
+                "type": "String"
+            },
+            {
+                "id": "Longitude",
+                "type": "String"
+            },
+            {
+                "id": "ElementName",
+                "type": "String"
+            },
+            {
+                "id": "DataTime",
+                "type": "String"
+            },
+            {
+                "id": "StartTime",
+                "type": "Timestamp"
+            },
+            {
+                "id": "EndTime",
+                "type": "Timestamp"
+            },
+            {
+                "id": "Temperature",
+                "type": "String"
+            },
+            {
+                "id": "DewPoint",
+                "type": "String"
+            },
+            {
+                "id": "ApparentTemperature",
+                "type": "String"
+            },
+            {
+                "id": "ComfortIndex",
+                "type": "String"
+            },
+            {
+                "id": "ComfortIndexDescription",
+                "type": "String"
+            },
+            {
+                "id": "RelativeHumidity",
+                "type": "String"
+            },
+            {
+                "id": "WindDirection",
+                "type": "String"
+            },
+            {
+                "id": "WindSpeed",
+                "type": "String"
+            },
+            {
+                "id": "BeaufortScale",
+                "type": "String"
+            },
+            {
+                "id": "ProbabilityOfPrecipitation",
+                "type": "String"
+            },
+            {
+                "id": "Weather",
+                "type": "String"
+            },
+            {
+                "id": "WeatherCode",
+                "type": "String"
+            },
+            {
+                "id": "WeatherDescription",
+                "type": "String"
+            },
+            {
+                "id": "MaxTemperature",
+                "type": "String"
+            },
+            {
+                "id": "MinTemperature",
+                "type": "String"
+            },
+            {
+                "id": "MaxApparentTemperature",
+                "type": "String"
+            },
+            {
+                "id": "MinApparentTemperature",
+                "type": "String"
+            },
+            {
+                "id": "MaxComfortIndex",
+                "type": "String"
+            },
+            {
+                "id": "MaxComfortIndexDescription",
+                "type": "String"
+            },
+            {
+                "id": "MinComfortIndex",
+                "type": "String"
+            },
+            {
+                "id": "MinComfortIndexDescription",
+                "type": "String"
+            },
+            {
+                "id": "UVIndex",
+                "type": "String"
+            },
+            {
+                "id": "UVExposureLevel",
+                "type": "String"
+            }
+        ]
+    },
+    "records": {
+        "Locations": [
+            {
+                "DatasetDescription": "臺灣各縣市鄉鎮未來3天天氣預報",
+                "LocationsName": "宜蘭縣",
+                "Dataid": "D0047-001",
+                "Location": [
+                    {
+                        "LocationName": "宜蘭市",
+                        "Geocode": "10002010",
+                        "Latitude": "24.753707",
+                        "Longitude": "121.745083",
+                        "WeatherElement": [
+                            {
+                                "ElementName": "3小時降雨機率",
+                                "Time": [
+                                    {
+                                        "StartTime": "2025-08-13T00:00:00+08:00",
+                                        "EndTime": "2025-08-13T03:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "ProbabilityOfPrecipitation": "40"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T03:00:00+08:00",
+                                        "EndTime": "2025-08-13T06:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "ProbabilityOfPrecipitation": "70"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T06:00:00+08:00",
+                                        "EndTime": "2025-08-13T09:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "ProbabilityOfPrecipitation": "80"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T09:00:00+08:00",
+                                        "EndTime": "2025-08-13T12:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "ProbabilityOfPrecipitation": "80"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "ElementName": "天氣現象",
+                                "Time": [
+                                    {
+                                        "StartTime": "2025-08-13T00:00:00+08:00",
+                                        "EndTime": "2025-08-13T03:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "Weather": "短暫陣雨或雷雨",
+                                                "WeatherCode": "15"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T03:00:00+08:00",
+                                        "EndTime": "2025-08-13T06:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "Weather": "短暫陣雨或雷雨",
+                                                "WeatherCode": "15"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T06:00:00+08:00",
+                                        "EndTime": "2025-08-13T09:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "Weather": "陣雨或雷雨",
+                                                "WeatherCode": "18"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T09:00:00+08:00",
+                                        "EndTime": "2025-08-13T12:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "Weather": "陣雨或雷雨",
+                                                "WeatherCode": "18"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "ElementName": "天氣預報綜合描述",
+                                "Time": [
+                                    {
+                                        "StartTime": "2025-08-13T00:00:00+08:00",
+                                        "EndTime": "2025-08-13T03:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "WeatherDescription": "短暫陣雨或雷雨。降雨機率40%。溫度攝氏27至28度。悶熱。偏南風 平均風速<= 1級(每秒1公尺)。相對濕度93至95%。"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T03:00:00+08:00",
+                                        "EndTime": "2025-08-13T06:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "WeatherDescription": "短暫陣雨或雷雨。降雨機率70%。溫度攝氏26至27度。舒適。偏南風 平均風速1-2級(每秒2公尺)。相對濕度92至94%。"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T06:00:00+08:00",
+                                        "EndTime": "2025-08-13T09:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "WeatherDescription": "陣雨或雷雨。降雨機率80%。溫度攝氏26度。舒適。西南風 平均風速1-2級(每秒2公尺)。相對濕度94至96%。"
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "StartTime": "2025-08-13T09:00:00+08:00",
+                                        "EndTime": "2025-08-13T12:00:00+08:00",
+                                        "ElementValue": [
+                                            {
+                                                "WeatherDescription": "陣雨或雷雨。降雨機率80%。溫度攝氏26度。舒適。偏西風 平均風速2-3級(每秒5公尺)。相對濕度83至92%。"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }, //以下省略
