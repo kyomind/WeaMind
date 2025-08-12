@@ -155,9 +155,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_db") as mock_get_db:
+        with patch("app.line.service.get_session") as mock_get_session:
             mock_session = Mock()
-            mock_get_db.return_value = iter([mock_session])
+            mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -189,9 +189,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_db") as mock_get_db:
+        with patch("app.line.service.get_session") as mock_get_session:
             mock_session = Mock()
-            mock_get_db.return_value = iter([mock_session])
+            mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -211,9 +211,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_db") as mock_get_db:
+        with patch("app.line.service.get_session") as mock_get_session:
             mock_session = Mock()
-            mock_get_db.return_value = iter([mock_session])
+            mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -237,9 +237,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_db") as mock_get_db:
+        with patch("app.line.service.get_session") as mock_get_session:
             mock_session = Mock()
-            mock_get_db.return_value = iter([mock_session])
+            mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
                 mock_user = Mock()
@@ -258,9 +258,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_db") as mock_get_db:
+        with patch("app.line.service.get_session") as mock_get_session:
             mock_session = Mock()
-            mock_get_db.return_value = iter([mock_session])
+            mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
                 mock_deactivate_user.return_value = None

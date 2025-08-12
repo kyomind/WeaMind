@@ -13,7 +13,7 @@ from linebot.v3.messaging import (
 from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
 
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import get_session  # Corrected import
 from app.user.service import create_user_if_not_exists, deactivate_user
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def handle_follow_event(event: FollowEvent) -> None:
             return
 
         # Get database session
-        session = next(get_db())
+        session = next(get_session())  # Corrected call
         try:
             # Create user if not exists or reactivate if inactive
             user = create_user_if_not_exists(session, user_id)
@@ -127,7 +127,7 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
             return
 
         # Get database session
-        session = next(get_db())
+        session = next(get_session())  # Corrected call
         try:
             # Deactivate user
             user = deactivate_user(session, user_id)

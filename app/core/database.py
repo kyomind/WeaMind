@@ -32,18 +32,18 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db() -> typing.Generator[Session, None, None]:
+def get_session() -> typing.Generator[Session, None, None]:
     """
     Create a database Session.
 
     For FastAPI dependency injection.
-    Usage: Add Depends(get_db) in your route.
+    Usage: Add Depends(get_session) in your route.
 
     Returns:
         A database Session
     """
-    db = SessionLocal()
+    session = SessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()

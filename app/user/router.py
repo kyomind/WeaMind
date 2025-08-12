@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.database import get_db
+from app.core.database import get_session
 from app.user import service
 from app.user.schemas import UserCreate, UserRead, UserUpdate
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/users")
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(
     payload: UserCreate,
-    session: Annotated[Session, Depends(get_db)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> UserRead:
     """
     Register a new user.
@@ -31,7 +31,7 @@ async def create_user(
 @router.get("/{user_id}")
 async def get_user(
     user_id: int,
-    session: Annotated[Session, Depends(get_db)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> UserRead:
     """
     Retrieve a single user.
@@ -46,7 +46,7 @@ async def get_user(
 async def update_user(
     user_id: int,
     payload: UserUpdate,
-    session: Annotated[Session, Depends(get_db)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> UserRead:
     """
     Update user information.
@@ -60,7 +60,7 @@ async def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(
     user_id: int,
-    session: Annotated[Session, Depends(get_db)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> None:
     """
     Delete a user.
