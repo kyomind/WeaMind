@@ -31,6 +31,6 @@ def create_user(client: TestClient) -> Callable[..., dict]:
 
 
 @pytest.fixture()
-def db() -> Session:
+def session() -> Session:
     """Provide a database session for testing."""
     return next(get_db())

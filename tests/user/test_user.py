@@ -93,94 +93,94 @@ def test_line_webhook_signature_invalid(client: TestClient) -> None:
 class TestUserService:
     """Test user service functions."""
 
-    def test_get_user_by_line_id_exists(self, db: Session) -> None:
+    def test_get_user_by_line_id_exists(self, session: Session) -> None:
         """Test getting user by LINE ID when user exists."""
         line_user_id = str(uuid4())
         user = User(line_user_id=line_user_id, display_name="Test User")
-        db.add(user)
-        db.commit()
+        session.add(user)
+        session.commit()
 
-        result = get_user_by_line_id(db, line_user_id)
+        result = get_user_by_line_id(session, line_user_id)
         assert result is not None  # noqa: S101
         assert result.line_user_id == line_user_id  # noqa: S101
 
-    def test_get_user_by_line_id_not_exists(self, db: Session) -> None:
+    def test_get_user_by_line_id_not_exists(self, session: Session) -> None:
         """Test getting user by LINE ID when user doesn't exist."""
-        result = get_user_by_line_id(db, "nonexistent_user")
+        result = get_user_by_line_id(session, "nonexistent_user")
         assert result is None  # noqa: S101
 
-    def test_create_user_if_not_exists_new_user(self, db: Session) -> None:
+    def test_create_user_if_not_exists_new_user(self, session: Session) -> None:
         """Test creating new user when user doesn't exist."""
         line_user_id = str(uuid4())
         display_name = "New User"
 
-        user = create_user_if_not_exists(db, line_user_id, display_name)
+        user = create_user_if_not_exists(session, line_user_id, display_name)
 
         assert user.line_user_id == line_user_id  # noqa: S101
         assert user.display_name == display_name  # noqa: S101
         assert user.is_active  # noqa: S101
 
         # Verify user was saved to database
-        db_user = get_user_by_line_id(db, line_user_id)
+        db_user = get_user_by_line_id(session, line_user_id)
         assert db_user is not None  # noqa: S101
         assert db_user.id == user.id  # noqa: S101
 
-    def test_create_user_if_not_exists_existing_active_user(self, db: Session) -> None:
+    def test_create_user_if_not_exists_existing_active_user(self, session: Session) -> None:
         """Test creating user when active user already exists."""
         line_user_id = str(uuid4())
         existing_user = User(line_user_id=line_user_id, display_name="Existing User")
-        db.add(existing_user)
-        db.commit()
+        session.add(existing_user)
+        session.commit()
         existing_id = existing_user.id
 
-        user = create_user_if_not_exists(db, line_user_id, "New Display Name")
+        user = create_user_if_not_exists(session, line_user_id, "New Display Name")
 
         assert user.id == existing_id  # noqa: S101
         assert user.line_user_id == line_user_id  # noqa: S101
         assert user.display_name == "Existing User"  # noqa: S101
         assert user.is_active  # noqa: S101
 
-    def test_create_user_if_not_exists_existing_inactive_user(self, db: Session) -> None:
+    def test_create_user_if_not_exists_existing_inactive_user(self, session: Session) -> None:
         """Test creating user when inactive user already exists."""
         line_user_id = str(uuid4())
         existing_user = User(line_user_id=line_user_id, display_name="Existing User")
         existing_user.is_active = False
-        db.add(existing_user)
-        db.commit()
+        session.add(existing_user)
+        session.commit()
         existing_id = existing_user.id
 
-        user = create_user_if_not_exists(db, line_user_id, "New Display Name")
+        user = create_user_if_not_exists(session, line_user_id, "New Display Name")
 
         assert user.id == existing_id  # noqa: S101
         assert user.line_user_id == line_user_id  # noqa: S101
         assert user.display_name == "New Display Name"  # noqa: S101
         assert user.is_active  # noqa: S101
 
-    def test_create_user_if_not_exists_no_display_name(self, db: Session) -> None:
+    def test_create_user_if_not_exists_no_display_name(self, session: Session) -> None:
         """Test creating user without display name."""
         line_user_id = str(uuid4())
 
-        user = create_user_if_not_exists(db, line_user_id)
+        user = create_user_if_not_exists(session, line_user_id)
 
         assert user.line_user_id == line_user_id  # noqa: S101
         assert user.display_name is None  # noqa: S101
         assert user.is_active  # noqa: S101
 
-    def test_deactivate_user_exists(self, db: Session) -> None:
+    def test_deactivate_user_exists(self, session: Session) -> None:
         """Test deactivating user when user exists."""
         line_user_id = str(uuid4())
         user = User(line_user_id=line_user_id, display_name="Test User")
-        db.add(user)
-        db.commit()
+        session.add(user)
+        session.commit()
         user_id = user.id
 
-        result = deactivate_user(db, line_user_id)
+        result = deactivate_user(session, line_user_id)
 
         assert result is not None  # noqa: S101
         assert result.id == user_id  # noqa: S101
         assert not result.is_active  # noqa: S101
 
-    def test_deactivate_user_not_exists(self, db: Session) -> None:
+    def test_deactivate_user_not_exists(self, session: Session) -> None:
         """Test deactivating user when user doesn't exist."""
-        result = deactivate_user(db, "nonexistent_user")
+        result = deactivate_user(session, "nonexistent_user")
         assert result is None  # noqa: S101

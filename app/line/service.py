@@ -78,10 +78,10 @@ def handle_follow_event(event: FollowEvent) -> None:
             return
 
         # Get database session
-        db = next(get_db())
+        session = next(get_db())
         try:
             # Create user if not exists or reactivate if inactive
-            user = create_user_if_not_exists(db, user_id)
+            user = create_user_if_not_exists(session, user_id)
             logger.info(f"User {user_id} followed - user record created/activated (ID: {user.id})")
 
             # Send welcome message if reply token exists
@@ -106,7 +106,7 @@ def handle_follow_event(event: FollowEvent) -> None:
                     except Exception:
                         logger.exception(f"Error sending welcome message to user {user_id}")
         finally:
-            db.close()
+            session.close()
 
     except Exception:
         logger.exception("Error handling follow event")
@@ -127,16 +127,16 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
             return
 
         # Get database session
-        db = next(get_db())
+        session = next(get_db())
         try:
             # Deactivate user
-            user = deactivate_user(db, user_id)
+            user = deactivate_user(session, user_id)
             if user:
                 logger.info(f"User {user_id} unfollowed - user record deactivated (ID: {user.id})")
             else:
                 logger.warning(f"Unfollow event for unknown user {user_id}")
         finally:
-            db.close()
+            session.close()
 
     except Exception:
         logger.exception("Error handling unfollow event")

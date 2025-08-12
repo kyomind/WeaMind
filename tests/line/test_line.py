@@ -156,8 +156,8 @@ class TestLineService:
         mock_event.source = mock_source
 
         with patch("app.line.service.get_db") as mock_get_db:
-            mock_db = Mock()
-            mock_get_db.return_value = iter([mock_db])
+            mock_session = Mock()
+            mock_get_db.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -167,9 +167,9 @@ class TestLineService:
                 with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
                     handle_follow_event(mock_event)
 
-                    mock_create_user.assert_called_once_with(mock_db, "test_user_id")
+                    mock_create_user.assert_called_once_with(mock_session, "test_user_id")
                     mock_reply.assert_called_once()
-                    mock_db.close.assert_called_once()
+                    mock_session.close.assert_called_once()
 
     def test_handle_follow_event_no_user_id(self) -> None:
         """Test follow event without user_id."""
@@ -190,8 +190,8 @@ class TestLineService:
         mock_event.source = mock_source
 
         with patch("app.line.service.get_db") as mock_get_db:
-            mock_db = Mock()
-            mock_get_db.return_value = iter([mock_db])
+            mock_session = Mock()
+            mock_get_db.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -200,8 +200,8 @@ class TestLineService:
 
                 handle_follow_event(mock_event)
 
-                mock_create_user.assert_called_once_with(mock_db, "test_user_id")
-                mock_db.close.assert_called_once()
+                mock_create_user.assert_called_once_with(mock_session, "test_user_id")
+                mock_session.close.assert_called_once()
 
     def test_handle_follow_event_api_error(self) -> None:
         """Test follow event with messaging API error."""
@@ -212,8 +212,8 @@ class TestLineService:
         mock_event.source = mock_source
 
         with patch("app.line.service.get_db") as mock_get_db:
-            mock_db = Mock()
-            mock_get_db.return_value = iter([mock_db])
+            mock_session = Mock()
+            mock_get_db.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -227,8 +227,8 @@ class TestLineService:
                     # Should not raise exception, just log error
                     handle_follow_event(mock_event)
 
-                    mock_create_user.assert_called_once_with(mock_db, "test_user_id")
-                    mock_db.close.assert_called_once()
+                    mock_create_user.assert_called_once_with(mock_session, "test_user_id")
+                    mock_session.close.assert_called_once()
 
     def test_handle_unfollow_event_success(self) -> None:
         """Test successful unfollow event handling."""
@@ -238,8 +238,8 @@ class TestLineService:
         mock_event.source = mock_source
 
         with patch("app.line.service.get_db") as mock_get_db:
-            mock_db = Mock()
-            mock_get_db.return_value = iter([mock_db])
+            mock_session = Mock()
+            mock_get_db.return_value = iter([mock_session])
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
                 mock_user = Mock()
@@ -248,8 +248,8 @@ class TestLineService:
 
                 handle_unfollow_event(mock_event)
 
-                mock_deactivate_user.assert_called_once_with(mock_db, "test_user_id")
-                mock_db.close.assert_called_once()
+                mock_deactivate_user.assert_called_once_with(mock_session, "test_user_id")
+                mock_session.close.assert_called_once()
 
     def test_handle_unfollow_event_user_not_found(self) -> None:
         """Test unfollow event for unknown user."""
@@ -259,16 +259,16 @@ class TestLineService:
         mock_event.source = mock_source
 
         with patch("app.line.service.get_db") as mock_get_db:
-            mock_db = Mock()
-            mock_get_db.return_value = iter([mock_db])
+            mock_session = Mock()
+            mock_get_db.return_value = iter([mock_session])
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
                 mock_deactivate_user.return_value = None
 
                 handle_unfollow_event(mock_event)
 
-                mock_deactivate_user.assert_called_once_with(mock_db, "test_user_id")
-                mock_db.close.assert_called_once()
+                mock_deactivate_user.assert_called_once_with(mock_session, "test_user_id")
+                mock_session.close.assert_called_once()
 
     def test_handle_unfollow_event_no_user_id(self) -> None:
         """Test unfollow event without user_id."""
