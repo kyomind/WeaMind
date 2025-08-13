@@ -5,6 +5,10 @@ from sqlalchemy.engine import engine_from_config
 from app.core.config import settings
 from app.core.database import Base
 
+# Import all models so Alembic can detect them
+from app.user.models import User  # noqa: F401
+from app.weather.models import Location, Weather  # noqa: F401
+
 # Alembic configuration object for this script
 alembic_config = context.config
 
