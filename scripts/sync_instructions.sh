@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # WeaMind Instructions Sync Script
 # Copies .github/copilot-instructions.md to other AI tool configuration files
