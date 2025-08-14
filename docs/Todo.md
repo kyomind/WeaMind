@@ -20,6 +20,7 @@
 - [x] 18.LINE Developers 平台建立 channel 並取得 token 2025-07-10
 - [x] 19.webhook URL 設定、驗證與應聲蟲訊息測試 2025-07-11
 - [x] 20.實作 LINE Bot follow/unfollow 事件處理與自動建立用戶記錄功能 2025-08-11
+- [x] 21.設計並建立天氣與行政區資料庫 Schema，實作 Alembic 遷移 2025-08-14
 
 ## 說明
 

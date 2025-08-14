@@ -4,9 +4,11 @@
       "Bash(git checkout:*)",
       "Bash(uv run pytest:*)",
       "Bash(uv run ruff:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(make migrate:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "defaultMode": "acceptEdits"
   }
 }

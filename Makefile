@@ -1,6 +1,6 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs
 # === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -48,3 +48,12 @@ check:
 
 prune:
 	zsh scripts/cleanup_local_branches.sh
+
+sync-instructions:
+	zsh scripts/sync_instructions.sh
+
+export-docs:
+	zsh scripts/export_branch_docs.sh
+
+clean-docs:
+	zsh scripts/clean_docs.sh

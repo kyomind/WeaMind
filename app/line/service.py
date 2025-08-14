@@ -94,7 +94,7 @@ def handle_follow_event(event: FollowEvent) -> None:
                                 reply_token=event.reply_token,  # type: ignore[call-arg]
                                 messages=[
                                     TextMessage(
-                                        text="歡迎使用本服務！您可以開始與我互動了。",
+                                        text="Welcome! You can now start interacting with me.",
                                         quick_reply=None,  # type: ignore[call-arg]
                                         quote_token=None,  # type: ignore[call-arg]
                                     )
