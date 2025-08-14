@@ -4,7 +4,6 @@ import logging
 import re
 from collections.abc import Sequence
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.weather.models import Location
@@ -70,7 +69,7 @@ class LocationService:
         """
         return (
             session.query(Location)
-            .filter(func.concat(Location.county, Location.district).like(f"%{location_name}%"))
+            .filter(Location.full_name.like(f"%{location_name}%"))
             .order_by(Location.full_name)
             .all()
         )
