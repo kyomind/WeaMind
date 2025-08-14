@@ -6,6 +6,7 @@
         "autobuild",
         "autoflush",
         "autoincrement",
+        "autouse",
         "buildx",
         "carryforward",
         "celerybeat",
