@@ -15,16 +15,18 @@
 │   │   ├── router.py
 │   │   └── service.py
 │   ├── main.py
-│   └── user
+│   ├── user
+│   │   ├── __init__.py
+│   │   ├── models.py
+│   │   ├── router.py
+│   │   ├── schemas.py
+│   │   └── service.py
+│   └── weather
 │       ├── __init__.py
-│       ├── constants.py
-│       ├── models.py
-│       ├── router.py
-│       ├── schemas.py
-│       ├── service.py
-│       └── utils.py
+│       └── models.py
 ├── blogs
 │   └── README.md
+├── CLAUDE.md
 ├── coverage.xml
 ├── docker-compose.dev.yml
 ├── docker-compose.prod.yml
@@ -32,10 +34,10 @@
 ├── Dockerfile
 ├── docs
 │   ├── Architecture.md
-│   ├── Discuss.md
 │   ├── Example.md
 │   ├── Todo.md
 │   └── Tree.md
+├── GEMINI.md
 ├── LICENSE
 ├── logs
 │   └── app.log
@@ -45,15 +47,23 @@
 │   ├── README
 │   ├── script.py.mako
 │   └── versions
-│       └── b05ddf47e04e_create_user_table.py
+│       ├── 526d69e2321e_restrict_wea_bot_weather_permissions.py
+│       ├── 67c6acf6e8df_setup_database_permissions.py
+│       ├── 69db147baaec_grant_location_insert_update_.py
+│       ├── 8fda37b4a59c_optimize_weather_table_indexes.py
+│       ├── b05ddf47e04e_create_user_table.py
+│       └── f557a1959851_create_location_weather_tables.py
 ├── prd
 │   └── weamind-prd-v1.md
 ├── pyproject.toml
 ├── README.md
 ├── scripts
+│   ├── clean_docs.sh
 │   ├── cleanup_local_branches_preview.sh
 │   ├── cleanup_local_branches.sh
-│   └── gen_tree.sh
+│   ├── export_branch_docs.sh
+│   ├── gen_tree.sh
+│   └── sync_instructions.sh
 ├── tests
 │   ├── conftest.py
 │   ├── core
@@ -68,4 +78,4 @@
 │       └── test_user.py
 └── uv.lock
 
-16 directories, 51 files
+17 directories, 60 files
