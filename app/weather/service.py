@@ -47,11 +47,11 @@ class LocationService:
         # Check character count (2-6 Chinese characters)
         char_count = len(cleaned_text)
         if char_count < 2 or char_count > 6:
-            raise LocationParseError("🤔 輸入的字數不對喔！請輸入 2 到 6 個字的地名。", text)
+            raise LocationParseError("🤔 輸入的字數不對喔！請輸入 2 到 6 個字的地名", text)
 
         # Check if input contains only Chinese characters (and some common district suffixes)
         if not re.match(r"^[\u4e00-\u9fff]+$", cleaned_text):
-            raise LocationParseError("請輸入中文地名。", text)
+            raise LocationParseError("請輸入中文地名", text)
 
         # Replace "台" with "臺" for compatibility with official data
         # This handles common cases like "台北" -> "臺北"
@@ -94,8 +94,8 @@ class LocationService:
 
         Returns:
             tuple: (locations, response_message)
-                - locations: List of matching Location objects
-                - response_message: Response message for user
+                - locations: List of matching Location objects (empty if >3 matches)
+                - response_message: User-friendly response message
 
         Raises:
             LocationParseError: If input format is invalid
@@ -110,24 +110,25 @@ class LocationService:
         if result_count == 0:
             # No matches found
             response = f"😕 找不到「{cleaned_input}」這個地點耶，要不要檢查看看有沒有打錯字？"
+            # Return empty list with error message
             return locations, response
 
         elif result_count == 1:
             # Single match - will proceed to weather query
             location = locations[0]
             response = f"找到了 {location.full_name}，正在查詢天氣..."
+            # Return single location for weather query
             return locations, response
 
         elif 2 <= result_count <= 3:
             # Multiple matches - provide options
             options = "\n".join([f"👉 {loc.full_name}" for loc in locations])
             response = f"😕 找到多個符合的地點，請選擇：\n{options}"
+            # Return locations for future multi-select feature
             return locations, response
 
         else:
             # Too many matches
-            response = (
-                f"🤔 找到太多符合的地點了！請輸入更具體的地名，例如：\n"
-                f"「{cleaned_input}區」而不是「{cleaned_input}」"
-            )
+            response = "🤔 找到太多符合的地點了！請輸入更具體的地名"
+            # Return empty list when too many matches (>3)
             return [], response

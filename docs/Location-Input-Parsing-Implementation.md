@@ -50,16 +50,32 @@ tests/weather/
 class LocationService:
     @staticmethod
     def validate_location_input(text: str) -> str:
-        """驗證輸入格式"""
+        """驗證輸入格式並正規化（台→臺）"""
 
     @staticmethod
     def search_locations_by_name(session: Session, location_name: str) -> Sequence[Location]:
-        """模糊查詢地點"""
+        """使用 full_name 欄位進行模糊查詢"""
 
     @staticmethod
     def parse_location_input(session: Session, text: str) -> tuple[Sequence[Location], str]:
         """解析用戶輸入並返回匹配結果與回應訊息"""
 ```
+
+#### 設計說明：Tuple 返回值的理由
+
+`parse_location_input` 使用 tuple 返回 `(locations, response_message)` 的設計考量：
+
+**當前用途：**
+- `response_message`: 直接回應給用戶的訊息
+- `locations`: 用於日誌記錄和數量判斷
+
+**未來擴展性：**
+- **多選處理**：2-3個匹配時，可實作用戶選擇機制
+- **地理資訊**：存取經緯度進行地圖整合
+- **用戶偏好**：記錄常查地點，建立個人化推薦
+- **數據分析**：統計熱門查詢地區
+
+這種設計遵循「返回完整資料」原則，即使當前未完全使用，也為未來功能預留了介面完整性，避免 API 破壞性變更。
 
 ### LINE Bot 整合
 
@@ -113,6 +129,9 @@ class LocationService:
 ```
 用戶輸入：永和
 Bot回應：找到了 新北市永和區，正在查詢天氣...
+
+用戶輸入：台北
+Bot回應：找到了 臺北市○○區，正在查詢天氣...
 ```
 
 ### 多選案例
@@ -134,6 +153,11 @@ Bot回應：🤔 找到太多符合的地點了！請輸入更具體的地名，
 ```
 
 ## 技術細節
+
+### 字符正規化處理
+- **「台」→「臺」轉換**：自動將用戶習慣輸入的「台北」轉換為官方的「臺北」
+- **相容性考量**：解決用戶習慣與官方資料不一致的問題
+- **處理時機**：在格式驗證階段進行，確保後續查詢的準確性
 
 ### 資料庫查詢優化
 - 直接使用 `full_name` 欄位進行模糊查詢
