@@ -13,8 +13,9 @@ from linebot.v3.messaging import (
 from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
 
 from app.core.config import settings
-from app.core.database import get_session  # Corrected import
+from app.core.database import get_session
 from app.user.service import create_user_if_not_exists, deactivate_user
+from app.weather.service import LocationParseError, LocationService
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ webhook_handler = WebhookHandler(settings.LINE_CHANNEL_SECRET)
 @webhook_handler.add(MessageEvent, message=TextMessageContent)
 def handle_message_event(event: MessageEvent) -> None:
     """
-    Handle text message events with echo bot functionality.
+    Handle text message events with location parsing functionality.
 
     Args:
         event: The LINE message event
@@ -46,6 +47,34 @@ def handle_message_event(event: MessageEvent) -> None:
         logger.warning(f"Unexpected message type: {type(message)}")
         return
 
+    # Get database session
+    session = next(get_session())
+    response_text = message.text  # Default to echo
+
+    try:
+        # Try to parse as location input
+        locations, response_message = LocationService.parse_location_input(session, message.text)
+        response_text = response_message
+
+        # Log the parsing result
+        logger.info(
+            f"Location parsing result: {len(locations)} locations found for '{message.text}'"
+        )
+
+    except LocationParseError as e:
+        # Handle location parsing errors with user-friendly messages
+        response_text = e.message
+        logger.info(f"Location parsing error for '{e.input_text}': {e.message}")
+
+    except Exception:
+        # For unexpected errors, fall back to echo behavior
+        logger.exception(f"Unexpected error parsing location input: {message.text}")
+        response_text = message.text
+
+    finally:
+        session.close()
+
+    # Send response to user
     with ApiClient(configuration) as api_client:
         messaging_api_client = MessagingApi(api_client)
         try:
@@ -54,11 +83,11 @@ def handle_message_event(event: MessageEvent) -> None:
                 # Snake_case params work at runtime but static analysis only sees camelCase.
                 ReplyMessageRequest(
                     reply_token=event.reply_token,  # type: ignore[call-arg]
-                    messages=[TextMessage(text=message.text)],  # type: ignore
+                    messages=[TextMessage(text=response_text)],  # type: ignore
                     notification_disabled=False,  # type: ignore[call-arg]
                 )
             )
-            logger.info(f"Echo reply sent: {message.text}")
+            logger.info(f"Response sent: {response_text}")
         except Exception:
             logger.exception("Error sending LINE message")
 
