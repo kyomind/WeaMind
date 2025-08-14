@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore",  # 忽略未定義的環境變數
+        extra="ignore",  # Ignore undefined environment variables
     )
 
 

@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Setup database roles and permissions."""
-    # 直接從環境變數讀取配置，避免與 Settings 類別耦合
+    # Read configuration directly from environment variables to avoid coupling with the Settings class
     postgres_user = os.getenv('POSTGRES_USER')
     postgres_db = os.getenv('POSTGRES_DB')
     wea_data_user = os.getenv('WEA_DATA_USER')
@@ -34,10 +34,10 @@ def upgrade() -> None:
     if not wea_data_password:
         raise ValueError("WEA_DATA_PASSWORD environment variable is required")
 
-    # 1. 提升 wea_bot 權限（讓它能創建其他用戶）
+    # 1. Elevate wea_bot permissions (allowing it to create other users)
     op.execute(f"ALTER USER {postgres_user} WITH CREATEROLE")
 
-    # 2. 建立 wea_data 用戶（如果不存在）
+    # 2. Create wea_data user (if it does not exist)
     op.execute(f"""
         DO $$
         BEGIN
@@ -48,27 +48,27 @@ def upgrade() -> None:
         $$;
     """)
 
-    # 3. 設定基本連線權限
+    # 3. Set basic connection permissions
     op.execute(f"GRANT CONNECT ON DATABASE {postgres_db} TO {wea_data_user}")
     op.execute(f"GRANT USAGE ON SCHEMA public TO {wea_data_user}")
 
-    # 4. 設定 table 權限
-    # wea_data 對 location 的權限：只讀
+    # 4. Set table permissions
+    # Permissions for wea_data on location: read-only
     op.execute(f"GRANT SELECT ON location TO {wea_data_user}")
 
-    # wea_data 對 weather 的權限：全權限
+    # Permissions for wea_data on weather: full access
     op.execute(f"GRANT SELECT, INSERT, UPDATE, DELETE ON weather TO {wea_data_user}")
 
-    # 5. 設定 sequence 權限（讓 wea_data 可以插入資料）
+    # 5. Set sequence permissions (allowing wea_data to insert data)
     op.execute(f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {wea_data_user}")
 
-    # 註：wea_bot 作為 tables 的 owner，本來就有全權限
-    # 註：wea_bot 對 weather 的讀取權限會在下個步驟中調整
+    # Note: As the owner of the tables, wea_bot already has full permissions
+    # Note: wea_bot's read permissions on weather will be adjusted in the next step
 
 
 def downgrade() -> None:
     """Remove database permissions."""
-    # 直接從環境變數讀取配置，避免與 Settings 類別耦合
+    # Read configuration directly from environment variables to avoid coupling with the Settings class
     postgres_db = os.getenv('POSTGRES_DB')
     wea_data_user = os.getenv('WEA_DATA_USER')
 
@@ -77,11 +77,11 @@ def downgrade() -> None:
     if not wea_data_user:
         raise ValueError("WEA_DATA_USER environment variable is required")
 
-    # 移除權限
+    # Revoke permissions
     op.execute(f"REVOKE ALL ON weather FROM {wea_data_user}")
     op.execute(f"REVOKE ALL ON location FROM {wea_data_user}")
     op.execute(f"REVOKE ALL ON SCHEMA public FROM {wea_data_user}")
     op.execute(f"REVOKE CONNECT ON DATABASE {postgres_db} FROM {wea_data_user}")
 
-    # 刪除用戶
+    # Drop user
     op.execute(f"DROP USER IF EXISTS {wea_data_user}")

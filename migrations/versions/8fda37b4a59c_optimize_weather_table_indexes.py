@@ -20,10 +20,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Optimize weather table indexes for better write performance."""
-    # 移除單列索引（會被複合索引涵蓋）
+    # Remove single-column index (covered by composite index)
     op.drop_index(op.f('ix_weather_start_time'), table_name='weather')
 
-    # 新增複合索引以優化查詢效能
+    # Add composite index to optimize query performance
     op.create_index(
         'ix_weather_location_start_time',
         'weather',
@@ -31,7 +31,7 @@ def upgrade() -> None:
         unique=False
     )
 
-    # 新增 fetched_at 索引以優化滑動窗口查詢
+    # Add index on fetched_at to optimize sliding window queries
     op.create_index(
         'ix_weather_location_fetched_at',
         'weather',
@@ -42,9 +42,9 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Restore original weather table indexes."""
-    # 移除新增的複合索引
+    # Remove the added composite indexes
     op.drop_index('ix_weather_location_fetched_at', table_name='weather')
     op.drop_index('ix_weather_location_start_time', table_name='weather')
 
-    # 恢復原始的單列索引
+    # Restore the original single-column index
     op.create_index(op.f('ix_weather_start_time'), 'weather', ['start_time'], unique=False)

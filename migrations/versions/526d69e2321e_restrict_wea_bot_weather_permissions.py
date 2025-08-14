@@ -19,26 +19,26 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """Restrict wea_bot to read-only access on weather table."""
-    # 直接從環境變數讀取配置，避免與 Settings 類別耦合
+    # Read configuration directly from environment variables to avoid coupling with the Settings class
     postgres_user = os.getenv('POSTGRES_USER')
 
     if not postgres_user:
         raise ValueError("POSTGRES_USER environment variable is required")
 
-    # 移除 wea_bot 對 weather 的寫入權限
+    # Revoke write permissions on weather from wea_bot
     op.execute(f"REVOKE INSERT, UPDATE, DELETE ON weather FROM {postgres_user}")
 
-    # 確保保留讀取權限
+    # Ensure read permission is retained
     op.execute(f"GRANT SELECT ON weather TO {postgres_user}")
 
 
 def downgrade() -> None:
     """Restore wea_bot full permissions on weather table."""
-    # 直接從環境變數讀取配置，避免與 Settings 類別耦合
+    # Read configuration directly from environment variables to avoid coupling with the Settings class
     postgres_user = os.getenv('POSTGRES_USER')
 
     if not postgres_user:
         raise ValueError("POSTGRES_USER environment variable is required")
 
-    # 恢復全權限
+    # Restore full permissions
     op.execute(f"GRANT ALL ON weather TO {postgres_user}")
