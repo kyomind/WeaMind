@@ -53,7 +53,11 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",  # 忽略未定義的環境變數
+    )
 
 
 settings = Settings()  # type: ignore
