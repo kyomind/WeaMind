@@ -20,6 +20,11 @@ class TestLocationService:
         assert LocationService.validate_location_input("魚池鄉") == "魚池鄉"
         assert LocationService.validate_location_input(" 中山區 ") == "中山區"  # Whitespace removal
 
+        # Test "台" to "臺" conversion
+        assert LocationService.validate_location_input("台北") == "臺北"
+        assert LocationService.validate_location_input("台中") == "臺中"
+        assert LocationService.validate_location_input("台南") == "臺南"
+
     def test_validate_location_input_invalid_length(self) -> None:
         """Test location input validation with invalid length."""
         # Test too short (1 character)
@@ -61,7 +66,7 @@ class TestLocationService:
             geocode="6500100001", county="新北市", district="永和區", full_name="新北市永和區"
         )
         create_location(
-            geocode="1000800001", county="台北市", district="信義區", full_name="台北市信義區"
+            geocode="1000800001", county="臺北市", district="信義區", full_name="臺北市信義區"
         )
         create_location(
             geocode="1001000001", county="基隆市", district="信義區", full_name="基隆市信義區"
@@ -81,7 +86,7 @@ class TestLocationService:
         results = LocationService.search_locations_by_name(session, "信義區")
         assert len(results) == 2
         full_names = [r.full_name for r in results]
-        assert "台北市信義區" in full_names
+        assert "臺北市信義區" in full_names
         assert "基隆市信義區" in full_names
 
         # Test no matches
@@ -108,7 +113,7 @@ class TestLocationService:
     ) -> None:
         """Test location input parsing with multiple matches (2-3)."""
         create_location(
-            geocode="1000800002", county="台北市", district="信義區", full_name="台北市信義區"
+            geocode="1000800002", county="臺北市", district="信義區", full_name="臺北市信義區"
         )
         create_location(
             geocode="1001000002", county="基隆市", district="信義區", full_name="基隆市信義區"
@@ -118,10 +123,10 @@ class TestLocationService:
 
         assert len(locations) == 2
         full_names = [loc.full_name for loc in locations]
-        assert "台北市信義區" in full_names
+        assert "臺北市信義區" in full_names
         assert "基隆市信義區" in full_names
         assert "找到多個符合的地點" in response
-        assert "👉 台北市信義區" in response
+        assert "👉 臺北市信義區" in response
         assert "👉 基隆市信義區" in response
 
     def test_parse_location_input_no_matches(self, session: Session) -> None:
@@ -161,3 +166,27 @@ class TestLocationService:
         with pytest.raises(LocationParseError) as exc_info:
             LocationService.parse_location_input(session, "abc")  # Non-Chinese
         assert "請輸入中文地名" in exc_info.value.message
+
+    def test_parse_location_input_taiwan_character_conversion(
+        self, session: Session, create_location: Callable[..., Location]
+    ) -> None:
+        """Test location input parsing with Taiwan character conversion (台→臺)."""
+        # Create location with official "臺" character
+        create_location(
+            geocode="6300000001", county="臺北市", district="中正區", full_name="臺北市中正區"
+        )
+        create_location(
+            geocode="6600000001", county="臺中市", district="西區", full_name="臺中市西區"
+        )
+
+        # Test user input with common "台" character should find results
+        locations, response = LocationService.parse_location_input(session, "台北")
+        assert len(locations) == 1
+        assert locations[0].full_name == "臺北市中正區"
+        assert "找到了 臺北市中正區" in response
+
+        # Test partial match with converted character
+        locations, response = LocationService.parse_location_input(session, "台中")
+        assert len(locations) == 1
+        assert locations[0].full_name == "臺中市西區"
+        assert "找到了 臺中市西區" in response

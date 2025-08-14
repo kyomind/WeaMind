@@ -53,7 +53,11 @@ class LocationService:
         if not re.match(r"^[\u4e00-\u9fff]+$", cleaned_text):
             raise LocationParseError("請輸入中文地名。", text)
 
-        return cleaned_text
+        # Replace "台" with "臺" for compatibility with official data
+        # This handles common cases like "台北" -> "臺北"
+        normalized_text = cleaned_text.replace("台", "臺")
+
+        return normalized_text
 
     @staticmethod
     def search_locations_by_name(session: Session, location_name: str) -> Sequence[Location]:
