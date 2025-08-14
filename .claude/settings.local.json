@@ -8,6 +8,7 @@
       "Bash(make migrate:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "defaultMode": "acceptEdits"
   }
 }
