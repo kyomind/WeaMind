@@ -23,7 +23,8 @@
 │   │   └── service.py
 │   └── weather
 │       ├── __init__.py
-│       └── models.py
+│       ├── models.py
+│       └── service.py
 ├── blogs
 │   └── README.md
 ├── CLAUDE.md
@@ -35,6 +36,7 @@
 ├── docs
 │   ├── Architecture.md
 │   ├── Example.md
+│   ├── Location-Input-Parsing-Implementation.md
 │   ├── Todo.md
 │   └── Tree.md
 ├── GEMINI.md
@@ -73,9 +75,12 @@
 │   ├── line
 │   │   ├── conftest.py
 │   │   └── test_line.py
-│   └── user
+│   ├── user
+│   │   ├── conftest.py
+│   │   └── test_user.py
+│   └── weather
 │       ├── conftest.py
-│       └── test_user.py
+│       └── test_location_service.py
 └── uv.lock
 
-17 directories, 60 files
+18 directories, 64 files
