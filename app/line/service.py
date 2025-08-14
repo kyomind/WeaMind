@@ -49,10 +49,9 @@ def handle_message_event(event: MessageEvent) -> None:
 
     # Get database session
     session = next(get_session())
-    response_text = message.text  # Default to echo
 
     try:
-        # Try to parse as location input
+        # Parse as location input
         locations, response_message = LocationService.parse_location_input(session, message.text)
         response_text = response_message
 
@@ -67,9 +66,9 @@ def handle_message_event(event: MessageEvent) -> None:
         logger.info(f"Location parsing error for '{e.input_text}': {e.message}")
 
     except Exception:
-        # For unexpected errors, fall back to echo behavior
+        # For unexpected errors, provide generic error message
         logger.exception(f"Unexpected error parsing location input: {message.text}")
-        response_text = message.text
+        response_text = "😅 系統暫時有點忙，請稍後再試一次。"
 
     finally:
         session.close()
