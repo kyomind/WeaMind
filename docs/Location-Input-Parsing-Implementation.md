@@ -77,6 +77,30 @@ class LocationService:
 
 這種設計遵循「返回完整資料」原則，即使當前未完全使用，也為未來功能預留了介面完整性，避免 API 破壞性變更。
 
+#### 設計說明：Static Method 的選擇⭐️
+
+`LocationService` 使用 `@staticmethod` 而非實例方法的設計考量：
+
+**採用 Static Method 的理由：**
+- **無狀態操作**：所有方法都是純函式，不需要實例狀態
+- **依賴注入**：所有依賴（如 `session`）透過參數傳入
+- **函式式風格**：適合工具類別（utility class）使用場景
+- **測試友善**：直接呼叫，無需實例化的複雜性
+
+**何時使用實例方法：**
+如果服務類別需要持有狀態（如資料庫連線、快取、配置參數），則應使用實例方法：
+
+```python
+# 目前設計：函數庫風格
+LocationService.parse_location_input(session, text)
+
+# 實例方法風格（如需要狀態管理）
+service = LocationService(session, cache_enabled=True)
+service.parse_location_input(text)
+```
+
+目前的設計更接近「函式庫」而非「物件導向服務」，因此 static method 是合適的選擇。
+
 ### LINE Bot 整合
 
 修改了 `handle_message_event` 函數：
