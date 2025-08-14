@@ -49,8 +49,12 @@ mkdir -p "$TARGET_DIR"
 echo "正在複製 docs 目錄下的文件..."
 cp -r "$DOCS_SOURCE_DIR"/* "$TARGET_DIR/"
 
+# 複製 prd 目錄下的所有文件
+echo "正在複製 prd 目錄下的文件..."
+cp -r "prd"/* "$TARGET_DIR/"
+
 echo "✅ 成功完成！"
-echo "已將 docs 目錄下的所有文件複製到: $TARGET_DIR"
+echo "已將 docs 和 prd 目錄下的所有文件複製到: $TARGET_DIR"
 
 # 顯示複製的文件列表
 echo ""
