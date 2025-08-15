@@ -21,10 +21,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from app.core.database import Base, engine
 from app.main import app
 
-# Import models so SQLAlchemy registers tables correctly even if unused
-from app.user import models as user_models  # noqa: F401
-from app.weather import models as weather_models  # noqa: F401
-
 Base.metadata.create_all(bind=engine)
 # Use a module-level singleton instead of creating a new client per fixture
 _client = TestClient(app)
