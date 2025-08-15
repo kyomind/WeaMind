@@ -53,6 +53,9 @@ def handle_message_event(event: MessageEvent) -> None:
     # Get database session
     session = next(get_session())
 
+    # Initialize variables to ensure they're always defined
+    needs_quick_reply = False
+
     try:
         # Parse as location input
         locations, response_message = LocationService.parse_location_input(session, message.text)
