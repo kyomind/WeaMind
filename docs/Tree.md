@@ -37,6 +37,7 @@
 │   ├── Architecture.md
 │   ├── Example.md
 │   ├── Location-Input-Parsing-Implementation.md
+│   ├── Quick-Reply-Implementation.md
 │   ├── Todo.md
 │   └── Tree.md
 ├── GEMINI.md
@@ -83,4 +84,4 @@
 │       └── test_location_service.py
 └── uv.lock
 
-18 directories, 64 files
+18 directories, 65 files

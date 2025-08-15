@@ -6,7 +6,10 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import (
     ApiClient,
     Configuration,
+    MessageAction,
     MessagingApi,
+    QuickReply,
+    QuickReplyItem,
     ReplyMessageRequest,
     TextMessage,
 )
@@ -50,10 +53,15 @@ def handle_message_event(event: MessageEvent) -> None:
     # Get database session
     session = next(get_session())
 
+    # Initialize variables to ensure they're always defined
+    needs_quick_reply = False
+
     try:
         # Parse as location input
         locations, response_message = LocationService.parse_location_input(session, message.text)
-        response_text = response_message
+
+        # Check if Quick Reply is needed (2-3 locations found)
+        needs_quick_reply = 2 <= len(locations) <= 3
 
         # Log the parsing result
         logger.info(
@@ -62,13 +70,13 @@ def handle_message_event(event: MessageEvent) -> None:
 
     except LocationParseError as e:
         # Handle location parsing errors with user-friendly messages
-        response_text = e.message
+        response_message = e.message
         logger.info(f"Location parsing error for '{e.input_text}': {e.message}")
 
     except Exception:
         # For unexpected errors, provide generic error message
         logger.exception(f"Unexpected error parsing location input: {message.text}")
-        response_text = "😅 系統暫時有點忙，請稍後再試一次。"
+        response_message = "😅 系統暫時有點忙，請稍後再試一次。"
 
     finally:
         session.close()
@@ -77,16 +85,38 @@ def handle_message_event(event: MessageEvent) -> None:
     with ApiClient(configuration) as api_client:
         messaging_api_client = MessagingApi(api_client)
         try:
+            # Create Quick Reply items if needed
+            quick_reply = None
+            if needs_quick_reply:
+                quick_reply_items = [
+                    QuickReplyItem(
+                        type="action",
+                        imageUrl=None,  # Optional for text-only quick reply
+                        action=MessageAction(
+                            type="message",
+                            label=location.full_name,
+                            text=location.full_name,
+                        ),
+                    )
+                    for location in locations
+                ]
+                quick_reply = QuickReply(items=quick_reply_items)
+
             messaging_api_client.reply_message(
                 # NOTE: Pyright doesn't fully support Pydantic field aliases yet.
                 # Snake_case params work at runtime but static analysis only sees camelCase.
                 ReplyMessageRequest(
                     reply_token=event.reply_token,  # type: ignore[call-arg]
-                    messages=[TextMessage(text=response_text)],  # type: ignore
+                    messages=[
+                        TextMessage(
+                            text=response_message,
+                            quick_reply=quick_reply,  # type: ignore[call-arg]
+                        )
+                    ],  # type: ignore
                     notification_disabled=False,  # type: ignore[call-arg]
                 )
             )
-            logger.info(f"Response sent: {response_text}")
+            logger.info(f"Response sent: {response_message}")
         except Exception:
             logger.exception("Error sending LINE message")
 

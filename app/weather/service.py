@@ -121,10 +121,9 @@ class LocationService:
             return locations, response
 
         elif 2 <= result_count <= 3:
-            # Multiple matches - provide options
-            options = "\n".join([f"👉 {loc.full_name}" for loc in locations])
-            response = f"😕 找到多個符合的地點，請選擇：\n{options}"
-            # Return locations for future multi-select feature
+            # Multiple matches - provide options with Quick Reply
+            response = "😕 找到多個符合的地點，請選擇："
+            # Return locations for Quick Reply selection
             return locations, response
 
         else:
