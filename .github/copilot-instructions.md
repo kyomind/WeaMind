@@ -15,7 +15,7 @@ WeaMind delivers intelligent weather services through AI-powered interactions. T
 4. **Commit Messages**: Write concise, natural messages focusing on the overall intent of changes (under 10 words, avoid listing specific method names)
 
 ### Naming Conventions
-- **API Naming**: Request body parameter must be named `payload`
+- **API Router Functions**: Request body parameter must be named `payload`
 - **Pytest Fixtures**:
   - Helper functions: verb prefix (e.g., `create_user`)
   - Objects/values: noun (e.g., `user`)
