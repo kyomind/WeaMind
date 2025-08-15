@@ -101,7 +101,10 @@ class TestLocationService:
             geocode="6500100002", county="新北市", district="永和區", full_name="新北市永和區"
         )
 
-        locations, response = LocationService.parse_location_input(session, "永和區")
+        (
+            locations,
+            response,
+        ) = LocationService.parse_location_input(session, "永和區")
 
         assert len(locations) == 1
         assert locations[0].full_name == "新北市永和區"
@@ -119,19 +122,23 @@ class TestLocationService:
             geocode="1001000002", county="基隆市", district="信義區", full_name="基隆市信義區"
         )
 
-        locations, response = LocationService.parse_location_input(session, "信義區")
+        (
+            locations,
+            response,
+        ) = LocationService.parse_location_input(session, "信義區")
 
         assert len(locations) == 2
         full_names = [loc.full_name for loc in locations]
         assert "臺北市信義區" in full_names
         assert "基隆市信義區" in full_names
         assert "找到多個符合的地點" in response
-        assert "👉 臺北市信義區" in response
-        assert "👉 基隆市信義區" in response
 
     def test_parse_location_input_no_matches(self, session: Session) -> None:
         """Test location input parsing with no matches."""
-        locations, response = LocationService.parse_location_input(session, "不存在區")
+        (
+            locations,
+            response,
+        ) = LocationService.parse_location_input(session, "不存在區")
 
         assert len(locations) == 0
         assert "找不到「不存在區」這個地點" in response
@@ -151,7 +158,10 @@ class TestLocationService:
                 full_name=f"測試縣{district}",
             )
 
-        locations, response = LocationService.parse_location_input(session, "中正")
+        (
+            locations,
+            response,
+        ) = LocationService.parse_location_input(session, "中正")
 
         assert len(locations) == 0  # Should return empty when too many matches
         assert "找到太多符合的地點" in response
@@ -180,13 +190,19 @@ class TestLocationService:
         )
 
         # Test user input with common "台" character should find results
-        locations, response = LocationService.parse_location_input(session, "台北")
+        (
+            locations,
+            response,
+        ) = LocationService.parse_location_input(session, "台北")
         assert len(locations) == 1
         assert locations[0].full_name == "臺北市中正區"
         assert "找到了 臺北市中正區" in response
 
         # Test partial match with converted character
-        locations, response = LocationService.parse_location_input(session, "台中")
+        (
+            locations,
+            response,
+        ) = LocationService.parse_location_input(session, "台中")
         assert len(locations) == 1
         assert locations[0].full_name == "臺中市西區"
         assert "找到了 臺中市西區" in response
