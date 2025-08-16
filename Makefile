@@ -1,6 +1,6 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean
 # === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -38,6 +38,19 @@ rollback:
 upgrade-pyright:
 	uv lock --upgrade-package pyright
 	uv sync
+
+# === Git Worktree Management ===
+worktree-add:
+	zsh scripts/worktree_add.sh $(BRANCH)
+
+worktree-list:
+	zsh scripts/worktree_list.sh
+
+worktree-remove:
+	zsh scripts/worktree_remove.sh
+
+worktree-clean:
+	zsh scripts/worktree_clean.sh
 
 # === Local Utility Scripts ===
 tree:

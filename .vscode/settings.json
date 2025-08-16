@@ -59,6 +59,8 @@
         "tryceratops",
         "uvloop",
         "weamind",
-        "webassets"
+        "webassets",
+        "worktree",
+        "worktrees"
     ]
 }
