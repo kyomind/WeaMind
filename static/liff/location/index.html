@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地點設定 - WeaMind</title>
+    <link rel="stylesheet" href="style.css">
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 地點設定</h1>
+            <p>設定您的常用地點，方便快速查詢天氣</p>
+        </header>
+
+        <form id="locationForm">
+            <div class="form-group">
+                <label class="section-title">地點類型</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="locationType" value="home" checked>
+                        <span class="radio-custom"></span>
+                        🏠 住家
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="locationType" value="work">
+                        <span class="radio-custom"></span>
+                        🏢 公司
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="county" class="section-title">縣市</label>
+                <select id="county" name="county" required>
+                    <option value="">請選擇縣市</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="district" class="section-title">行政區</label>
+                <select id="district" name="district" required disabled>
+                    <option value="">請先選擇縣市</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary" disabled>確認設定</button>
+            </div>
+        </form>
+
+        <div id="loading" class="loading hidden">
+            <div class="loading-spinner"></div>
+            <p>設定中...</p>
+        </div>
+
+        <div id="message" class="message hidden"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
