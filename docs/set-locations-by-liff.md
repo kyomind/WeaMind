@@ -34,13 +34,13 @@ your-bot/
 │  ├─ routes/
 │  └─ models/
 ├─ static/                  # 新增：靜態檔案目錄
+│  ├─ data/
+│  │  └─ tw_admin_divisions.json  # 行政區資料
 │  └─ liff/
 │     └─ location/
 │        ├─ index.html      # LIFF 主頁面
 │        ├─ app.js          # 前端邏輯
 │        └─ style.css       # 樣式
-├─ data/                    # 新增：資料檔案
-│  └─ tw_admin_divisions.json
 └─ requirements.txt
 ```
 
