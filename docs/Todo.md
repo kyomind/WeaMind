@@ -73,3 +73,7 @@
 - 🍎代表可作為文章素材(由作者決定，預設無)
 - 🧃代表已撰寫文章
 - 每一個 todo 應限制可在 45-75 分鐘內完成，格式細節請參考 `docs/Example.md`
+
+## Future Todo
+
+- [ ] 實作完整的 LINE ID Token JWT 簽名驗證

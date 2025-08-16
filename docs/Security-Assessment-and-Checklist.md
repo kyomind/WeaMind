@@ -51,6 +51,35 @@ if not user:
 **風險**: 攻擊者可以偽造有效的 JWT token
 **狀態**: ⚠️ 需要實作
 
+#### 💡 為什麼需要第三方驗證工具？
+
+**核心概念**: 由於 JWT token **不是我們自己配發的**，而是由 LINE 平台配發，所以我們必須依賴 LINE 提供的驗證機制來確保 token 的真實性。
+
+**信任鏈流程**:
+```
+LINE 平台 → 配發 token → 用戶 → 傳遞 token → 我們的後端
+    ↓                                        ↑
+提供公鑰驗證工具 ————————————————————————————┘
+```
+
+**類比說明**:
+- **銀行**（LINE）發給客戶一張**支票**（JWT token）
+- 客戶拿支票到**商店**（我們的服務）消費
+- 商店**不能自己印支票**，但可以用銀行公布的**防偽特徵**（公鑰）來驗證支票真偽
+
+**實際威脅場景**:
+```python
+# 目前的安全漏洞：
+# 惡意使用者可以自製假 token，在 payload 中放入任何想要的 LINE user ID
+fake_token = create_fake_jwt_with_any_user_id("target_user_id")
+# 我們的系統會接受這個假 token，因為只檢查格式不檢查簽名
+```
+
+**為什麼必須用 LINE 的公鑰驗證**:
+1. **我們沒有 LINE 的私鑰** - 無法自己生成或驗證簽名
+2. **信任 LINE 的身份驗證** - 讓我們專注業務邏輯，不需管理用戶密碼
+3. **OAuth/OpenID Connect 標準** - 現代應用的標準做法
+
 ### 2. Audience 未驗證 (中風險)
 **問題**: 沒有驗證 `aud` 欄位是否為正確的 LIFF App ID
 **風險**: 其他 LIFF app 的 token 可能被誤用
@@ -59,35 +88,66 @@ if not user:
 ## 🛠️ 完整安全解決方案
 
 ### 選項 1: 完整 JWT 驗證 (推薦)
+
+**實作原理**: 使用 LINE 提供的公鑰驗證 token 的數位簽名
+
 ```python
 import jwt
 import requests
 from cryptography.hazmat.primitives import serialization
 
 def verify_line_id_token_complete(token: str) -> str:
-    # 1. 從 LINE 獲取 JWK
+    """完整的 LINE ID Token 驗證流程"""
+    
+    # 1. 從 LINE 的 JWK endpoint 取得公鑰
+    # 這是 LINE 公開提供的驗證工具
     jwk_response = requests.get("https://api.line.me/oauth2/v2.1/certs")
     jwks = jwk_response.json()
     
-    # 2. 驗證簽名並解碼
+    # 2. 使用 LINE 的公鑰驗證簽名並解碼
     try:
         payload = jwt.decode(
             token,
-            key=jwks,  # 需要轉換格式
-            algorithms=["RS256", "ES256"],
-            audience="YOUR_LIFF_APP_ID",
-            issuer="https://access.line.me"
+            key=jwks,  # LINE 提供的公鑰（需要格式轉換）
+            algorithms=["RS256", "ES256"],  # LINE 支援的演算法
+            audience="YOUR_LIFF_APP_ID",    # 驗證 token 是給我們的 app 用的
+            issuer="https://access.line.me"  # 驗證確實是 LINE 簽發的
         )
-        return payload["sub"]
+        return payload["sub"]  # LINE user ID
     except jwt.InvalidTokenError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 ```
 
+**安全性比較**:
+```python
+# 目前做法（不安全）：只看支票上的數字，不檢查印章
+def current_verification():
+    # 只解碼 payload，不驗證簽名
+    payload = base64.decode(token_payload)
+    return payload["sub"]  # 容易偽造
+
+# 完整做法（安全）：檢查銀行印章的真實性
+def secure_verification():
+    # 用 LINE 的公鑰驗證數位簽名
+    payload = jwt.decode(token, line_public_key, verify=True)
+    return payload["sub"]  # 幾乎無法偽造
+```
+
 ### 選項 2: 分階段改善 (務實)
+
+**開發階段優先順序**:
 ```python
 # 第一階段：加強現有驗證 ✅ 已完成
-# 第二階段：加入 audience 驗證
-# 第三階段：完整簽名驗證
+# - 基本格式檢查
+# - 過期時間驗證
+# - 發行者驗證
+
+# 第二階段：加入 audience 驗證 ⚠️ 開發中
+# - 確保 token 是為我們的 LIFF app 簽發的
+
+# 第三階段：完整簽名驗證 📅 後續實作
+# - 使用 LINE 公鑰驗證數位簽名
+# - 達到生產等級安全性
 ```
 
 ## 🔒 部署前檢查清單
@@ -194,6 +254,21 @@ if len(line_user_id) != 33:  # LINE user ID 固定長度
 2. **速率限制**: 防止暴力攻擊
 3. **監控告警**: 實時監控異常行為
 4. **快速回滾**: 準備緊急下線機制
+
+### 🔍 開發階段的安全考量
+
+**為什麼現階段可以先不實作完整驗證**:
+1. **開發優先順序**: 先建立完整的功能流程，再逐步強化安全性
+2. **測試可行性**: 完整 JWT 驗證需要複雜的公鑰管理，不適合頻繁測試
+3. **漸進式改善**: 分階段實作比一次到位更穩健
+
+**目前實作的合理性**:
+- ✅ **基本驗證已足夠** - 能防止大部分的簡單攻擊
+- ✅ **開發效率優先** - 不在早期階段被複雜的安全實作拖慢
+- ✅ **有明確的改善計劃** - 知道後續要做什麼以及為什麼要做
+
+**重要提醒**:
+> 目前的實作適合開發和有限測試，但上生產環境前**必須**完成完整的 JWT 簽名驗證。這不是可選項目，而是安全性的基本要求。
 
 ## 🎯 生產就緒部署條件
 
