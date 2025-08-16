@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地點設定 - WeaMind (開發預覽)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 地點設定</h1>
+            <p>設定您的常用地點，方便快速查詢天氣</p>
+        </header>
+
+        <form id="locationForm">
+            <div class="form-group">
+                <label class="section-title">地點類型</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="locationType" value="home" checked>
+                        <span class="radio-custom"></span>
+                        🏠 住家
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="locationType" value="work">
+                        <span class="radio-custom"></span>
+                        🏢 公司
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="county" class="section-title">縣市</label>
+                <select id="county" name="county" required>
+                    <option value="">請選擇縣市</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="district" class="section-title">行政區</label>
+                <select id="district" name="district" required disabled>
+                    <option value="">請先選擇縣市</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary" disabled>確認</button>
+            </div>
+        </form>
+
+        <div id="loading" class="loading hidden">
+            <div class="loading-spinner"></div>
+            <p>設定中...</p>
+        </div>
+
+        <div id="message" class="message hidden"></div>
+    </div>
+
+    <script>
+        // 純預覽版本 - 只載入基本功能，不包含 LIFF
+        class LocationPreviewApp {
+            constructor() {
+                this.adminData = {};
+                this.init();
+            }
+
+            async init() {
+                console.log('開發預覽模式 - 僅供樣式檢查');
+                await this.loadAdminData();
+                this.setupEventListeners();
+                this.populateCounties();
+            }
+
+            async loadAdminData() {
+                try {
+                    const response = await fetch('/static/data/tw_admin_divisions.json');
+                    if (!response.ok) {
+                        throw new Error('Failed to load admin data');
+                    }
+                    this.adminData = await response.json();
+                } catch (error) {
+                    console.error('Failed to load administrative data:', error);
+                    // 使用模擬數據
+                    this.adminData = {
+                        "臺北市": ["中正區", "大同區", "中山區"],
+                        "新北市": ["板橋區", "三重區", "中和區"],
+                        "桃園市": ["桃園區", "中壢區", "平鎮區"]
+                    };
+                }
+            }
+
+            populateCounties() {
+                const countySelect = document.getElementById('county');
+                const counties = Object.keys(this.adminData).sort();
+
+                counties.forEach(county => {
+                    const option = document.createElement('option');
+                    option.value = county;
+                    option.textContent = county;
+                    countySelect.appendChild(option);
+                });
+            }
+
+            setupEventListeners() {
+                const countySelect = document.getElementById('county');
+                const districtSelect = document.getElementById('district');
+                const submitBtn = document.getElementById('submitBtn');
+                const cancelBtn = document.getElementById('cancelBtn');
+
+                // 縣市選擇事件
+                countySelect.addEventListener('change', () => this.updateDistricts());
+
+                // 行政區選擇事件
+                districtSelect.addEventListener('change', () => this.validateForm());
+
+                // 地點類型選擇事件
+                document.querySelectorAll('input[name="locationType"]').forEach(radio => {
+                    radio.addEventListener('change', () => this.validateForm());
+                });
+
+                // 表單提交
+                document.getElementById('locationForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    alert('這是預覽模式，實際功能需要在 LINE 中使用');
+                });
+
+                // 取消按鈕
+                cancelBtn.addEventListener('click', () => {
+                    alert('這是預覽模式，實際功能需要在 LINE 中使用');
+                });
+            }
+
+            updateDistricts() {
+                const countySelect = document.getElementById('county');
+                const districtSelect = document.getElementById('district');
+                const selectedCounty = countySelect.value;
+
+                districtSelect.innerHTML = '<option value="">請選擇行政區</option>';
+
+                if (selectedCounty && this.adminData[selectedCounty]) {
+                    districtSelect.disabled = false;
+                    const districts = this.adminData[selectedCounty].sort();
+
+                    districts.forEach(district => {
+                        const option = document.createElement('option');
+                        option.value = district;
+                        option.textContent = district;
+                        districtSelect.appendChild(option);
+                    });
+                } else {
+                    districtSelect.disabled = true;
+                }
+
+                this.validateForm();
+            }
+
+            validateForm() {
+                const locationType = document.querySelector('input[name="locationType"]:checked');
+                const county = document.getElementById('county').value;
+                const district = document.getElementById('district').value;
+                const submitBtn = document.getElementById('submitBtn');
+
+                const isValid = locationType && county && district;
+                submitBtn.disabled = !isValid;
+            }
+        }
+
+        // 初始化預覽應用
+        new LocationPreviewApp();
+    </script>
+</body>
+
+</html>
