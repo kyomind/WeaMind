@@ -4,7 +4,7 @@
 WeaMind delivers intelligent weather services through AI-powered interactions. This repository contains only the line-bot (FastAPI) module that serves as the user entry point and collaborates with other microservices (wea-ai, wea-data) via HTTP APIs.
 
 ## Architecture
-- **DDD Structure**: `app/core` (config, DB), `app/user` (user CRUD), `app/line` (LINE webhook), `app/main.py` (entry point)
+- **DDD Structure**: `app/core` (config, DB), `app/user`, `app/line` (LINE webhook), `app/weather`, `app/main.py`
 - **Database**: PostgreSQL with Alembic migrations
 - **Dependencies**: FastAPI, Pydantic, SQLAlchemy, pytest, Ruff, Pyright
 
@@ -19,6 +19,7 @@ WeaMind delivers intelligent weather services through AI-powered interactions. T
 - **Pytest Fixtures**:
   - Helper functions: verb prefix (e.g., `create_user`)
   - Objects/values: noun (e.g., `user`)
+- **Git Branches**: Use feature branches for new features or bug fixes. e.g. `feature/location-settings`(noun)
 
 ## References
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
