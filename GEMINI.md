@@ -6,13 +6,12 @@ WeaMind delivers intelligent weather services through AI-powered interactions. T
 ## Architecture
 - **DDD Structure**: `app/core` (config, DB), `app/user`, `app/line` (LINE webhook), `app/weather`, `app/main.py`
 - **Database**: PostgreSQL with Alembic migrations
-- **Dependencies**: FastAPI, Pydantic, SQLAlchemy, pytest, Ruff, Pyright
+- **Dependencies**: FastAPI, Pydantic, SQLAlchemy 2.0, pytest, Ruff(lint, format), Pyright
 
 ## Coding Standards
 1. **Type Safety**: Always use type hints
 2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring.prompt.md`)
 3. **Comments**: Add comments for important logic to explain design intent
-4. **Commit Messages**: Write concise, natural messages focusing on the overall intent of changes (under 10 words, avoid listing specific method names)
 
 ### Naming Conventions
 - **API Router Functions**: Request body parameter must be named `payload`
@@ -23,12 +22,11 @@ WeaMind delivers intelligent weather services through AI-powered interactions. T
 
 ## References
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
-- Architecture: `docs/Architecture.md`
 - Directory structure: `docs/Tree.md`
 - PRD documents: `prd/` (internal only)
-- Makefile: `Makefile`
+- Makefile: `Makefile`(must read for CLI commands)
 
-## Development Commands
+## Core Development Commands
 - Tests: `uv run pytest`
 - Lint: `uv run ruff check .`
 - Format: `uv run ruff format .`
