@@ -27,7 +27,7 @@ if [[ ${#REMOVABLE_WORKTREES[@]} -eq 0 ]]; then
 fi
 
 # 顯示可移除的 worktrees 列表
-echo "� 可移除的 worktrees："
+echo "可移除的 worktrees："
 for i in {1..${#REMOVABLE_WORKTREES[@]}}; do
     echo "  $i) ${REMOVABLE_WORKTREES[$i]}"
 done
