@@ -27,14 +27,14 @@ if [[ ${#REMOVABLE_WORKTREES[@]} -eq 0 ]]; then
 fi
 
 # 顯示可移除的 worktrees 列表
-echo "可移除的 worktrees："
+echo "♻️ 可移除的 worktrees："
 for i in {1..${#REMOVABLE_WORKTREES[@]}}; do
     echo "  $i) ${REMOVABLE_WORKTREES[$i]}"
 done
 echo ""
 
 # 提示用戶選擇
-echo "�🗑️  請選擇要移除的 worktree 編號 (1-${#REMOVABLE_WORKTREES[@]})："
+echo "🗑️  請選擇要移除的 worktree 編號 (1-${#REMOVABLE_WORKTREES[@]})："
 read -r CHOICE
 
 # 驗證選擇
@@ -47,16 +47,16 @@ fi
 SELECTED_WORKTREE="${REMOVABLE_WORKTREES[$CHOICE]}"
 
 # 確認移除
-echo "⚠️  確定要移除 worktree: $SELECTED_WORKTREE？ (y/N)"
+echo "⚠️  確定要移除 worktree: $SELECTED_WORKTREE？ (Y/n)"
 read -r CONFIRM
 
-if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+if [[ "$CONFIRM" =~ ^[Nn]$ ]]; then
+    echo "ℹ️  取消操作"
+else
     if git worktree remove "$SELECTED_WORKTREE"; then
         echo "✅ 成功移除 worktree: $SELECTED_WORKTREE"
     else
         echo "❌ 移除失敗"
         exit 1
     fi
-else
-    echo "ℹ️  取消操作"
 fi
