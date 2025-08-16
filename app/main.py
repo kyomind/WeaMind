@@ -3,6 +3,7 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
@@ -33,6 +34,15 @@ else:
         openapi_url=None,
     )
     logger.info("FastAPI app created in production mode")
+
+# 🔒 安全配置：CORS 設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://liff.line.me"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
