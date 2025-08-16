@@ -53,6 +53,12 @@ def handle_message_event(event: MessageEvent) -> None:
     # Get database session
     session = next(get_session())
 
+    # Check for special commands first
+    if message.text.strip() == "設定地點":
+        session.close()
+        send_liff_location_setting_response(event.reply_token)
+        return
+
     # Initialize variables to ensure they're always defined
     needs_quick_reply = False
 
@@ -209,3 +215,33 @@ def handle_default_event(event: object) -> None:
         event: The LINE event
     """
     logger.info(f"Received unhandled event: {event}")
+
+
+def send_liff_location_setting_response(reply_token: str) -> None:
+    """
+    Send LIFF location setting response to user.
+
+    Args:
+        reply_token: Reply token from LINE message event
+    """
+    liff_url = f"{settings.BASE_URL}/static/liff/location/"
+    response_message = (
+        "🏠 地點設定\n\n"
+        "請點擊下方連結設定您的常用地點：\n"
+        f"{liff_url}\n\n"
+        "設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
+    )
+
+    with ApiClient(configuration) as api_client:
+        messaging_api_client = MessagingApi(api_client)
+        try:
+            messaging_api_client.reply_message(
+                ReplyMessageRequest(
+                    reply_token=reply_token,  # type: ignore[call-arg]
+                    messages=[TextMessage(text=response_message)],  # type: ignore
+                    notification_disabled=False,  # type: ignore[call-arg]
+                )
+            )
+            logger.info(f"LIFF location setting response sent: {liff_url}")
+        except Exception:
+            logger.exception("Failed to send LIFF location setting response")
