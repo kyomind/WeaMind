@@ -1,21 +1,16 @@
 #!/bin/zsh
 
-# 如果提供了參數，使用參數作為目標分支；否則提示用戶輸入
-if [[ -n "$1" ]]; then
-    TARGET_BRANCH="$1"
-else
-    echo "🌳 Git Worktree 創建工具"
-    echo ""
-    echo "📋 現有分支："
-    git branch -a | grep -E "(feature/|hotfix/|bugfix/)" | head -10
-    echo ""
-    echo "💡 請輸入要創建 worktree 的分支名稱："
-    read -r TARGET_BRANCH
-    
-    if [[ -z "$TARGET_BRANCH" ]]; then
-        echo "❌ 未輸入分支名稱，取消操作"
-        exit 1
-    fi
+echo "🌳 Git Worktree 創建工具"
+echo ""
+echo "📋 現有分支："
+git branch -a | grep -E "(feature/|hotfix/|bugfix/)" | head -10
+echo ""
+echo "💡 請輸入要創建 worktree 的分支名稱："
+read -r TARGET_BRANCH
+
+if [[ -z "$TARGET_BRANCH" ]]; then
+    echo "❌ 未輸入分支名稱，取消操作"
+    exit 1
 fi
 
 # 檢查是否為 main 分支
@@ -46,7 +41,6 @@ if git show-ref --verify --quiet refs/heads/$TARGET_BRANCH; then
         echo "💡 解決方案："
         echo "   1. 切換到其他分支: git checkout main"
         echo "   2. 然後再執行: make worktree-add"
-        echo "   3. 或者指定其他分支: make worktree-add BRANCH=other-branch"
         exit 1
     fi
     

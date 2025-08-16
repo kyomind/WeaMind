@@ -41,7 +41,7 @@ upgrade-pyright:
 
 # === Git Worktree Management ===
 worktree-add:
-	zsh scripts/worktree_add.sh $(BRANCH)
+	zsh scripts/worktree_add.sh
 
 worktree-list:
 	zsh scripts/worktree_list.sh
