@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     LINE_CHANNEL_SECRET: str
     LINE_CHANNEL_ACCESS_TOKEN: str
 
+    # Application URL settings
+    BASE_URL: str = "https://api.kyomind.tw"
+
     @property
     def logs_dir(self) -> Path:
         """Get the logs directory path."""
