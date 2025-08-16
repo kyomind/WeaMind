@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.user.models import User
 from app.user.schemas import UserCreate, UserUpdate
+from app.weather.models import Location
 
 
 def create_user(session: Session, user_in: UserCreate) -> User:
@@ -112,3 +113,67 @@ def deactivate_user(session: Session, line_user_id: str) -> User | None:
         session.refresh(user)
         return user
     return None
+
+
+def get_location_by_county_district(
+    session: Session, county: str, district: str
+) -> Location | None:
+    """
+    Get location by county and district.
+
+    Args:
+        session: database Session object
+        county: county name (e.g., "新北市")
+        district: district name (e.g., "永和區")
+
+    Returns:
+        The Location model or None if not found
+    """
+    return (
+        session.query(Location)
+        .filter(Location.county == county, Location.district == district)
+        .first()
+    )
+
+
+def set_user_location(
+    session: Session, line_user_id: str, location_type: str, county: str, district: str
+) -> tuple[bool, str, Location | None]:
+    """
+    Set user's home or work location.
+
+    Args:
+        session: database Session object
+        line_user_id: LINE user ID
+        location_type: "home" or "work"
+        county: county name
+        district: district name
+
+    Returns:
+        Tuple of (success, message, location)
+    """
+    # Validate location_type
+    if location_type not in ["home", "work"]:
+        return False, "無效的地點類型", None
+
+    # Get or create user
+    user = get_user_by_line_id(session, line_user_id)
+    if not user:
+        # Auto-create user for LIFF users (they must be authenticated by LINE)
+        user = create_user_if_not_exists(session, line_user_id, display_name=None)
+
+    # Get location
+    location = get_location_by_county_district(session, county, district)
+    if not location:
+        return False, "地點不存在", None
+
+    # Update user location
+    if location_type == "home":
+        user.home_location_id = location.id
+    else:  # work
+        user.work_location_id = location.id
+
+    session.commit()
+    session.refresh(user)
+
+    return True, "地點設定成功", location
