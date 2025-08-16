@@ -3,6 +3,7 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -46,7 +47,10 @@ async def root() -> dict:
 
 
 # Register routers from modules
-app.include_router(user_router, tags=["user"])
+app.include_router(user_router, tags=["user"])  # no prefix because the domain is api.kyomind.tw
 app.include_router(line_router, tags=["line"])
+
+# Mount static files for LIFF
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 logger.info("All routers registered successfully")
