@@ -55,6 +55,7 @@
         "Spyder",
         "spyderproject",
         "spyproject",
+        "staticfiles",
         "tablename",
         "testpaths",
         "tryceratops",
