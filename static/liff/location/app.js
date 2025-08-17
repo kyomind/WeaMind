@@ -1,25 +1,12 @@
-// LIFF Location Setting App - Version 20250817-3
+// LIFF Location Setting App
 class LocationApp {
     constructor() {
         this.adminData = {};
-        this.version = '20250817-3';
         this.init();
     }
 
     async init() {
         try {
-            // Check if this is the latest version by checking URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const forceRefresh = urlParams.get('refresh');
-
-            // If we detect we're in an infinite loop (multiple redirects), force refresh
-            if (window.location.href.includes('code=') && !forceRefresh) {
-                console.log('Detected OAuth redirect, adding refresh parameter');
-                const newUrl = window.location.href + '&refresh=1';
-                window.location.replace(newUrl);
-                return;
-            }
-
             // Initialize LIFF with real LIFF ID
             const liffId = '2007938807-GQzRrDoy';
             await liff.init({ liffId: liffId });
@@ -32,24 +19,17 @@ class LocationApp {
             // Check if tokens are available
             try {
                 const accessToken = liff.getAccessToken();
-                const idToken = liff.getIDToken();
-
-                console.log('Initial token check:', {
-                    hasAccessToken: !!accessToken,
-                    hasIdToken: !!idToken,
-                    accessTokenLength: accessToken ? accessToken.length : 0
-                });
 
                 if (!accessToken) {
-                    console.log('No Access Token available, redirecting to login');
                     liff.login();
                     return;
                 }
             } catch (error) {
-                console.log('Token error, redirecting to login:', error);
                 liff.login();
                 return;
-            }            // 載入並初始化頁面
+            }
+
+            // 載入並初始化頁面
             await this.loadAdminData();
             this.setupEventListeners();
             this.populateCounties();
@@ -173,13 +153,8 @@ class LocationApp {
                 if (!accessToken) {
                     throw new Error('No Access Token available');
                 }
-
-                // Log token info for debugging (first 20 chars only for security)
-                console.log('Access Token obtained:', accessToken.substring(0, 20) + '...');
-
             } catch (error) {
                 // Token might be expired, try to refresh by re-login
-                console.log('Access Token issue, attempting re-login:', error);
                 this.showMessage('登入狀態過期，請重新登入...', 'info');
                 liff.login();
                 return;
@@ -201,18 +176,10 @@ class LocationApp {
             });
 
             if (!response.ok) {
-                // Log error details for debugging
-                console.error('API request failed:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    url: response.url
-                });
-
                 // Handle token expiration specifically
                 if (response.status === 401) {
                     try {
                         const errorData = await response.json();
-                        console.error('401 Error details:', errorData);
                         this.showMessage(`登入狀態已過期：${errorData.detail}`, 'error');
                     } catch (e) {
                         this.showMessage('登入狀態已過期，請重新登入', 'error');
@@ -241,7 +208,6 @@ class LocationApp {
             }, 2000);
 
         } catch (error) {
-            console.error('Submit failed:', error);
             this.showMessage(error.message || '設定失敗，請重試', 'error');
         } finally {
             this.showLoading(false);
