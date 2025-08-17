@@ -47,9 +47,21 @@ def verify_line_id_token(token: str) -> str:
         # Verify token claims
         current_time = int(time.time())
 
-        # Check expiration
+        # Check expiration with some tolerance (5 minutes buffer)
         exp = payload_data.get("exp")
-        if not exp or current_time > exp:
+        if not exp:
+            raise ValueError("No expiration time in token")
+
+        # Add 5 minutes buffer to handle clock skew
+        time_buffer = 5 * 60  # 5 minutes
+        if current_time > (exp + time_buffer):
+            # Log for debugging
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Token expired: current_time={current_time}, exp={exp}, diff={current_time - exp}"
+            )
             raise ValueError("Token expired")
 
         # Check issuer (should be LINE)
@@ -61,6 +73,12 @@ def verify_line_id_token(token: str) -> str:
         line_user_id = payload_data.get("sub")
         if not line_user_id:
             raise ValueError("No user ID in token")
+
+        # Log successful verification for debugging
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.info(f"Token verified successfully for user: {line_user_id}")
 
         # TODO: 完整的生產環境實作應該：
         # 1. 從 LINE 的 JWK endpoint 取得公鑰

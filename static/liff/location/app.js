@@ -154,6 +154,33 @@ class LocationApp {
                 if (!idToken) {
                     throw new Error('No ID Token available');
                 }
+
+                // Log token info for debugging (first 20 chars only for security)
+                console.log('ID Token obtained:', idToken.substring(0, 20) + '...');
+
+                // Try to decode payload to check expiration
+                try {
+                    const parts = idToken.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                        const currentTime = Math.floor(Date.now() / 1000);
+                        const exp = payload.exp;
+                        console.log('Token info:', {
+                            currentTime: currentTime,
+                            exp: exp,
+                            timeToExpiry: exp - currentTime,
+                            sub: payload.sub
+                        });
+
+                        // Check if token is about to expire (within 5 minutes)
+                        if (exp - currentTime < 300) {
+                            console.warn('Token expires soon, might cause issues');
+                        }
+                    }
+                } catch (decodeError) {
+                    console.log('Could not decode token for debugging:', decodeError);
+                }
+
             } catch (error) {
                 // Token might be expired, try to refresh by re-login
                 console.log('ID Token issue, attempting re-login:', error);
@@ -180,9 +207,22 @@ class LocationApp {
             });
 
             if (!response.ok) {
+                // Log error details for debugging
+                console.error('API request failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    url: response.url
+                });
+
                 // Handle token expiration specifically
                 if (response.status === 401) {
-                    this.showMessage('登入狀態已過期，請重新登入', 'error');
+                    try {
+                        const errorData = await response.json();
+                        console.error('401 Error details:', errorData);
+                        this.showMessage(`登入狀態已過期：${errorData.detail}`, 'error');
+                    } catch (e) {
+                        this.showMessage('登入狀態已過期，請重新登入', 'error');
+                    }
                     setTimeout(() => {
                         liff.login();
                     }, 2000);
