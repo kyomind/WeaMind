@@ -39,10 +39,30 @@ class LocationApp {
                         isExpired: currentTime >= exp
                     });
 
-                    // If token is expired or expires within 1 minute, force re-login
+                    // If token is expired or expires within 1 minute, force complete logout and re-login
                     if (currentTime >= exp || (exp - currentTime) < 60) {
-                        console.log('Token is expired or expires soon, forcing re-login');
-                        liff.login();
+                        console.log('Token is expired or expires soon, forcing complete logout and re-login');
+
+                        // Force complete logout to clear all cached tokens
+                        try {
+                            liff.logout();
+                            console.log('Logged out successfully');
+                        } catch (logoutError) {
+                            console.log('Logout error (might be okay):', logoutError);
+                        }
+
+                        // Clear any browser storage that might cache tokens
+                        try {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                        } catch (storageError) {
+                            console.log('Storage clear error (might be okay):', storageError);
+                        }
+
+                        // Force re-login after logout
+                        setTimeout(() => {
+                            liff.login();
+                        }, 1000);
                         return;
                     }
                 }
@@ -196,15 +216,35 @@ class LocationApp {
 
                         // Check if token is expired or expires soon (within 1 minute)
                         if (currentTime >= exp) {
-                            console.error('Token is already expired, forcing re-login');
-                            this.showMessage('登入狀態已過期，請重新登入', 'error');
+                            console.error('Token is already expired, forcing complete logout and re-login');
+                            this.showMessage('登入狀態已過期，完全重新登入中...', 'error');
+
+                            // Force complete logout
+                            try {
+                                liff.logout();
+                                localStorage.clear();
+                                sessionStorage.clear();
+                            } catch (error) {
+                                console.log('Cleanup error:', error);
+                            }
+
                             setTimeout(() => liff.login(), 1000);
                             return;
                         }
 
                         if (exp - currentTime < 60) {
-                            console.warn('Token expires very soon, forcing re-login for safety');
-                            this.showMessage('登入狀態即將過期，重新登入中...', 'info');
+                            console.warn('Token expires very soon, forcing complete logout and re-login for safety');
+                            this.showMessage('登入狀態即將過期，完全重新登入中...', 'info');
+
+                            // Force complete logout
+                            try {
+                                liff.logout();
+                                localStorage.clear();
+                                sessionStorage.clear();
+                            } catch (error) {
+                                console.log('Cleanup error:', error);
+                            }
+
                             setTimeout(() => liff.login(), 1000);
                             return;
                         }
