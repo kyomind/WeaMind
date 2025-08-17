@@ -1,5 +1,6 @@
-# Todo List for this Project
+# Project Accomplishments
 
+## Todo and Completed
 - [x] 1.Pydantic的FastAPI config設定 2025-05-15
 - [x] 2.🧃新增 pyright 作為專案的 type checker 2025-05-16
 - [x] 3.db遷移工具設定檔(還沒真的第一次遷移) 2025-05-30
@@ -77,3 +78,7 @@
 ## Future Todo
 
 - [ ] 實作完整的 LINE ID Token JWT 簽名驗證
+
+## Check List
+- [ ] 二級行政區的下拉選單出現閃爍式的重新載入問題
+- [ ] LIFF SDK 的錯誤訊息問題
