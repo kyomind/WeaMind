@@ -70,3 +70,8 @@ export-docs:
 
 clean-docs:
 	zsh scripts/clean_docs.sh
+
+# === LIFF Development ===
+update-liff-version:
+	@echo "🔄 Updating LIFF version..."
+	@zsh scripts/update_liff_version.sh

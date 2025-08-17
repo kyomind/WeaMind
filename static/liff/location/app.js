@@ -1,4 +1,5 @@
 // LIFF Location Setting App
+// AUTO_UPDATE_VERSION: 20250817-1330 (AI can update this timestamp when making changes)
 class LocationApp {
     constructor() {
         this.adminData = {};
