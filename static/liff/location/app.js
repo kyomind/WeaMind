@@ -6,19 +6,38 @@ class LocationApp {
     }
 
     async init() {
-        // Initialize LIFF with real LIFF ID
-        const liffId = '2007938807-GQzRrDoy';
-        await liff.init({ liffId: liffId });
+        try {
+            // Initialize LIFF with real LIFF ID
+            const liffId = '2007938807-GQzRrDoy';
+            await liff.init({ liffId: liffId });
 
-        if (!liff.isLoggedIn()) {
-            liff.login();
-            return;
+            if (!liff.isLoggedIn()) {
+                liff.login();
+                return;
+            }
+
+            // Check if ID Token is available and not expired
+            try {
+                const idToken = liff.getIDToken();
+                if (!idToken) {
+                    console.log('No ID Token available, redirecting to login');
+                    liff.login();
+                    return;
+                }
+            } catch (error) {
+                console.log('ID Token error, redirecting to login:', error);
+                liff.login();
+                return;
+            }
+
+            // 載入並初始化頁面
+            await this.loadAdminData();
+            this.setupEventListeners();
+            this.populateCounties();
+        } catch (error) {
+            console.error('LIFF initialization failed:', error);
+            this.showMessage('初始化失敗，請重新整理頁面', 'error');
         }
-
-        // 載入並初始化頁面
-        await this.loadAdminData();
-        this.setupEventListeners();
-        this.populateCounties();
     }
 
     async loadAdminData() {
@@ -128,8 +147,20 @@ class LocationApp {
             const county = document.getElementById('county').value;
             const district = document.getElementById('district').value;
 
-            // Get ID Token
-            const idToken = liff.getIDToken();
+            // Get ID Token with retry on expiration
+            let idToken;
+            try {
+                idToken = liff.getIDToken();
+                if (!idToken) {
+                    throw new Error('No ID Token available');
+                }
+            } catch (error) {
+                // Token might be expired, try to refresh by re-login
+                console.log('ID Token issue, attempting re-login:', error);
+                this.showMessage('登入狀態過期，請重新登入...', 'info');
+                liff.login();
+                return;
+            }
 
             // Prepare payload
             const payload = {
@@ -149,6 +180,15 @@ class LocationApp {
             });
 
             if (!response.ok) {
+                // Handle token expiration specifically
+                if (response.status === 401) {
+                    this.showMessage('登入狀態已過期，請重新登入', 'error');
+                    setTimeout(() => {
+                        liff.login();
+                    }, 2000);
+                    return;
+                }
+
                 const errorData = await response.json();
                 throw new Error(errorData.detail || '設定失敗');
             }
