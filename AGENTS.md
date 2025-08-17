@@ -1,7 +1,7 @@
 # WeaMind Coding Agent Instructions
 
 ## Project Overview
-WeaMind delivers intelligent weather services through AI-powered interactions. This repository contains only the line-bot (FastAPI) module that serves as the user entry point and collaborates with other microservices (wea-ai, wea-data) via HTTP APIs.
+WeaMind delivers fast and intuitive weather query services through LINE Bot. This repository contains the line-bot (FastAPI) module that serves as the main user interface.
 
 ## Architecture
 - **DDD Structure**: `app/core` (config, DB), `app/user`, `app/line` (LINE webhook), `app/weather`, `app/main.py`
@@ -21,6 +21,7 @@ WeaMind delivers intelligent weather services through AI-powered interactions. T
 - **Git Branches**: Use feature branches for new features or bug fixes. e.g. `feature/location-settings`(noun)
 
 ## References
+- Architecture: `docs/Architecture.md` (high-level overview of the system architecture)
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
 - Directory structure: `docs/Tree.md`
 - PRD documents: `prd/` (internal only)

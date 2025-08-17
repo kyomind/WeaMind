@@ -7,6 +7,7 @@ DOCS_DIR="docs"
 
 # 保留的檔案列表
 KEEP_FILES=(
+    "Architecture.md"
     "Example.md"
     "Todo.md"
     "Tree.md"

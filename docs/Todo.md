@@ -81,5 +81,6 @@
 ## Future Todo
 
 - [ ] 實作完整的 LINE ID Token JWT 簽名驗證
+- [ ] 為單元測試寫獨立的 prompt file
 
 ## Check List

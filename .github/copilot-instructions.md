@@ -21,6 +21,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - **Git Branches**: Use feature branches for new features or bug fixes. e.g. `feature/location-settings`(noun)
 
 ## References
+- Architecture: `docs/Architecture.md` (high-level overview of the system architecture)
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
 - Directory structure: `docs/Tree.md`
 - PRD documents: `prd/` (internal only)
