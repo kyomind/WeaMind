@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_line_user_id
+from app.core.auth import get_current_line_user_id_from_access_token
 from app.core.database import get_session
 from app.user import service
 from app.user.schemas import (
@@ -79,14 +79,14 @@ async def delete_user(
 @router.post("/locations")
 async def set_user_location(
     payload: LocationSettingRequest,
-    line_user_id: Annotated[str, Depends(get_current_line_user_id)],
+    line_user_id: Annotated[str, Depends(get_current_line_user_id_from_access_token)],
     session: Annotated[Session, Depends(get_session)],
 ) -> LocationSettingResponse:
     """
     Set user's home or work location via LIFF.
 
     This endpoint is called from the LIFF location setting page.
-    It requires a valid LINE ID Token for authentication.
+    It requires a valid LINE Access Token for authentication.
     """
     # Validate location data against administrative divisions
     success, message, _ = service.set_user_location(

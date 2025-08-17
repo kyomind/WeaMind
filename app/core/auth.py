@@ -2,11 +2,88 @@
 
 import base64
 import json
+import logging
 import time
 from typing import Annotated
 
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+logger = logging.getLogger(__name__)
+
+
+async def verify_line_access_token(access_token: str) -> str:
+    """
+    Verify LINE Access Token using LINE Platform API and extract LINE user ID.
+
+    Args:
+        access_token: LINE Access Token from LIFF
+
+    Returns:
+        LINE user ID
+
+    Raises:
+        HTTPException: If token is invalid
+    """
+    try:
+        # Verify access token using LINE Platform API
+        async with httpx.AsyncClient() as client:
+            verify_response = await client.get(
+                "https://api.line.me/oauth2/v2.1/verify",
+                params={"access_token": access_token},
+                timeout=10.0,
+            )
+
+            if verify_response.status_code != 200:
+                logger.warning(f"Token verification failed: {verify_response.status_code}")
+                raise ValueError("Access token verification failed")
+
+            verify_data = verify_response.json()
+
+            # Check if the token is valid and matches our LIFF app
+            if not verify_data.get("client_id"):
+                raise ValueError("Invalid token response")
+
+            expires_in = verify_data.get("expires_in", 0)
+            if expires_in <= 0:
+                raise ValueError("Token expired")
+
+            logger.info(f"Access token verified successfully, expires in: {expires_in} seconds")
+
+        # Get user profile using the access token
+        async with httpx.AsyncClient() as client:
+            profile_response = await client.get(
+                "https://api.line.me/v2/profile",
+                headers={"Authorization": f"Bearer {access_token}"},
+                timeout=10.0,
+            )
+
+            if profile_response.status_code != 200:
+                logger.warning(f"Profile retrieval failed: {profile_response.status_code}")
+                raise ValueError("Failed to retrieve user profile")
+
+            profile_data = profile_response.json()
+            line_user_id = profile_data.get("userId")
+
+            if not line_user_id:
+                raise ValueError("No user ID in profile")
+
+            logger.info(f"Access token verified successfully for user: {line_user_id}")
+            return line_user_id
+
+    except httpx.RequestError as e:
+        logger.exception("Network error during token verification")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to verify token due to network error",
+        ) from e
+    except Exception as e:
+        logger.warning(f"Token verification failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid LINE Access Token: {str(e)}",
+        ) from e
 
 
 def verify_line_id_token(token: str) -> str:
@@ -97,14 +174,29 @@ def verify_line_id_token(token: str) -> str:
 security = HTTPBearer()
 
 
+async def get_current_line_user_id_from_access_token(
+    token: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+) -> str:
+    """
+    Dependency to get current LINE user ID from Bearer Access token.
+
+    Args:
+        token: HTTP Bearer token (LINE Access Token)
+
+    Returns:
+        LINE user ID
+    """
+    return await verify_line_access_token(token.credentials)
+
+
 def get_current_line_user_id(
     token: Annotated[HTTPAuthorizationCredentials, Depends(security)],
 ) -> str:
     """
-    Dependency to get current LINE user ID from Bearer token.
+    Dependency to get current LINE user ID from Bearer token (Legacy ID Token).
 
     Args:
-        token: HTTP Bearer token
+        token: HTTP Bearer token (LINE ID Token)
 
     Returns:
         LINE user ID

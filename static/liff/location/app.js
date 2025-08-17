@@ -16,63 +16,27 @@ class LocationApp {
                 return;
             }
 
-            // Check if ID Token is available and not expired
+            // Check if tokens are available
             try {
+                const accessToken = liff.getAccessToken();
                 const idToken = liff.getIDToken();
-                if (!idToken) {
-                    console.log('No ID Token available, redirecting to login');
+
+                console.log('Initial token check:', {
+                    hasAccessToken: !!accessToken,
+                    hasIdToken: !!idToken,
+                    accessTokenLength: accessToken ? accessToken.length : 0
+                });
+
+                if (!accessToken) {
+                    console.log('No Access Token available, redirecting to login');
                     liff.login();
                     return;
                 }
-
-                // Check token expiration immediately after login
-                const parts = idToken.split('.');
-                if (parts.length === 3) {
-                    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-                    const currentTime = Math.floor(Date.now() / 1000);
-                    const exp = payload.exp;
-
-                    console.log('Initial token check:', {
-                        currentTime: currentTime,
-                        exp: exp,
-                        timeToExpiry: exp - currentTime,
-                        isExpired: currentTime >= exp
-                    });
-
-                    // If token is expired or expires within 1 minute, force complete logout and re-login
-                    if (currentTime >= exp || (exp - currentTime) < 60) {
-                        console.log('Token is expired or expires soon, forcing complete logout and re-login');
-
-                        // Force complete logout to clear all cached tokens
-                        try {
-                            liff.logout();
-                            console.log('Logged out successfully');
-                        } catch (logoutError) {
-                            console.log('Logout error (might be okay):', logoutError);
-                        }
-
-                        // Clear any browser storage that might cache tokens
-                        try {
-                            localStorage.clear();
-                            sessionStorage.clear();
-                        } catch (storageError) {
-                            console.log('Storage clear error (might be okay):', storageError);
-                        }
-
-                        // Force re-login after logout
-                        setTimeout(() => {
-                            liff.login();
-                        }, 1000);
-                        return;
-                    }
-                }
             } catch (error) {
-                console.log('ID Token error, redirecting to login:', error);
+                console.log('Token error, redirecting to login:', error);
                 liff.login();
                 return;
-            }
-
-            // 載入並初始化頁面
+            }            // 載入並初始化頁面
             await this.loadAdminData();
             this.setupEventListeners();
             this.populateCounties();
@@ -189,79 +153,24 @@ class LocationApp {
             const county = document.getElementById('county').value;
             const district = document.getElementById('district').value;
 
-            // Get ID Token with retry on expiration
-            let idToken;
+            // Get Access Token (recommended for server API calls)
+            let accessToken;
             try {
-                idToken = liff.getIDToken();
-                if (!idToken) {
-                    throw new Error('No ID Token available');
+                accessToken = liff.getAccessToken();
+                if (!accessToken) {
+                    throw new Error('No Access Token available');
                 }
 
                 // Log token info for debugging (first 20 chars only for security)
-                console.log('ID Token obtained:', idToken.substring(0, 20) + '...');
-
-                // Try to decode payload to check expiration
-                try {
-                    const parts = idToken.split('.');
-                    if (parts.length === 3) {
-                        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-                        const currentTime = Math.floor(Date.now() / 1000);
-                        const exp = payload.exp;
-                        console.log('Token info:', {
-                            currentTime: currentTime,
-                            exp: exp,
-                            timeToExpiry: exp - currentTime,
-                            sub: payload.sub
-                        });
-
-                        // Check if token is expired or expires soon (within 1 minute)
-                        if (currentTime >= exp) {
-                            console.error('Token is already expired, forcing complete logout and re-login');
-                            this.showMessage('登入狀態已過期，完全重新登入中...', 'error');
-
-                            // Force complete logout
-                            try {
-                                liff.logout();
-                                localStorage.clear();
-                                sessionStorage.clear();
-                            } catch (error) {
-                                console.log('Cleanup error:', error);
-                            }
-
-                            setTimeout(() => liff.login(), 1000);
-                            return;
-                        }
-
-                        if (exp - currentTime < 60) {
-                            console.warn('Token expires very soon, forcing complete logout and re-login for safety');
-                            this.showMessage('登入狀態即將過期，完全重新登入中...', 'info');
-
-                            // Force complete logout
-                            try {
-                                liff.logout();
-                                localStorage.clear();
-                                sessionStorage.clear();
-                            } catch (error) {
-                                console.log('Cleanup error:', error);
-                            }
-
-                            setTimeout(() => liff.login(), 1000);
-                            return;
-                        }
-                    }
-                } catch (decodeError) {
-                    console.log('Could not decode token for debugging:', decodeError);
-                }
+                console.log('Access Token obtained:', accessToken.substring(0, 20) + '...');
 
             } catch (error) {
                 // Token might be expired, try to refresh by re-login
-                console.log('ID Token issue, attempting re-login:', error);
+                console.log('Access Token issue, attempting re-login:', error);
                 this.showMessage('登入狀態過期，請重新登入...', 'info');
                 liff.login();
                 return;
-            }
-
-            // Prepare payload
+            }            // Prepare payload
             const payload = {
                 location_type: locationType,
                 county: county,
@@ -273,7 +182,7 @@ class LocationApp {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${idToken}`
+                    'Authorization': `Bearer ${accessToken}`
                 },
                 body: JSON.stringify(payload)
             });
