@@ -24,6 +24,28 @@ class LocationApp {
                     liff.login();
                     return;
                 }
+
+                // Check token expiration immediately after login
+                const parts = idToken.split('.');
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    const currentTime = Math.floor(Date.now() / 1000);
+                    const exp = payload.exp;
+
+                    console.log('Initial token check:', {
+                        currentTime: currentTime,
+                        exp: exp,
+                        timeToExpiry: exp - currentTime,
+                        isExpired: currentTime >= exp
+                    });
+
+                    // If token is expired or expires within 1 minute, force re-login
+                    if (currentTime >= exp || (exp - currentTime) < 60) {
+                        console.log('Token is expired or expires soon, forcing re-login');
+                        liff.login();
+                        return;
+                    }
+                }
             } catch (error) {
                 console.log('ID Token error, redirecting to login:', error);
                 liff.login();
@@ -172,9 +194,19 @@ class LocationApp {
                             sub: payload.sub
                         });
 
-                        // Check if token is about to expire (within 5 minutes)
-                        if (exp - currentTime < 300) {
-                            console.warn('Token expires soon, might cause issues');
+                        // Check if token is expired or expires soon (within 1 minute)
+                        if (currentTime >= exp) {
+                            console.error('Token is already expired, forcing re-login');
+                            this.showMessage('登入狀態已過期，請重新登入', 'error');
+                            setTimeout(() => liff.login(), 1000);
+                            return;
+                        }
+
+                        if (exp - currentTime < 60) {
+                            console.warn('Token expires very soon, forcing re-login for safety');
+                            this.showMessage('登入狀態即將過期，重新登入中...', 'info');
+                            setTimeout(() => liff.login(), 1000);
+                            return;
                         }
                     }
                 } catch (decodeError) {
