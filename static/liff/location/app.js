@@ -1,12 +1,25 @@
-// LIFF Location Setting App
+// LIFF Location Setting App - Version 20250817-3
 class LocationApp {
     constructor() {
         this.adminData = {};
+        this.version = '20250817-3';
         this.init();
     }
 
     async init() {
         try {
+            // Check if this is the latest version by checking URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceRefresh = urlParams.get('refresh');
+
+            // If we detect we're in an infinite loop (multiple redirects), force refresh
+            if (window.location.href.includes('code=') && !forceRefresh) {
+                console.log('Detected OAuth redirect, adding refresh parameter');
+                const newUrl = window.location.href + '&refresh=1';
+                window.location.replace(newUrl);
+                return;
+            }
+
             // Initialize LIFF with real LIFF ID
             const liffId = '2007938807-GQzRrDoy';
             await liff.init({ liffId: liffId });
