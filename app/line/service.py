@@ -224,7 +224,7 @@ def send_liff_location_setting_response(reply_token: str) -> None:
     Args:
         reply_token: Reply token from LINE message event
     """
-    liff_url = f"{settings.BASE_URL}/static/liff/location/"
+    liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
     response_message = (
         "🏠 地點設定\n\n"
         "請點擊下方連結設定您的常用地點：\n"

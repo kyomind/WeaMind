@@ -23,7 +23,7 @@ class LocationApp {
 
     async loadAdminData() {
         try {
-            const response = await fetch('/static/data/tw_admin_divisions.json');
+            const response = await fetch('https://api.kyomind.tw/static/data/tw_admin_divisions.json');
             if (!response.ok) {
                 throw new Error('Failed to load admin data');
             }
@@ -139,7 +139,7 @@ class LocationApp {
             };
 
             // Submit to backend
-            const response = await fetch('/api/users/locations', {
+            const response = await fetch('https://api.kyomind.tw/users/locations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
