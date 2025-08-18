@@ -28,7 +28,20 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - Makefile: `Makefile`(must read for CLI commands)
 
 ## Core Development Commands
-- Tests: `uv run pytest`
+- Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
 - Lint: `uv run ruff check .`
 - Format: `uv run ruff format .`
 - Type check: `uv run pyright .`
+
+## VS Code Environment Best Practices
+*Note: Some tools mentioned below are GitHub Copilot specific. Use terminal alternatives if tools are unavailable.*
+- **Testing**: Always use `runTests` tool for better integration with VS Code test explorer
+- **Test Failures**: Use `test_failure` tool to get detailed failure information
+- **File Errors**: Use `get_errors` tool for compile/lint errors in specific files
+- **Coverage Analysis**:
+  - Use existing coverage reports: `coverage.xml` or `coverage_html_report/index.html`
+  - Read HTML report files for detailed coverage information
+
+## CLI Output Best Practices
+- **Short Commands**: Use `run_in_terminal` for commands with brief output (build, install, simple checks)
+- **Long Output**: Use specialized tools for extensive output operations

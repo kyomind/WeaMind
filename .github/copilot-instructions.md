@@ -34,6 +34,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - Type check: `uv run pyright .`
 
 ## VS Code Environment Best Practices
+*Note: Some tools mentioned below are GitHub Copilot specific. Use terminal alternatives if tools are unavailable.*
 - **Testing**: Always use `runTests` tool for better integration with VS Code test explorer
 - **Test Failures**: Use `test_failure` tool to get detailed failure information
 - **File Errors**: Use `get_errors` tool for compile/lint errors in specific files
