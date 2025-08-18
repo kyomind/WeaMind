@@ -7,6 +7,7 @@
 │   ├── __init__.py
 │   ├── core
 │   │   ├── __init__.py
+│   │   ├── auth.py
 │   │   ├── config.py
 │   │   ├── database.py
 │   │   └── logging.py
@@ -34,12 +35,16 @@
 ├── docker-compose.yml
 ├── Dockerfile
 ├── docs
-│   ├── Architecture.md
 │   ├── Example.md
-│   ├── Location-Input-Parsing-Implementation.md
-│   ├── Quick-Reply-Implementation.md
+│   ├── FIX-LIFF-Location-Settings-Authentication-Cache-Issues.md
+│   ├── LIFF-Location-Settings-Complete.md
+│   ├── liff-location-settings-dev-spec.md
+│   ├── LIFF-Version-Control-Guide.md
+│   ├── Security-Assessment-and-Checklist.md
+│   ├── set-locations-by-liff.md
 │   ├── Todo.md
-│   └── Tree.md
+│   ├── Tree.md
+│   └── User-API-Security-Design-Discussion.md
 ├── GEMINI.md
 ├── LICENSE
 ├── logs
@@ -53,6 +58,7 @@
 │       ├── 526d69e2321e_restrict_wea_bot_weather_permissions.py
 │       ├── 67c6acf6e8df_setup_database_permissions.py
 │       ├── 69db147baaec_grant_location_insert_update_.py
+│       ├── 7f11c9b6d545_feature_liff_location_settings_20250816_.py
 │       ├── 8fda37b4a59c_optimize_weather_table_indexes.py
 │       ├── b05ddf47e04e_create_user_table.py
 │       └── f557a1959851_create_location_weather_tables.py
@@ -66,7 +72,17 @@
 │   ├── cleanup_local_branches.sh
 │   ├── export_branch_docs.sh
 │   ├── gen_tree.sh
-│   └── sync_instructions.sh
+│   ├── sync_instructions.sh
+│   ├── update_liff_version.sh
+│   ├── worktree_add.sh
+│   ├── worktree_clean.sh
+│   ├── worktree_list.sh
+│   └── worktree_remove.sh
+├── static
+│   ├── data
+│   │   └── tw_admin_divisions.json
+│   └── liff
+│       └── location
 ├── tests
 │   ├── conftest.py
 │   ├── core
@@ -84,4 +100,4 @@
 │       └── test_location_service.py
 └── uv.lock
 
-18 directories, 65 files
+22 directories, 77 files

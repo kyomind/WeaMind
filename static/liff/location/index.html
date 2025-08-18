@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>地點設定 - WeaMind</title>
+    <!-- AUTO_UPDATE_VERSION: Cache busting version for CSS -->
+    <link rel="stylesheet" href="style.css?v=20250817-1330">
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"
+        integrity="sha384-qhUi6QIy4QqPhWxflVG5hItdBJU3apYXHW2LORl+S8YR4Cb+453TT8OA7YU9pdHS"
+        crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 地點設定</h1>
+            <p>設定您的常用地點，方便快速查詢天氣</p>
+        </header>
+
+        <form id="locationForm">
+            <div class="form-group">
+                <label class="section-title">地點類型</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="locationType" value="home" checked>
+                        <span class="radio-custom"></span>
+                        🏠 住家
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="locationType" value="work">
+                        <span class="radio-custom"></span>
+                        🏢 公司
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="county" class="section-title">縣市</label>
+                <select id="county" name="county" required>
+                    <option value="">請選擇縣市</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="district" class="section-title">行政區</label>
+                <select id="district" name="district" required disabled>
+                    <option value="">請先選擇縣市</option>
+                </select>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary" disabled>確認</button>
+            </div>
+        </form>
+
+        <div id="loading" class="loading hidden">
+            <div class="loading-spinner"></div>
+            <p>設定中...</p>
+        </div>
+
+        <div id="message" class="message hidden"></div>
+    </div>
+
+    <!-- AUTO_UPDATE_VERSION: Cache busting version for JavaScript -->
+    <script src="app.js?v=20250817-1330"></script>
+</body>
+
+</html>

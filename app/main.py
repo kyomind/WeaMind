@@ -3,6 +3,8 @@
 import logging
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.core.logging import setup_logging
@@ -33,6 +35,15 @@ else:
     )
     logger.info("FastAPI app created in production mode")
 
+# 🔒 安全配置：CORS 設定
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://liff.line.me"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 async def root() -> dict:
@@ -46,7 +57,10 @@ async def root() -> dict:
 
 
 # Register routers from modules
-app.include_router(user_router, tags=["user"])
+app.include_router(user_router, tags=["user"])  # no prefix because the domain is api.kyomind.tw
 app.include_router(line_router, tags=["line"])
+
+# Mount static files for LIFF
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 logger.info("All routers registered successfully")
