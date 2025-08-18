@@ -55,7 +55,7 @@ class LocationApp {
 
     populateCounties() {
         const countySelect = document.getElementById('county');
-        const counties = Object.keys(this.adminData).sort();
+        const counties = Object.keys(this.adminData).sort((a, b) => a.localeCompare(b));
 
         counties.forEach(county => {
             const option = document.createElement('option');
@@ -114,7 +114,7 @@ class LocationApp {
             districtSelect.disabled = false;
 
             // Populate districts
-            const districts = this.adminData[selectedCounty].sort();
+            const districts = this.adminData[selectedCounty].sort((a, b) => a.localeCompare(b));
             districts.forEach(district => {
                 const option = document.createElement('option');
                 option.value = district;
@@ -259,5 +259,5 @@ class LocationApp {
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new LocationApp();
+    const app = new LocationApp();
 });
