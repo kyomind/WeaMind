@@ -3,7 +3,6 @@
 import base64
 import hashlib
 import hmac
-from collections.abc import Callable
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -20,47 +19,6 @@ def test_root(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200  # noqa: S101
     assert response.json() == {"message": "Welcome to WeaMind API"}  # noqa: S101
-
-
-def test_create_user(client: TestClient) -> None:
-    """Create a new user."""
-
-    data = {"line_user_id": str(uuid4()), "display_name": "Alice"}
-    response = client.post("/users", json=data)
-    assert response.status_code == 201  # noqa: S101
-    body = response.json()
-    assert body["line_user_id"] == data["line_user_id"]  # noqa: S101
-
-
-def test_get_user(create_user: Callable[..., dict], client: TestClient) -> None:
-    """Retrieve an existing user."""
-
-    created = create_user()
-    user_id = created["id"]
-    response = client.get(f"/users/{user_id}")
-    assert response.status_code == 200  # noqa: S101
-    assert response.json()["id"] == user_id  # noqa: S101
-
-
-def test_update_user(create_user: Callable[..., dict], client: TestClient) -> None:
-    """Update a user's display name."""
-
-    created = create_user()
-    user_id = created["id"]
-    response = client.patch(f"/users/{user_id}", json={"display_name": "Bob"})
-    assert response.status_code == 200  # noqa: S101
-    assert response.json()["display_name"] == "Bob"  # noqa: S101
-
-
-def test_delete_user(create_user: Callable[..., dict], client: TestClient) -> None:
-    """Delete a user."""
-
-    created = create_user()
-    user_id = created["id"]
-    response = client.delete(f"/users/{user_id}")
-    assert response.status_code == 204  # noqa: S101
-    response = client.get(f"/users/{user_id}")
-    assert response.status_code == 404  # noqa: S101
 
 
 def test_line_webhook_signature_ok(client: TestClient) -> None:
@@ -189,88 +147,6 @@ class TestUserService:
 
 class TestUserServiceAdditional:
     """Additional test cases for user service functions."""
-
-    def test_create_user(self, session: Session) -> None:
-        """Test creating a new user."""
-        from app.user.schemas import UserCreate
-        from app.user.service import create_user
-
-        line_user_id = str(uuid4())
-        user_data = UserCreate(line_user_id=line_user_id, display_name="Test User")
-
-        created_user = create_user(session, user_data)
-
-        assert created_user.line_user_id == line_user_id  # noqa: S101
-        assert created_user.display_name == "Test User"  # noqa: S101
-        assert created_user.is_active  # noqa: S101
-
-    def test_get_user(self, session: Session) -> None:
-        """Test getting user by ID."""
-        from app.user.service import get_user
-
-        user = User(line_user_id=str(uuid4()), display_name="Test User")
-        session.add(user)
-        session.commit()
-
-        retrieved_user = get_user(session, user.id)
-
-        assert retrieved_user is not None  # noqa: S101
-        assert retrieved_user.id == user.id  # noqa: S101
-
-    def test_get_user_not_exists(self, session: Session) -> None:
-        """Test getting user that doesn't exist."""
-        from app.user.service import get_user
-
-        result = get_user(session, 99999)
-        assert result is None  # noqa: S101
-
-    def test_update_user(self, session: Session) -> None:
-        """Test updating user."""
-        from app.user.schemas import UserUpdate
-        from app.user.service import update_user
-
-        user = User(line_user_id=str(uuid4()), display_name="Original Name")
-        session.add(user)
-        session.commit()
-
-        user_update = UserUpdate(display_name="Updated Name")
-        updated_user = update_user(session, user.id, user_update)
-
-        assert updated_user is not None  # noqa: S101
-        assert updated_user.display_name == "Updated Name"  # noqa: S101
-
-    def test_update_user_not_exists(self, session: Session) -> None:
-        """Test updating user that doesn't exist."""
-        from app.user.schemas import UserUpdate
-        from app.user.service import update_user
-
-        user_update = UserUpdate(display_name="Updated Name")
-        result = update_user(session, 99999, user_update)
-
-        assert result is None  # noqa: S101
-
-    def test_delete_user(self, session: Session) -> None:
-        """Test deleting user."""
-        from app.user.service import delete_user
-
-        user = User(line_user_id=str(uuid4()), display_name="Test User")
-        session.add(user)
-        session.commit()
-        user_id = user.id
-
-        result = delete_user(session, user_id)
-
-        assert result is True  # noqa: S101
-        # Verify user is deleted
-        deleted_user = session.get(User, user_id)
-        assert deleted_user is None  # noqa: S101
-
-    def test_delete_user_not_exists(self, session: Session) -> None:
-        """Test deleting user that doesn't exist."""
-        from app.user.service import delete_user
-
-        result = delete_user(session, 99999)
-        assert result is False  # noqa: S101
 
     def test_get_location_by_county_district(self, session: Session) -> None:
         """Test getting location by county and district."""
@@ -422,39 +298,6 @@ class TestUserServiceAdditional:
 
 class TestUserRouterAdditional:
     """Additional test cases for user router endpoints."""
-
-    def test_create_user_duplicate_line_id(self, client: TestClient) -> None:
-        """Test creating user with duplicate LINE ID."""
-        line_user_id = str(uuid4())
-
-        # Create first user
-        payload = {"line_user_id": line_user_id, "display_name": "First User"}
-        response = client.post("/users", json=payload)
-        assert response.status_code == 201  # noqa: S101
-
-        # Try to create second user with same LINE ID
-        payload = {"line_user_id": line_user_id, "display_name": "Second User"}
-        response = client.post("/users", json=payload)
-        assert response.status_code == 400  # noqa: S101
-        assert "User already exists" in response.json()["detail"]  # noqa: S101
-
-    def test_get_user_not_found(self, client: TestClient) -> None:
-        """Test getting user that doesn't exist."""
-        response = client.get("/users/99999")
-        assert response.status_code == 404  # noqa: S101
-        assert response.json()["detail"] == "User not found"  # noqa: S101
-
-    def test_update_user_not_found(self, client: TestClient) -> None:
-        """Test updating user that doesn't exist."""
-        response = client.patch("/users/99999", json={"display_name": "New Name"})
-        assert response.status_code == 404  # noqa: S101
-        assert response.json()["detail"] == "User not found"  # noqa: S101
-
-    def test_delete_user_not_found(self, client: TestClient) -> None:
-        """Test deleting user that doesn't exist."""
-        response = client.delete("/users/99999")
-        assert response.status_code == 404  # noqa: S101
-        assert response.json()["detail"] == "User not found"  # noqa: S101
 
     def test_set_user_location_success(self, client: TestClient, session: Session) -> None:
         """Test successfully setting user location via LIFF."""

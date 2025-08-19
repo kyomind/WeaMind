@@ -29,6 +29,7 @@
         "LIFF",
         "linebot",
         "mkdocs",
+        "noqa",
         "nosetests",
         "onupdate",
         "perflint",
