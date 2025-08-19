@@ -33,6 +33,12 @@ This file serves as an index for WeaMind testing guidelines. The guidelines have
 3. **Model Validation**: Data validation logic
 4. **Error Handling**: Exception scenarios
 
+## Coverage Analysis Best Practices
+- **IMPORTANT**: Always run tests with coverage first to generate fresh reports before analysis
+- Use `uv run pytest --cov=app --cov-report=xml --cov-report=html` to generate current reports
+- Then read coverage reports: `coverage.xml` or `coverage_html_report/index.html`
+- Read HTML report files for detailed coverage information
+
 ---
 
 **Note**: These guidelines follow pytest best practices and WeaMind project coding standards.

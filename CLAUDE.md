@@ -32,6 +32,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 
 ## Core Development Commands
 - Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
+- Coverage: `uv run pytest --cov=app --cov-report=xml --cov-report=html` to generate reports
 - Lint: `uv run ruff check .`
 - Format: `uv run ruff format .`
 - Type check: `uv run pyright .`
@@ -41,6 +42,3 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - **Testing**: Always use `runTests` tool for better integration with VS Code test explorer
 - **Test Failures**: Use `test_failure` tool to get detailed failure information
 - **File Errors**: Use `get_errors` tool for compile/lint errors in specific files
-- **Coverage Analysis**:
-  - Use existing coverage reports: `coverage.xml` or `coverage_html_report/index.html`
-  - Read HTML report files for detailed coverage information
