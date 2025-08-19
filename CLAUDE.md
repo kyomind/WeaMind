@@ -10,7 +10,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 
 ## Coding Standards
 1. **Type Safety**: Always use type hints
-2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring.prompt.md`)
+2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring-guidelines.prompt.md`)
 3. **Comments**: Add comments for important logic to explain design intent
 
 ### Naming Conventions
@@ -27,6 +27,8 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - PRD documents: `prd/` (internal only)
 - Makefile: `Makefile` (project-specific shortcuts and preferred commands)
 - CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md` (guidelines for using terminal tools effectively)
+- Docstring Guidelines: `.github/prompts/docstring-guidelines.prompt.md` (Python function documentation standards)
+- Testing Guidelines: `.github/instructions/testing-guidelines.md` (comprehensive testing best practices and patterns)
 
 ## Core Development Commands
 - Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
