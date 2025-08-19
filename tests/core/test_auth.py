@@ -1,8 +1,7 @@
 """Test authentication utilities."""
 
-import base64
-import json
 import time
+from collections.abc import Callable
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
@@ -182,32 +181,12 @@ class TestVerifyLineAccessToken:
 class TestVerifyLineIdToken:
     """Test LINE ID Token verification."""
 
-    def create_valid_token(self, line_user_id: str, exp_offset: int = 3600) -> str:
-        """Create a valid JWT token for testing."""
-        current_time = int(time.time())
-
-        header = {"alg": "RS256", "typ": "JWT"}
-        payload = {
-            "iss": "https://access.line.me",
-            "sub": line_user_id,
-            "exp": current_time + exp_offset,
-        }
-
-        # Base64 encode without padding
-        header_encoded = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-        payload_encoded = (
-            base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-        )
-
-        # Create a dummy signature (we're not verifying signature in current implementation)
-        signature = base64.urlsafe_b64encode(b"dummy_signature").decode().rstrip("=")
-
-        return f"{header_encoded}.{payload_encoded}.{signature}"
-
-    def test_verify_line_id_token_success(self) -> None:
+    def test_verify_line_id_token_success(
+        self, create_jwt_token: Callable[[str, int], str]
+    ) -> None:
         """Test successful LINE ID Token verification."""
         line_user_id = str(uuid4())
-        token = self.create_valid_token(line_user_id)
+        token = create_jwt_token(line_user_id, 3600)
 
         result = verify_line_id_token(token)
 
@@ -223,7 +202,9 @@ class TestVerifyLineIdToken:
         assert exc_info.value.status_code == 401  # noqa: S101
         assert "Invalid LINE ID Token" in exc_info.value.detail  # noqa: S101
 
-    def test_verify_line_id_token_unsupported_algorithm(self) -> None:
+    def test_verify_line_id_token_unsupported_algorithm(
+        self, create_custom_jwt_token: Callable[[dict, dict], str]
+    ) -> None:
         """Test LINE ID Token verification with unsupported algorithm."""
         header = {"alg": "HS256", "typ": "JWT"}  # Unsupported algorithm
         payload = {
@@ -232,20 +213,16 @@ class TestVerifyLineIdToken:
             "exp": int(time.time()) + 3600,
         }
 
-        header_encoded = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-        payload_encoded = (
-            base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-        )
-        signature = "dummy_signature"
-
-        token = f"{header_encoded}.{payload_encoded}.{signature}"
+        token = create_custom_jwt_token(header, payload)
 
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
         assert exc_info.value.status_code == 401  # noqa: S101
 
-    def test_verify_line_id_token_no_expiration(self) -> None:
+    def test_verify_line_id_token_no_expiration(
+        self, create_custom_jwt_token: Callable[[dict, dict], str]
+    ) -> None:
         """Test LINE ID Token verification without expiration time."""
         header = {"alg": "RS256", "typ": "JWT"}
         payload = {
@@ -254,30 +231,28 @@ class TestVerifyLineIdToken:
             # No exp field
         }
 
-        header_encoded = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-        payload_encoded = (
-            base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-        )
-        signature = "dummy_signature"
-
-        token = f"{header_encoded}.{payload_encoded}.{signature}"
+        token = create_custom_jwt_token(header, payload)
 
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
         assert exc_info.value.status_code == 401  # noqa: S101
 
-    def test_verify_line_id_token_expired(self) -> None:
+    def test_verify_line_id_token_expired(
+        self, create_jwt_token: Callable[[str, int], str]
+    ) -> None:
         """Test LINE ID Token verification with expired token."""
         line_user_id = str(uuid4())
-        token = self.create_valid_token(line_user_id, exp_offset=-3600)  # Expired 1 hour ago
+        token = create_jwt_token(line_user_id, -3600)  # Expired 1 hour ago
 
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
         assert exc_info.value.status_code == 401  # noqa: S101
 
-    def test_verify_line_id_token_invalid_issuer(self) -> None:
+    def test_verify_line_id_token_invalid_issuer(
+        self, create_custom_jwt_token: Callable[[dict, dict], str]
+    ) -> None:
         """Test LINE ID Token verification with invalid issuer."""
         header = {"alg": "RS256", "typ": "JWT"}
         payload = {
@@ -286,20 +261,16 @@ class TestVerifyLineIdToken:
             "exp": int(time.time()) + 3600,
         }
 
-        header_encoded = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-        payload_encoded = (
-            base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-        )
-        signature = "dummy_signature"
-
-        token = f"{header_encoded}.{payload_encoded}.{signature}"
+        token = create_custom_jwt_token(header, payload)
 
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
         assert exc_info.value.status_code == 401  # noqa: S101
 
-    def test_verify_line_id_token_no_user_id(self) -> None:
+    def test_verify_line_id_token_no_user_id(
+        self, create_custom_jwt_token: Callable[[dict, dict], str]
+    ) -> None:
         """Test LINE ID Token verification without user ID."""
         header = {"alg": "RS256", "typ": "JWT"}
         payload = {
@@ -308,13 +279,7 @@ class TestVerifyLineIdToken:
             # No sub field
         }
 
-        header_encoded = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-        payload_encoded = (
-            base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-        )
-        signature = "dummy_signature"
-
-        token = f"{header_encoded}.{payload_encoded}.{signature}"
+        token = create_custom_jwt_token(header, payload)
 
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
