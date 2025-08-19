@@ -4,46 +4,46 @@ applyTo: 'tests/**/*.py'
 
 # WeaMind Testing Guidelines
 
-## 測試檔案結構與組織
+## Test File Structure and Organization
 
-### 檔案結構對應
-- 保持測試檔案結構與 `app/` 目錄結構一致
-- 測試檔案命名: `test_<module_name>.py`
-- 每個模組建立對應的 `conftest.py` 存放專用 fixtures
+### File Structure Mapping
+- Keep test file structure consistent with `app/` directory structure
+- Test file naming: `test_<module_name>.py`
+- Create corresponding `conftest.py` for each module to store dedicated fixtures
 
 ```
 tests/
-├── conftest.py              # 全域 fixtures
+├── conftest.py              # Global fixtures
 ├── core/
-│   ├── conftest.py         # core 模組專用 fixtures
+│   ├── conftest.py         # Core module specific fixtures
 │   └── test_*.py
 ├── user/
-│   ├── conftest.py         # user 模組專用 fixtures
+│   ├── conftest.py         # User module specific fixtures
 │   └── test_user.py
 └── <module>/
     ├── conftest.py
     └── test_*.py
 ```
 
-## Pytest Fixtures 命名約定
+## Pytest Fixtures Naming Conventions
 
-### Helper Functions (動詞開頭)
+### Helper Functions (Verb prefix)
 ```python
 @pytest.fixture()
 def create_user() -> Callable[..., dict]:
     """Return a helper for creating test users."""
     def _create(display_name: str = "Alice") -> dict:
-        # 實作
-        return result
+        # Implementation
+        return created_user
     return _create
 
 @pytest.fixture()
 def setup_mock_weather_api() -> Generator[Mock, None, None]:
     """Setup and teardown mock weather API."""
-    # 實作
+    # Implementation
 ```
 
-### Objects/Values (名詞)
+### Objects/Values (Noun)
 ```python
 @pytest.fixture()
 def user() -> dict:
@@ -56,74 +56,74 @@ def client() -> TestClient:
     return TestClient(app)
 ```
 
-## 測試類別組織
+## Test Class Organization
 
-### 類別命名與結構
+### Class Naming and Structure
 ```python
 class TestLocationService:
     """Test cases for LocationService class."""
 
     def test_validate_location_input_valid(self) -> None:
         """Test valid location input validation."""
-        # 測試實作
+        # Test implementation
 
     def test_validate_location_input_invalid_length(self) -> None:
         """Test location input validation with invalid length."""
-        # 測試實作
+        # Test implementation
 ```
 
-### 測試方法命名模式
+### Test Method Naming Pattern
 - `test_<method_name>_<scenario>`
-- 範例: `test_validate_location_input_valid`, `test_create_user_duplicate_line_id`
+- Examples: `test_validate_location_input_valid`, `test_create_user_duplicate_line_id`
 
-## API 測試最佳實踐
+## API Testing Best Practices
 
-### HTTP 狀態碼檢查
+### HTTP Status Code Validation
 ```python
 def test_create_user(client: TestClient) -> None:
     """Create a new user."""
-    data = {"line_user_id": str(uuid4()), "display_name": "Alice"}
-    response = client.post("/users", json=data)
+    payload = {"line_user_id": str(uuid4()), "display_name": "Alice"}
+    response = client.post("/users", json=payload)
     assert response.status_code == 201  # noqa: S101
-    body = response.json()
-    assert body["line_user_id"] == data["line_user_id"]  # noqa: S101
+    response_body = response.json()
+    assert response_body["line_user_id"] == payload["line_user_id"]  # noqa: S101
 ```
 
-### 使用 Helper Fixtures
+### Using Helper Fixtures
 ```python
 def test_get_user(create_user: Callable[..., dict], client: TestClient) -> None:
     """Retrieve an existing user."""
-    created = create_user()  # 使用 helper 建立測試資料
-    user_id = created["id"]
+    created_user = create_user()  # Use helper to create test data
+    user_id = created_user["id"]
     response = client.get(f"/users/{user_id}")
     assert response.status_code == 200  # noqa: S101
 ```
 
-## Mock 與外部服務測試
+## Mock and External Service Testing
 
-### Mock 外部 API
+### Mock External APIs
 ```python
 @patch('app.weather.service.external_weather_api')
-def test_weather_api_integration(mock_api: Mock) -> None:
+def test_weather_api_integration(mock_weather_api: Mock) -> None:
     """Test weather API integration with mocked response."""
-    mock_api.return_value = {"temperature": 25, "condition": "sunny"}
-    # 測試實作
+    mock_weather_api.return_value = {"temperature": 25, "condition": "sunny"}
+    # Test implementation
 ```
 
-### LINE Bot Event 測試
+### LINE Bot Event Testing
 ```python
 def test_handle_follow_event() -> None:
     """Test handling LINE follow event."""
-    mock_event = FollowEvent(
+    follow_event = FollowEvent(
         source={"type": "user", "userId": "test_user"},
         timestamp=1234567890
     )
-    # 測試實作
+    # Test implementation
 ```
 
-## 異常處理測試
+## Exception Handling Testing
 
-### 使用 pytest.raises
+### Using pytest.raises
 ```python
 def test_validate_location_input_invalid_length(self) -> None:
     """Test location input validation with invalid length."""
@@ -132,129 +132,129 @@ def test_validate_location_input_invalid_length(self) -> None:
     assert "輸入的字數不對" in exc_info.value.message
 ```
 
-## 資料庫測試
+## Database Testing
 
-### 使用內存資料庫
-- 全域 conftest.py 已設定 SQLite 內存資料庫
-- 每個測試使用乾淨的資料庫狀態
+### Using In-Memory Database
+- Global conftest.py has configured SQLite in-memory database
+- Each test uses clean database state
 
-### Service Layer 測試
+### Service Layer Testing
 ```python
 def test_create_user_if_not_exists(session: Session) -> None:
     """Test user creation service logic."""
     line_user_id = "test_user_123"
     display_name = "Test User"
 
-    user = create_user_if_not_exists(session, line_user_id, display_name)
-    assert user.line_user_id == line_user_id
-    assert user.display_name == display_name
+    created_user = create_user_if_not_exists(session, line_user_id, display_name)
+    assert created_user.line_user_id == line_user_id
+    assert created_user.display_name == display_name
 ```
 
-## 測試文件與斷言
+## Test Documentation and Assertions
 
-### Docstring 格式
+### Docstring Format
 ```python
 def test_webhook_invalid_signature(client: TestClient) -> None:
     """Test webhook with invalid LINE signature."""
-    # 測試實作
+    # Test implementation
 ```
 
-### 斷言風格
-- 使用 `assert` 而非 `self.assert*`
-- 加上 `# noqa: S101` 避免 ruff 警告
-- 斷言順序: 先檢查狀態碼，再檢查回應內容
+### Assertion Style
+- Use `assert` instead of `self.assert*`
+- Add `# noqa: S101` to avoid ruff warnings
+- Assertion order: Check status code first, then response content
 
-## 測試覆蓋率目標
+## Test Coverage Goals
 
-### 優先覆蓋範圍
-1. **Service Layer**: 業務邏輯核心
-2. **API Endpoints**: 所有 HTTP 介面
-3. **Model Validation**: 資料驗證邏輯
-4. **Error Handling**: 異常情況處理
+### Priority Coverage Areas
+1. **Service Layer**: Core business logic
+2. **API Endpoints**: All HTTP interfaces
+3. **Model Validation**: Data validation logic
+4. **Error Handling**: Exception scenarios
 
-### 覆蓋率檢查
+### Coverage Checking
 ```bash
-# 執行測試並生成覆蓋率報告
+# Run tests and generate coverage report
 uv run pytest --cov=app --cov-report=html
 
-# 查看覆蓋率報告
+# View coverage report
 open coverage_html_report/index.html
 ```
 
-## 常見測試模式
+## Common Testing Patterns
 
-### 1. 建立測試資料的 Helper Pattern
+### 1. Test Data Creation Helper Pattern
 ```python
 @pytest.fixture()
 def create_user(client: TestClient) -> Callable[..., dict]:
     """Return a helper for creating test users."""
     def _create(display_name: str = "Alice") -> dict:
-        data = {"line_user_id": str(uuid4()), "display_name": display_name}
-        response = client.post("/users", json=data)
+        payload = {"line_user_id": str(uuid4()), "display_name": display_name}
+        response = client.post("/users", json=payload)
         assert response.status_code == 201
         return response.json()
     return _create
 ```
 
-### 2. 參數化測試
+### 2. Parameterized Testing
 ```python
-@pytest.mark.parametrize("input_location,expected", [
+@pytest.mark.parametrize("input_location,expected_location", [
     ("永和區", "永和區"),
     ("台北", "臺北"),
     (" 中山區 ", "中山區"),
 ])
-def test_location_input_normalization(input_location: str, expected: str) -> None:
+def test_location_input_normalization(input_location: str, expected_location: str) -> None:
     """Test location input normalization."""
-    result = LocationService.validate_location_input(input_location)
-    assert result == expected
+    normalized_location = LocationService.validate_location_input(input_location)
+    assert normalized_location == expected_location
 ```
 
-### 3. 類別化測試組織
+### 3. Class-based Test Organization
 ```python
 class TestLineWebhook:
     """Test LINE webhook endpoint."""
 
     def test_invalid_content_type(self, client: TestClient) -> None:
         """Test webhook with invalid content type."""
-        # 測試實作
+        # Test implementation
 
     def test_webhook_processing_error(self, client: TestClient) -> None:
         """Test webhook processing error handling."""
-        # 測試實作
+        # Test implementation
 ```
 
-## 測試執行指導
+## Test Execution Guidelines
 
-### VS Code 整合
-- 優先使用 `runTests` 工具進行測試
-- 利用 VS Code Test Explorer 瀏覽和執行個別測試
+### VS Code Integration
+- Prefer using `runTests` tool for testing
+- Utilize VS Code Test Explorer to browse and execute individual tests
 
-### 命令列執行
+### Command Line Execution
 ```bash
-# 執行全部測試
+# Run all tests
 uv run pytest
 
-# 執行特定模組測試
+# Run specific module tests
 uv run pytest tests/user/
 
-# 執行特定測試
+# Run specific test
 uv run pytest tests/user/test_user.py::test_create_user
 
-# 執行測試並顯示詳細輸出
+# Run tests with verbose output
 uv run pytest -v
 ```
 
-## 效能考量
+## Performance Considerations
 
-### Fixture 設計原則
-- 使用 module-level singleton 避免重複建立昂貴資源
-- 範例: `_client = TestClient(app)` 在模組層級建立
+### Fixture Design Principles
+- Use module-level singleton to avoid recreating expensive resources
+- Example: `_client = TestClient(app)` created at module level
 
-### 測試隔離
-- 每個測試應該獨立執行
-- 避免測試間的狀態依賴
-- 使用適當的 scope 管理 fixture 生命週期
+### Test Isolation
+- Each test should run independently
+- Avoid state dependencies between tests
+- Use appropriate scope to manage fixture lifecycle
 
 ---
 
-**注意**: 這些指導原則基於 WeaMind 專案的實際測試實踐，遵循 pytest 最佳實踐與專案的編碼標準。
+**Note**: These guidelines are based on WeaMind project's actual testing practices, following pytest best practices and project coding standards.
