@@ -1,3 +1,8 @@
+---
+mode: 'agent'
+description: 'Python docstring style guide for function documentation'
+---
+
 # Python Docstring Style Guide
 
 When writing Python docstrings, follow the Google style as the general principle, and adhere to the following rules:
@@ -21,20 +26,20 @@ When writing Python docstrings, follow the Google style as the general principle
 Here are examples that follow the specification:
 
 ```python
-def get_db() -> typing.Generator[Session, None, None]:
+def get_session() -> typing.Generator[Session, None, None]:
     """
     Create a database session.
 
-    Usage: Add Depends(get_db) in your route.
+    Usage: Add Depends(get_session) in your route.
 
     Returns:
         Database session object for database operations.
     """
-    db = SessionLocal()
+    session = SessionLocal()
     try:
-        yield db
+        yield session
     finally:
-        db.close()
+        session.close()
 ```
 
 One line or three lines are enough for simple functions:
