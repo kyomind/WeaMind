@@ -25,7 +25,8 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
 - Directory structure: `docs/Tree.md`
 - PRD documents: `prd/` (internal only)
-- Makefile: `Makefile`(must read for CLI commands)
+- Makefile: `Makefile` (project-specific shortcuts and preferred commands)
+- CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md` (guidelines for using terminal tools effectively)
 
 ## Core Development Commands
 - Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
@@ -41,7 +42,3 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - **Coverage Analysis**:
   - Use existing coverage reports: `coverage.xml` or `coverage_html_report/index.html`
   - Read HTML report files for detailed coverage information
-
-## CLI Output Best Practices
-- **Short Commands**: Use `run_in_terminal` for commands with brief output (build, install, simple checks)
-- **Long Output**: Use specialized tools for extensive output operations
