@@ -10,7 +10,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 
 ## Coding Standards
 1. **Type Safety**: Always use type hints
-2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring.prompt.md`)
+2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring-guidelines.prompt.md`)
 3. **Comments**: Add comments for important logic to explain design intent
 
 ### Naming Conventions
@@ -25,10 +25,20 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
 - Directory structure: `docs/Tree.md`
 - PRD documents: `prd/` (internal only)
-- Makefile: `Makefile`(must read for CLI commands)
+- Makefile: `Makefile` (project-specific shortcuts and preferred commands)
+- CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md` (guidelines for using terminal tools effectively)
+- Docstring Guidelines: `.github/prompts/docstring-guidelines.prompt.md` (Python function documentation standards)
+- Testing Guidelines: `.github/instructions/testing-guidelines.md` (comprehensive testing best practices and patterns)
 
 ## Core Development Commands
-- Tests: `uv run pytest`
+- Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
+- Coverage: `uv run pytest --cov=app --cov-report=xml --cov-report=html` to generate reports
 - Lint: `uv run ruff check .`
 - Format: `uv run ruff format .`
 - Type check: `uv run pyright .`
+
+## VS Code Environment Best Practices
+*Note: Some tools mentioned below are GitHub Copilot specific. Use terminal alternatives if tools are unavailable.*
+- **Testing**: Always use `runTests` tool for better integration with VS Code test explorer
+- **Test Failures**: Use `test_failure` tool to get detailed failure information
+- **File Errors**: Use `get_errors` tool for compile/lint errors in specific files

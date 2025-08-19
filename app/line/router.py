@@ -62,7 +62,9 @@ async def line_webhook(
     }
     """
     body_as_text: str = body.decode("utf-8")
-    logger.info(f"Received LINE webhook: {body_as_text}")
+
+    # Log webhook reception safely without exposing full content (security: prevent log injection)
+    logger.info(f"Received LINE webhook: length={len(body_as_text)} bytes")
 
     # Handle webhook event using official SDK
     try:

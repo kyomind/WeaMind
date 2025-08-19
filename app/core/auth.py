@@ -133,9 +133,6 @@ def verify_line_id_token(token: str) -> str:
         time_buffer = 5 * 60  # 5 minutes
         if current_time > (exp + time_buffer):
             # Log for debugging
-            import logging
-
-            logger = logging.getLogger(__name__)
             logger.warning(
                 f"Token expired: current_time={current_time}, exp={exp}, diff={current_time - exp}"
             )
@@ -152,9 +149,6 @@ def verify_line_id_token(token: str) -> str:
             raise ValueError("No user ID in token")
 
         # Log successful verification for debugging
-        import logging
-
-        logger = logging.getLogger(__name__)
         logger.info(f"Token verified successfully for user: {line_user_id}")
 
         # TODO: 完整的生產環境實作應該：
