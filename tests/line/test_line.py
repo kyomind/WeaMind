@@ -6,11 +6,13 @@ from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
 
+from app.core.config import settings
 from app.line.service import (
     handle_default_event,
     handle_follow_event,
     handle_message_event,
     handle_unfollow_event,
+    send_liff_location_setting_response,
 )
 
 
@@ -293,6 +295,109 @@ class TestLineService:
         # Should return early without processing
         handle_unfollow_event(mock_event)
         # No exception should be raised
+
+    def test_handle_message_event_location_setting_command(self) -> None:
+        """Test handling '設定地點' command."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_message = Mock(spec=TextMessageContent)
+        mock_message.text = "設定地點"
+        mock_event.message = mock_message
+
+        with patch("app.line.service.get_session") as mock_get_session:
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            with patch("app.line.service.send_liff_location_setting_response") as mock_send_liff:
+                handle_message_event(mock_event)
+                mock_send_liff.assert_called_once_with("test_token")
+                mock_session.close.assert_called_once()
+
+    def test_handle_message_event_location_parse_exception(self) -> None:
+        """Test handling unexpected exception during location parsing."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_message = Mock(spec=TextMessageContent)
+        mock_message.text = "台北"
+        mock_event.message = mock_message
+
+        with patch("app.line.service.get_session") as mock_get_session:
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            with patch(
+                "app.line.service.LocationService.parse_location_input",
+                side_effect=Exception("Unexpected error"),
+            ):
+                with patch("app.line.service.MessagingApi") as mock_messaging_api:
+                    mock_api_instance = Mock()
+                    mock_messaging_api.return_value = mock_api_instance
+
+                    with patch("app.line.service.ApiClient"):
+                        handle_message_event(mock_event)
+
+                        # Should send generic error message
+                        mock_api_instance.reply_message.assert_called_once()
+                        call_args = mock_api_instance.reply_message.call_args[0]
+                        request = call_args[0]
+                        message = request.messages[0]
+                        assert "系統暫時有點忙" in message.text
+
+    def test_handle_follow_event_exception(self) -> None:
+        """Test follow event with general exception."""
+        mock_event = Mock(spec=FollowEvent)
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch(
+            "app.line.service.get_session",
+            side_effect=Exception("Database error"),
+        ):
+            # Should not raise exception, just log error
+            handle_follow_event(mock_event)
+
+    def test_handle_unfollow_event_exception(self) -> None:
+        """Test unfollow event with general exception."""
+        mock_event = Mock(spec=UnfollowEvent)
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch(
+            "app.line.service.get_session",
+            side_effect=Exception("Database error"),
+        ):
+            # Should not raise exception, just log error
+            handle_unfollow_event(mock_event)
+
+    def test_send_liff_location_setting_response_success(self) -> None:
+        """Test successful LIFF location setting response."""
+
+        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            with patch("app.line.service.ApiClient"):
+                send_liff_location_setting_response("test_token")
+
+                mock_api_instance.reply_message.assert_called_once()
+                call_args = mock_api_instance.reply_message.call_args[0]
+                request = call_args[0]
+                message = request.messages[0]
+                assert "地點設定" in message.text
+                assert settings.BASE_URL in message.text
+
+    def test_send_liff_location_setting_response_error(self) -> None:
+        """Test LIFF location setting response with API error."""
+
+        with patch(
+            "app.line.service.MessagingApi.reply_message",
+            side_effect=Exception("API Error"),
+        ):
+            with patch("app.line.service.ApiClient"):
+                # Should not raise exception, just log error
+                send_liff_location_setting_response("test_token")
 
 
 class TestQuickReplyFeature:
