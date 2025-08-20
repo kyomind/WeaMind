@@ -35,13 +35,11 @@
 ├── docker-compose.yml
 ├── Dockerfile
 ├── docs
+│   ├── Architecture.md
+│   ├── DISCUSS-AI-Development-Dead-Code-Prevention.md
+│   ├── DONE-LIFF-Location-Settings-Complete.md
+│   ├── DONE-User-API-Security-Optimization-Implementation-Record.md
 │   ├── Example.md
-│   ├── FIX-LIFF-Location-Settings-Authentication-Cache-Issues.md
-│   ├── LIFF-Location-Settings-Complete.md
-│   ├── liff-location-settings-dev-spec.md
-│   ├── LIFF-Version-Control-Guide.md
-│   ├── Security-Assessment-and-Checklist.md
-│   ├── set-locations-by-liff.md
 │   ├── Todo.md
 │   ├── Tree.md
 │   └── User-API-Security-Design-Discussion.md
@@ -87,6 +85,7 @@
 │   ├── conftest.py
 │   ├── core
 │   │   ├── conftest.py
+│   │   ├── test_auth.py
 │   │   ├── test_config.py
 │   │   └── test_logging.py
 │   ├── line
@@ -100,4 +99,4 @@
 │       └── test_location_service.py
 └── uv.lock
 
-22 directories, 77 files
+22 directories, 76 files
