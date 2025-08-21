@@ -42,16 +42,9 @@ def get_session() -> typing.Generator[Session, None, None]:
         session.close()
 ```
 
-One line or three lines are enough for simple functions:
+Simple functions use single-line docstrings:
 ```python
 def ping() -> str:
     """Service health check."""
     return "pong"
-```
-```python
-def test_ping() -> None:
-    """
-    Test service health check.
-    """
-    assert ping() == "pong"
 ```
