@@ -1,0 +1,136 @@
+<svg width="2500" height="1686" viewBox="0 0 2500 1686" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <defs>
+    <linearGradient id="backgroundGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#E3F2FD;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="2500" height="1686" fill="url(#backgroundGrad)"/>
+  
+  <!-- 格線分隔 -->
+  <!-- 垂直線 -->
+  <line x1="833" y1="0" x2="833" y2="1686" stroke="#E0E0E0" stroke-width="2"/>
+  <line x1="1667" y1="0" x2="1667" y2="1686" stroke="#E0E0E0" stroke-width="2"/>
+  
+  <!-- 水平線 -->
+  <line x1="0" y1="843" x2="2500" y2="843" stroke="#E0E0E0" stroke-width="2"/>
+  
+  <!-- 第一行：查住家、查公司、最近查過 -->
+  
+  <!-- 格子1：查住家 -->
+  <g id="home-weather">
+    <rect x="0" y="0" width="833" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
+    <!-- 房屋圖示 - 放大版本 -->
+    <circle cx="416" cy="280" r="120" fill="#4A90E2"/>
+    <polygon points="316,250 416,150 516,250" fill="white"/>
+    <rect x="346" y="250" width="140" height="140" fill="white"/>
+    <rect x="381" y="320" width="30" height="70" fill="#4A90E2"/>
+    <circle cx="450" cy="300" r="8" fill="#4A90E2"/>
+    
+    <text x="416" y="580" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#2C3E50">查住家</text>
+  </g>
+  
+  <!-- 格子2：查公司 -->
+  <g id="office-weather">
+    <rect x="833" y="0" width="834" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
+    <!-- 辦公大樓圖示 - 放大版本 -->
+    <rect x="1130" y="150" width="200" height="280" fill="#4A90E2" rx="15"/>
+    <!-- 窗戶 - 更大更多 -->
+    <rect x="1150" y="180" width="25" height="25" fill="white"/>
+    <rect x="1190" y="180" width="25" height="25" fill="white"/>
+    <rect x="1230" y="180" width="25" height="25" fill="white"/>
+    <rect x="1270" y="180" width="25" height="25" fill="white"/>
+    <rect x="1150" y="220" width="25" height="25" fill="white"/>
+    <rect x="1190" y="220" width="25" height="25" fill="white"/>
+    <rect x="1230" y="220" width="25" height="25" fill="white"/>
+    <rect x="1270" y="220" width="25" height="25" fill="white"/>
+    <rect x="1150" y="260" width="25" height="25" fill="white"/>
+    <rect x="1190" y="260" width="25" height="25" fill="white"/>
+    <rect x="1230" y="260" width="25" height="25" fill="white"/>
+    <rect x="1270" y="260" width="25" height="25" fill="white"/>
+    <rect x="1150" y="300" width="25" height="25" fill="white"/>
+    <rect x="1190" y="300" width="25" height="25" fill="white"/>
+    <rect x="1230" y="300" width="25" height="25" fill="white"/>
+    <rect x="1270" y="300" width="25" height="25" fill="white"/>
+    <rect x="1150" y="340" width="25" height="25" fill="white"/>
+    <rect x="1190" y="340" width="25" height="25" fill="white"/>
+    <rect x="1230" y="340" width="25" height="25" fill="white"/>
+    <rect x="1270" y="340" width="25" height="25" fill="white"/>
+    <rect x="1150" y="380" width="25" height="25" fill="white"/>
+    <rect x="1190" y="380" width="25" height="25" fill="white"/>
+    <rect x="1230" y="380" width="25" height="25" fill="white"/>
+    <rect x="1270" y="380" width="25" height="25" fill="white"/>
+    
+    <text x="1250" y="580" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#2C3E50">查公司</text>
+  </g>
+  
+  <!-- 格子3：最近查過 -->
+  <g id="recent-queries">
+    <rect x="1667" y="0" width="833" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
+    <!-- 時鐘圖示 - 放大版本 -->
+    <circle cx="2083" cy="280" r="120" fill="#4A90E2"/>
+    <circle cx="2083" cy="280" r="100" fill="white"/>
+    <line x1="2083" y1="280" x2="2083" y2="200" stroke="#4A90E2" stroke-width="10"/>
+    <line x1="2083" y1="280" x2="2143" y2="280" stroke="#4A90E2" stroke-width="8"/>
+    <circle cx="2083" cy="280" r="15" fill="#4A90E2"/>
+    <!-- 刻度 -->
+    <line x1="2083" y1="170" x2="2083" y2="190" stroke="#4A90E2" stroke-width="6"/>
+    <line x1="2193" y1="280" x2="2173" y2="280" stroke="#4A90E2" stroke-width="6"/>
+    <line x1="2083" y1="390" x2="2083" y2="370" stroke="#4A90E2" stroke-width="6"/>
+    <line x1="1973" y1="280" x2="1993" y2="280" stroke="#4A90E2" stroke-width="6"/>
+    
+    <text x="2083" y="580" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#2C3E50">最近查過</text>
+  </g>
+  
+  <!-- 第二行：目前位置、設定地點、其它 -->
+  
+  <!-- 格子4：目前位置 -->
+  <g id="current-location">
+    <rect x="0" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
+    <!-- 定位圖示 - 放大版本 -->
+    <circle cx="416" cy="1123" r="120" fill="#4A90E2"/>
+    <circle cx="416" cy="1123" r="90" fill="white"/>
+    <circle cx="416" cy="1090" r="35" fill="#4A90E2"/>
+    <polygon points="416,1156 396,1196 436,1196" fill="#4A90E2"/>
+    <!-- 外圍定位圈 -->
+    <circle cx="416" cy="1123" r="110" fill="none" stroke="#4A90E2" stroke-width="8" stroke-dasharray="20,10"/>
+    
+    <text x="416" y="1420" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#2C3E50">目前位置</text>
+  </g>
+  
+  <!-- 格子5：設定地點 -->
+  <g id="location-settings">
+    <rect x="833" y="843" width="834" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
+    <!-- 設定齒輪圖示 - 放大版本 -->
+    <circle cx="1250" cy="1123" r="120" fill="#4A90E2"/>
+    <circle cx="1250" cy="1123" r="80" fill="white"/>
+    <circle cx="1250" cy="1123" r="40" fill="#4A90E2"/>
+    <!-- 齒輪齒 - 更大更多 -->
+    <rect x="1240" y="1003" width="20" height="40" fill="#4A90E2"/>
+    <rect x="1240" y="1203" width="20" height="40" fill="#4A90E2"/>
+    <rect x="1130" y="1113" width="40" height="20" fill="#4A90E2"/>
+    <rect x="1330" y="1113" width="40" height="20" fill="#4A90E2"/>
+    <!-- 對角線齒 -->
+    <polygon points="1180,1053 1200,1033 1220,1053 1200,1073" fill="#4A90E2"/>
+    <polygon points="1320,1053 1300,1033 1280,1053 1300,1073" fill="#4A90E2"/>
+    <polygon points="1180,1193 1200,1213 1220,1193 1200,1173" fill="#4A90E2"/>
+    <polygon points="1320,1193 1300,1213 1280,1193 1300,1173" fill="#4A90E2"/>
+    
+    <text x="1250" y="1420" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#2C3E50">設定地點</text>
+  </g>
+  
+  <!-- 格子6：其它 -->
+  <g id="more-options">
+    <rect x="1667" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
+    <!-- 資訊圖示 - 放大版本 -->
+    <circle cx="2083" cy="1123" r="120" fill="#4A90E2"/>
+    <circle cx="2083" cy="1123" r="90" fill="white"/>
+    <text x="2083" y="1163" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#4A90E2">i</text>
+    <!-- 裝飾圓點 -->
+    <circle cx="2083" cy="1200" r="8" fill="#4A90E2"/>
+    
+    <text x="2083" y="1420" text-anchor="middle" font-family="Arial, sans-serif" font-size="72" font-weight="bold" fill="#2C3E50">其它</text>
+  </g>
+</svg>

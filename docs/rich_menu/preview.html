@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeaMind Rich Menu 預覽</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .rich-menu {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            width: 100%;
+            aspect-ratio: 2500/1686;
+            background: linear-gradient(to bottom, #E3F2FD, #FFFFFF);
+        }
+
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #E0E0E0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            background-color: rgba(76, 144, 226, 0.1);
+        }
+
+        .menu-item.primary {
+            background-color: rgba(76, 144, 226, 0.1);
+        }
+
+        .menu-item.secondary {
+            background-color: rgba(76, 144, 226, 0.05);
+        }
+
+        .icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2C3E50;
+        }
+
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #4A90E2;
+        }
+
+        .postback-data {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>WeaMind Rich Menu 設計預覽</h1>
+        <p>這是 WeaMind LINE Bot Rich Menu 的設計預覽。實際尺寸為 2500x1686 像素。</p>
+
+        <div class="preview">
+            <div class="rich-menu">
+                <!-- 第一行 -->
+                <div class="menu-item primary" onclick="showPostback('action=weather&type=home')">
+                    <div class="icon">🏠</div>
+                    <div class="title">查住家</div>
+                </div>
+
+                <div class="menu-item secondary" onclick="showPostback('action=weather&type=office')">
+                    <div class="icon">🏢</div>
+                    <div class="title">查公司</div>
+                </div>
+
+                <div class="menu-item primary" onclick="showPostback('action=recent_queries')">
+                    <div class="icon">🕒</div>
+                    <div class="title">最近查過</div>
+                </div>
+
+                <!-- 第二行 -->
+                <div class="menu-item secondary" onclick="showPostback('action=weather&type=current')">
+                    <div class="icon">📍</div>
+                    <div class="title">目前位置</div>
+                </div>
+
+                <div class="menu-item primary" onclick="showPostback('action=settings&type=location')">
+                    <div class="icon">⚙️</div>
+                    <div class="title">設定地點</div>
+                </div>
+
+                <div class="menu-item secondary" onclick="showPostback('action=menu&type=more')">
+                    <div class="icon">📋</div>
+                    <div class="title">其它</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info">
+            <h3>設計說明</h3>
+            <ul>
+                <li><strong>配色方案：</strong> 天藍色系主色調，符合天氣主題</li>
+                <li><strong>布局：</strong> 2x3 六格配置，優先顯示常用功能</li>
+                <li><strong>優先級：</strong> 查住家、最近查過、設定地點為主要功能</li>
+                <li><strong>圖示：</strong> 使用直觀的 emoji 圖示，降低理解成本</li>
+            </ul>
+
+            <h3>PostBack 資料</h3>
+            <div id="postback-display" class="postback-data">
+                點擊上方按鈕查看對應的 PostBack 資料
+            </div>
+        </div>
+
+        <div class="info">
+            <h3>下一步</h3>
+            <ol>
+                <li>基於此設計製作 2500x1686 像素的實際圖片</li>
+                <li>使用 Figma、Photoshop 或其他設計工具完善視覺效果</li>
+                <li>確保文字在手機上清晰可讀</li>
+                <li>實作 Rich Menu API 設定代碼</li>
+                <li>實作 PostBack 事件處理邏輯</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function showPostback(data) {
+            document.getElementById('postback-display').textContent = data;
+        }
+    </script>
+</body>
+
+</html>
