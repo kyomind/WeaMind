@@ -8,12 +8,14 @@ This file serves as an index for WeaMind testing guidelines. The guidelines have
 
 ## Instruction Files
 
-### 🔧 [testing-fixtures.instructions.md](.github/instructions/testing-fixtures.instructions.md)
+### 🔧 testing-fixtures.instructions.md
+- **Path**: `.github/instructions/testing-fixtures.instructions.md`
 - **Apply to**: `tests/**/conftest.py`
 - **Content**: Pytest fixtures naming conventions, organization, and performance considerations
 - **Use cases**: When creating or modifying fixture files
 
-### 🧪 [testing-functions.instructions.md](.github/instructions/testing-functions.instructions.md)
+### 🧪 testing-functions.instructions.md
+- **Path**: `.github/instructions/testing-functions.instructions.md`
 - **Apply to**: `tests/**/test_*.py`
 - **Content**: Test function structure, naming patterns, assertions, mocking, and parameterized testing
 - **Use cases**: When writing or modifying test functions
