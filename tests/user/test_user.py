@@ -10,7 +10,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 from app.user.models import User
-from app.user.service import create_user_if_not_exists, deactivate_user, get_user_by_line_id
+from app.user.service import (
+    create_user_if_not_exists,
+    deactivate_user,
+    get_location_by_county_district,
+    get_user_by_line_id,
+    set_user_location,
+)
+from app.weather.models import Location
 
 
 def test_root(client: TestClient) -> None:
@@ -150,9 +157,6 @@ class TestUserServiceAdditional:
 
     def test_get_location_by_county_district(self, session: Session) -> None:
         """Test getting location by county and district."""
-        from app.user.service import get_location_by_county_district
-        from app.weather.models import Location
-
         # Create a location
         location = Location(
             geocode="test001",
@@ -171,15 +175,11 @@ class TestUserServiceAdditional:
 
     def test_get_location_by_county_district_not_exists(self, session: Session) -> None:
         """Test getting location that doesn't exist."""
-        from app.user.service import get_location_by_county_district
-
         result = get_location_by_county_district(session, "不存在縣市", "不存在區域")
         assert result is None  # noqa: S101
 
     def test_set_user_location_invalid_type(self, session: Session) -> None:
         """Test setting user location with invalid location type."""
-        from app.user.service import set_user_location
-
         line_user_id = str(uuid4())
         success, message, location = set_user_location(
             session, line_user_id, "invalid_type", "台北市", "中正區"
@@ -191,8 +191,6 @@ class TestUserServiceAdditional:
 
     def test_set_user_location_location_not_exists(self, session: Session) -> None:
         """Test setting user location when location doesn't exist."""
-        from app.user.service import set_user_location
-
         line_user_id = str(uuid4())
         success, message, location = set_user_location(
             session, line_user_id, "home", "不存在縣市", "不存在區域"
@@ -204,9 +202,6 @@ class TestUserServiceAdditional:
 
     def test_set_user_location_home_success(self, session: Session) -> None:
         """Test successfully setting user home location."""
-        from app.user.service import set_user_location
-        from app.weather.models import Location
-
         # Create location
         location = Location(
             geocode="test002",
@@ -229,7 +224,6 @@ class TestUserServiceAdditional:
         assert returned_location.district == "中正區"  # noqa: S101
 
         # Verify user was created and location was set
-        from app.user.service import get_user_by_line_id
 
         user = get_user_by_line_id(session, line_user_id)
         assert user is not None  # noqa: S101
@@ -237,8 +231,6 @@ class TestUserServiceAdditional:
 
     def test_set_user_location_work_success(self, session: Session) -> None:
         """Test successfully setting user work location."""
-        from app.user.service import set_user_location
-        from app.weather.models import Location
 
         # Create location
         location = Location(
@@ -260,7 +252,6 @@ class TestUserServiceAdditional:
         assert returned_location is not None  # noqa: S101
 
         # Verify work location was set
-        from app.user.service import get_user_by_line_id
 
         user = get_user_by_line_id(session, line_user_id)
         assert user is not None  # noqa: S101
@@ -268,8 +259,6 @@ class TestUserServiceAdditional:
 
     def test_set_user_location_existing_user(self, session: Session) -> None:
         """Test setting location for existing user."""
-        from app.user.service import set_user_location
-        from app.weather.models import Location
 
         # Create user and location
         line_user_id = str(uuid4())
@@ -301,7 +290,6 @@ class TestUserRouterAdditional:
 
     def test_set_user_location_success(self, client: TestClient, session: Session) -> None:
         """Test successfully setting user location via LIFF."""
-        from app.weather.models import Location
 
         # Create location
         location = Location(
@@ -336,7 +324,6 @@ class TestUserRouterAdditional:
 
     def test_set_user_location_work(self, client: TestClient, session: Session) -> None:
         """Test setting work location via LIFF."""
-        from app.weather.models import Location
 
         # Create location
         location = Location(

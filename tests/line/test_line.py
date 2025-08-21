@@ -14,6 +14,7 @@ from app.line.service import (
     handle_unfollow_event,
     send_liff_location_setting_response,
 )
+from app.weather.models import Location
 
 
 class TestLineWebhook:
@@ -405,8 +406,6 @@ class TestQuickReplyFeature:
 
     def test_handle_message_event_with_multiple_locations(self) -> None:
         """Test message handling with multiple location results creates Quick Reply."""
-        from app.weather.models import Location
-
         mock_event = Mock(spec=MessageEvent)
         mock_event.reply_token = "test_reply_token"
         mock_message = Mock(spec=TextMessageContent)
@@ -458,8 +457,6 @@ class TestQuickReplyFeature:
 
     def test_handle_message_event_single_location_no_quick_reply(self) -> None:
         """Test message handling with single location result (no Quick Reply)."""
-        from app.weather.models import Location
-
         mock_event = Mock(spec=MessageEvent)
         mock_event.reply_token = "test_reply_token"
         mock_message = Mock(spec=TextMessageContent)
