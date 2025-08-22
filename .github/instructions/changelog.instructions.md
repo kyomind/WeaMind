@@ -8,7 +8,18 @@ applyTo: "CHANGELOG.md,pyproject.toml"
 
 ### 1. 版本發布前的準備工作
 
-#### 收集變更資訊
+#### 使用簡化的 changelog.sh 腳本
+
+**最簡單的方式：**
+```bash
+# 1. 查看目前狀態和待發布的變更
+make changelog-status
+
+# 2. 準備 CHANGELOG 資料（自動提供 AI 提示詞）
+make changelog-prepare [VERSION=0.2.0]
+```
+
+#### 手動收集變更資訊（進階用法）
 ```bash
 # 查看自上次發布以來的 commits
 git log --oneline v0.1.0..HEAD
@@ -21,21 +32,24 @@ git diff --stat v0.1.0..HEAD
 ```
 
 #### 使用 Copilot Chat 產生 CHANGELOG 內容
-在 VS Code 中的 Copilot Chat：
+在 VS Code 中的 Copilot Chat（提示詞已內建在 `make changelog-prepare` 中）：
 
 ```
-@workspace 請根據以下 git log 產生 CHANGELOG.md 的新版本內容：
+根據以下 git commits 為 WeaMind 產生 CHANGELOG 內容：
 
 [貼上 git log 輸出]
 
-要求：
-1. 使用繁體中文
-2. 遵循 Keep a Changelog 格式
-3. 分類為：新增(Added)/修正(Fixed)/改進(Changed)/移除(Removed)
-4. 重點描述使用者可見的功能變更
-5. 加入適當的 emoji 圖標
-6. 保持專業但親和的語調
-7. 突出技術亮點和產品價值
+要求：繁體中文、Keep a Changelog 格式、突出產品價值、加入適當 emoji、保持專業親和語調
+格式範例：
+## [版本號] - 日期
+### 新增 ✨
+- 功能描述（突出用戶價值）
+
+### 修正 🔧
+- 問題修復（說明影響）
+
+### 改進 🚀
+- 效能或體驗提升
 ```
 
 ### 2. CHANGELOG 格式規範
@@ -58,20 +72,38 @@ git diff --stat v0.1.0..HEAD
 - 加入相關 emoji 增加可讀性
 - 提及對使用者的實際價值
 
-### 3. 版本號管理
+### 3. 版本號管理與發布
 
-#### 更新版本號（手動）
+#### 使用簡化腳本發布（推薦）
+```bash
+# 一鍵發布新版本（包含版本號更新、提交、標籤、推送）
+make changelog-release VERSION=0.2.0
+```
+
+#### 手動版本管理（進階）
 ```bash
 # 更新 pyproject.toml 中的版本號
 # version = "0.2.0"
-```
 
-#### 創建 Git 標籤
-```bash
+# 創建 Git 標籤
 git add CHANGELOG.md pyproject.toml
 git commit -m "chore: bump version to v0.2.0"
 git tag v0.2.0
 git push origin main --tags
+```
+
+#### 完整發布流程
+```bash
+# 1. 檢查狀態
+make changelog-status
+
+# 2. 準備資料（獲得 AI 提示詞）
+make changelog-prepare VERSION=0.2.0
+
+# 3. 使用 Copilot Chat 生成內容並手動編輯 CHANGELOG.md
+
+# 4. 發布版本
+make changelog-release VERSION=0.2.0
 ```
 
 ### 4. Copilot 快速指令範本
@@ -101,6 +133,14 @@ git push origin main --tags
 
 ### 5. 發布檢查清單
 
+#### 使用簡化流程
+- [ ] 執行 `make changelog-status` 確認有新變更
+- [ ] 執行 `make changelog-prepare` 獲得 commits 資料
+- [ ] 使用 Copilot Chat 生成 CHANGELOG 內容
+- [ ] 手動編輯 CHANGELOG.md 完善內容
+- [ ] 執行 `make changelog-release VERSION=x.y.z` 完成發布
+
+#### 傳統手動檢查
 - [ ] 確認版本號在 `pyproject.toml` 中已更新
 - [ ] CHANGELOG.md 包含所有重要變更
 - [ ] 內容使用繁體中文且語調一致
@@ -109,7 +149,25 @@ git push origin main --tags
 - [ ] 「即將推出」部分已更新
 - [ ] Git 標籤已建立並推送
 
-### 6. 行銷重點提示
+### 6. 快速參考指令
+
+#### 新的簡化指令
+```bash
+make changelog-status                    # 查看目前狀態
+make changelog-prepare [VERSION=x.y.z]   # 準備 commits 資料
+make changelog-release VERSION=x.y.z     # 發布新版本
+make changelog-help                      # 顯示使用指南
+```
+
+#### 腳本直接使用
+```bash
+./scripts/changelog.sh status           # 查看狀態
+./scripts/changelog.sh prepare [ver]    # 準備資料
+./scripts/changelog.sh update <version> # 發布版本
+./scripts/changelog.sh help             # 顯示幫助
+```
+
+### 7. 行銷重點提示
 
 記住 WeaMind 是一個**產品**，CHANGELOG 也是行銷材料：
 - 強調使用者體驗改進
@@ -118,7 +176,7 @@ git push origin main --tags
 - 營造持續進步的形象
 - 與使用者建立連結感
 
-### 7. 常用 Emoji 參考
+### 8. 常用 Emoji 參考
 
 - 🚀 新功能發布
 - 🌍 地理/位置相關
