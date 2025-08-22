@@ -61,6 +61,7 @@ make changelog-prepare VERSION=0.2.0
 make changelog-release VERSION=0.2.0
 ```
 - 自動更新 `pyproject.toml` 版本號
+- 執行 `uv lock` 更新 lock 檔案
 - 提交變更並建立 git tag
 - 推送到遠端倉庫
 - 觸發 GitHub Actions 建立 Release

@@ -20,6 +20,13 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
   - Objects/values: noun (e.g., `user`)
 - **Git Branches**: Use feature branches for new features or bug fixes. e.g. `feature/location-settings`(noun)
 
+### Git Commit Messages
+- **Natural English**: Use clear, descriptive English sentences
+- **Examples**: 
+  - "Update CHANGELOG for v0.1.3"
+  - "Enhance GitHub Actions release with full git history"
+  - "Add location settings feature"
+
 ## References
 - Architecture: `docs/Architecture.md` (high-level overview of the system architecture)
 - Todo: `docs/Todo.md` (includes completed and pending tasks)
