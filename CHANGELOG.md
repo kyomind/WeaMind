@@ -1,13 +1,8 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+# 更新記錄
 
 ## [0.1.0] - 2025-08-22
 
-****### 新增
+### 新增
 - **LINE Bot 核心功能**: 完整的 LINE webhook 整合，支援 follow/unfollow 事件處理
 - **智慧地點解析**: 支援中文地名模糊查詢，涵蓋全台鄉鎮區資料
 - **Quick Reply 互動**: 當查詢結果為 2-3 個地點時，自動提供快速回覆選項
@@ -30,11 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## 發布說明
-每個版本的詳細異動請參考對應的 [GitHub Releases](https://github.com/kyomind/WeaMind/releases)。
+所有重要變更都會記錄在此檔案中。
 
-## 回饋與建議
-如有任何功能建議或問題回報，歡迎透過 [GitHub Issues](https://github.com/kyomind/WeaMind/issues) 與我們聯繫。
+格式基於 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.0.0/)，並且本專案遵循 [語意化版本](https://semver.org/lang/zh-TW/)。
 
 ---
-*WeaMind - 讓天氣查詢變得更簡單、更直觀* 🌤️
+
+> WeaMind - 讓天氣查詢變得更簡單、更直觀 🌤️

@@ -258,6 +258,7 @@ update_version() {
     git push origin "v${version}"
 
     log_success "🎉 版本 v${version} 發布完成！"
+    log_info "💡 GitHub Actions 將自動建立 Release"
 }
 
 # 主邏輯
