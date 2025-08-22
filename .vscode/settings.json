@@ -50,6 +50,7 @@
         "ropeproject",
         "Scrapy",
         "sdist",
+        "softprops",
         "sonarcloud",
         "sonarqube",
         "sonarsource",

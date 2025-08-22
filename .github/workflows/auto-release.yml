@@ -7,12 +7,12 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5  # Official GitHub action, keep version tag
         with:
-          # 獲取完整的 git 歷史記錄，讓 GitHub 能正確比較版本
+          # Fetch complete git history for GitHub to correctly compare versions
           fetch-depth: 0
       - name: Create GitHub Release (auto notes)
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2
         with:
           generate_release_notes: true
         env:
