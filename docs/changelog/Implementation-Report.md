@@ -48,9 +48,15 @@ make changelog-status
 # 2. 準備資料（自動提供 AI 提示詞）
 make changelog-prepare [VERSION=0.2.0]
 
-# 3. 發布版本（一鍵完成）
+# 3. 發布版本（一鍵完成，含自動 GitHub Release）
 make changelog-release VERSION=0.2.0
 ```
+
+**🚀 新增 GitHub Actions 自動發布**:
+- 推送版本標籤後，自動建立 GitHub Release
+- 自動生成 Release Notes
+- 設為最新版本
+- 不再需要手動操作 GitHub Release 頁面！
 
 ### 詳細指南
 ```bash
@@ -184,14 +190,15 @@ make changelog-help                   # 顯示使用指南
 3. **配置文件** - 將硬編碼值移至配置
 
 ### 長期規劃
-1. **CI/CD 整合** - GitHub Actions 自動化
+1. ✅ **GitHub Actions 自動化** - 已完成！自動 Release 發布
 2. **多環境支援** - Windows/Linux 兼容性
 3. **模板系統** - 可自定義的 CHANGELOG 模板
 
 ## 🎉 結論
 
-WeaMind CHANGELOG 系統已完成**大幅精簡化**，實現：
+WeaMind CHANGELOG 系統已完成**大幅精簡化 + GitHub Actions 整合**，實現：
 - ✅ 心智負擔大幅降低（從 7 個腳本到 1 個）
+- ✅ **完全自動化發布** - 從版本更新到 GitHub Release 一氣呵成
 - ✅ 功能完整保留（status/prepare/release）
 - ✅ AI 整合完善（內建提示詞）
 - ✅ 產品導向的內容格式

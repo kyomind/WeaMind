@@ -3,61 +3,38 @@
 > **AI Agent 專用文件** - 本文件提供完整的自動化流程，AI agent 可直接執行所有操作
 
 ## 🎯 目標
-為 WeaMind 專案建立專業的版本歷史記錄，支援產品行銷和用戶溝通。
+為 WeaMind 專案建立專業的版本歷史記錄，支援產品行銷和用戶溝通，並通過 GitHub Actions 實現完全自動化發布。
 
-## 📋 完整自動化流程
+## 📋 超簡化的3步驟流程
 
-### Phase 1: 環境檢查與準備
-
-#### 1.1 檢查當前版本狀態
+### Step 1: 檢查狀態
 ```bash
-# 執行版本檢查工具
-make version-check
-
-# 或直接使用腳本
-./scripts/version-check.sh
+make changelog-status
 ```
 
-#### 1.2 收集變更資訊
+### Step 2: 準備 AI 資料
 ```bash
-# 檢查最近的 commits（調整數量根據需要）
-git log --oneline -20
-
-# 如果有上一個版本標籤，檢查差異
-LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
-if [ ! -z "$LAST_TAG" ]; then
-    git log --oneline --no-merges $LAST_TAG..HEAD
-fi
-
-# 查看檔案變更統計
-git diff --stat HEAD~10..HEAD
+# 自動收集 commits 並提供 AI 提示詞
+make changelog-prepare [VERSION=0.2.0]
 ```
 
-### Phase 2: AI 輔助內容生成
-
-#### 2.1 使用 Copilot Chat 生成 CHANGELOG 內容
-
-**提示詞範本：**
+### Step 3: 一鍵發布（含 GitHub Release）
+```bash
+# 更新版本、提交、標籤、推送，觸發 GitHub Actions
+make changelog-release VERSION=0.2.0
 ```
-@workspace 根據以下 git commits 為 WeaMind 產生 CHANGELOG 內容：
 
-[貼上 git log 輸出]
+## 🤖 GitHub Actions 自動發布
 
-要求：
-1. 使用繁體中文
-2. 遵循 Keep a Changelog 格式
-3. 分類為：新增(Added)/修正(Fixed)/改進(Changed)/移除(Removed)
-4. 重點描述使用者可見的功能變更
-5. 加入適當的 emoji 圖標（參考 .github/instructions/changelog-maintenance.instructions.md）
-6. 保持專業但親和的語調
-7. 突出技術亮點和產品價值
-8. 版本號設為 [NEW_VERSION]
-9. 日期設為 [CURRENT_DATE]
+**重要**: 當執行 `make changelog-release` 時，系統會自動：
 
-格式要求：
-- 每個項目以「- 🎯 **功能名稱** - 詳細描述」開始
-- 重要功能用粗體標示
-- 技術細節放在描述中，但保持用戶友好
+1. ✅ 更新 `pyproject.toml` 版本號
+2. ✅ 提交變更並創建 git 標籤
+3. ✅ 推送標籤到 GitHub
+4. 🚀 **觸發 GitHub Actions**，自動建立 Release 頁面
+5. 📝 GitHub 自動生成 Release Notes
+
+**不再需要手動操作 GitHub Release 頁面！**
 - 如果是安全性相關，特別標註
 ```
 
