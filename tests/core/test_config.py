@@ -13,6 +13,7 @@ class TestSettings:
         assert settings.APP_NAME == "WeaMind API"
         assert settings.DEBUG is False
         assert settings.ENV == "development"
+
         assert settings.POSTGRES_PORT == 5432
 
     def test_logs_dir_property(self) -> None:

@@ -47,8 +47,10 @@ class TestVerifyLineAccessToken:
 
             result = await verify_line_access_token(access_token)
 
-            assert result == line_user_id  # noqa: S101
-            assert mock_client_instance.get.call_count == 2  # noqa: S101
+            assert result == line_user_id
+
+
+            assert mock_client_instance.get.call_count == 2
 
     @pytest.mark.asyncio
     async def test_verify_line_access_token_verify_failed(self) -> None:
@@ -66,9 +68,8 @@ class TestVerifyLineAccessToken:
             with pytest.raises(HTTPException) as exc_info:
                 await verify_line_access_token(access_token)
 
-            assert exc_info.value.status_code == 401  # noqa: S101
-            assert "Invalid LINE Access Token" in exc_info.value.detail  # noqa: S101
-
+            assert exc_info.value.status_code == 401
+            assert "Invalid LINE Access Token" in exc_info.value.detail
     @pytest.mark.asyncio
     async def test_verify_line_access_token_no_client_id(self) -> None:
         """Test LINE Access Token verification when response has no client_id."""
@@ -86,8 +87,7 @@ class TestVerifyLineAccessToken:
             with pytest.raises(HTTPException) as exc_info:
                 await verify_line_access_token(access_token)
 
-            assert exc_info.value.status_code == 401  # noqa: S101
-
+            assert exc_info.value.status_code == 401
     @pytest.mark.asyncio
     async def test_verify_line_access_token_expired(self) -> None:
         """Test LINE Access Token verification when token is expired."""
@@ -108,8 +108,7 @@ class TestVerifyLineAccessToken:
             with pytest.raises(HTTPException) as exc_info:
                 await verify_line_access_token(access_token)
 
-            assert exc_info.value.status_code == 401  # noqa: S101
-
+            assert exc_info.value.status_code == 401
     @pytest.mark.asyncio
     async def test_verify_line_access_token_profile_failed(self) -> None:
         """Test LINE Access Token verification when profile API fails."""
@@ -133,8 +132,7 @@ class TestVerifyLineAccessToken:
             with pytest.raises(HTTPException) as exc_info:
                 await verify_line_access_token(access_token)
 
-            assert exc_info.value.status_code == 401  # noqa: S101
-
+            assert exc_info.value.status_code == 401
     @pytest.mark.asyncio
     async def test_verify_line_access_token_no_user_id(self) -> None:
         """Test LINE Access Token verification when profile has no userId."""
@@ -159,8 +157,7 @@ class TestVerifyLineAccessToken:
             with pytest.raises(HTTPException) as exc_info:
                 await verify_line_access_token(access_token)
 
-            assert exc_info.value.status_code == 401  # noqa: S101
-
+            assert exc_info.value.status_code == 401
     @pytest.mark.asyncio
     async def test_verify_line_access_token_network_error(self) -> None:
         """Test LINE Access Token verification with network error."""
@@ -174,9 +171,8 @@ class TestVerifyLineAccessToken:
             with pytest.raises(HTTPException) as exc_info:
                 await verify_line_access_token(access_token)
 
-            assert exc_info.value.status_code == 503  # noqa: S101
-            assert "network error" in exc_info.value.detail  # noqa: S101
-
+            assert exc_info.value.status_code == 503
+            assert "network error" in exc_info.value.detail
 
 class TestVerifyLineIdToken:
     """Test LINE ID Token verification."""
@@ -190,8 +186,7 @@ class TestVerifyLineIdToken:
 
         result = verify_line_id_token(token)
 
-        assert result == line_user_id  # noqa: S101
-
+        assert result == line_user_id
     def test_verify_line_id_token_invalid_format(self) -> None:
         """Test LINE ID Token verification with invalid format."""
         invalid_token = "invalid.token"
@@ -199,9 +194,8 @@ class TestVerifyLineIdToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(invalid_token)
 
-        assert exc_info.value.status_code == 401  # noqa: S101
-        assert "Invalid LINE ID Token" in exc_info.value.detail  # noqa: S101
-
+        assert exc_info.value.status_code == 401
+        assert "Invalid LINE ID Token" in exc_info.value.detail
     def test_verify_line_id_token_unsupported_algorithm(
         self, create_custom_jwt_token: Callable[[dict, dict], str]
     ) -> None:
@@ -218,8 +212,7 @@ class TestVerifyLineIdToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
-        assert exc_info.value.status_code == 401  # noqa: S101
-
+        assert exc_info.value.status_code == 401
     def test_verify_line_id_token_no_expiration(
         self, create_custom_jwt_token: Callable[[dict, dict], str]
     ) -> None:
@@ -236,8 +229,7 @@ class TestVerifyLineIdToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
-        assert exc_info.value.status_code == 401  # noqa: S101
-
+        assert exc_info.value.status_code == 401
     def test_verify_line_id_token_expired(
         self, create_jwt_token: Callable[[str, int], str]
     ) -> None:
@@ -248,8 +240,7 @@ class TestVerifyLineIdToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
-        assert exc_info.value.status_code == 401  # noqa: S101
-
+        assert exc_info.value.status_code == 401
     def test_verify_line_id_token_invalid_issuer(
         self, create_custom_jwt_token: Callable[[dict, dict], str]
     ) -> None:
@@ -266,8 +257,7 @@ class TestVerifyLineIdToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
-        assert exc_info.value.status_code == 401  # noqa: S101
-
+        assert exc_info.value.status_code == 401
     def test_verify_line_id_token_no_user_id(
         self, create_custom_jwt_token: Callable[[dict, dict], str]
     ) -> None:
@@ -284,8 +274,7 @@ class TestVerifyLineIdToken:
         with pytest.raises(HTTPException) as exc_info:
             verify_line_id_token(token)
 
-        assert exc_info.value.status_code == 401  # noqa: S101
-
+        assert exc_info.value.status_code == 401
 
 class TestAuthDependencies:
     """Test FastAPI authentication dependencies."""
@@ -301,9 +290,8 @@ class TestAuthDependencies:
 
             result = await get_current_line_user_id_from_access_token(token)
 
-            assert result == line_user_id  # noqa: S101
-            mock_verify.assert_called_once_with("test_token")  # noqa: S101
-
+            assert result == line_user_id
+            mock_verify.assert_called_once_with("test_token")
     def test_get_current_line_user_id(self) -> None:
         """Test get current LINE user ID from ID token dependency."""
         line_user_id = str(uuid4())
@@ -314,5 +302,5 @@ class TestAuthDependencies:
 
             result = get_current_line_user_id(token)
 
-            assert result == line_user_id  # noqa: S101
-            mock_verify.assert_called_once_with("test_token")  # noqa: S101
+            assert result == line_user_id
+            mock_verify.assert_called_once_with("test_token")

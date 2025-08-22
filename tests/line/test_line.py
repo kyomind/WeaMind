@@ -448,6 +448,7 @@ class TestQuickReplyFeature:
                         assert hasattr(message, "quick_reply")
                         quick_reply = message.quick_reply
                         assert quick_reply is not None
+
                         assert len(quick_reply.items) == 2
 
                         # Check Quick Reply items

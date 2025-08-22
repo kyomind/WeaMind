@@ -24,7 +24,7 @@ def create_user(client: TestClient) -> Callable[..., dict]:
     def _create(display_name: str = "Alice") -> dict:
         data = {"line_user_id": str(uuid4()), "display_name": display_name}
         response = client.post("/users", json=data)
-        assert response.status_code == 201  # noqa: S101
+        assert response.status_code == 201
         return response.json()
 
     return _create

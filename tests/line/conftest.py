@@ -42,7 +42,6 @@ def line_image_message_data() -> dict:
 
 
 @pytest.fixture()
-@pytest.fixture()
 def line_follow_event_data() -> dict:
     """Return a follow event webhook body for testing."""
     return {"events": [{"type": "follow", "replyToken": "test_token"}]}

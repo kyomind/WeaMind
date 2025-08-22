@@ -75,11 +75,13 @@ class TestLocationService:
         # Test exact district name match
         results = LocationService.search_locations_by_name(session, "永和區")
         assert len(results) == 1
+
         assert results[0].full_name == "新北市永和區"
 
         # Test partial district name match
         results = LocationService.search_locations_by_name(session, "永和")
         assert len(results) == 1
+
         assert results[0].full_name == "新北市永和區"
 
         # Test multiple matches
@@ -109,6 +111,7 @@ class TestLocationService:
         assert len(locations) == 1
         assert locations[0].full_name == "新北市永和區"
         assert "找到了 新北市永和區" in response
+
         assert "正在查詢天氣" in response
 
     def test_parse_location_input_multiple_matches(
@@ -142,6 +145,7 @@ class TestLocationService:
 
         assert len(locations) == 0
         assert "找不到「不存在區」這個地點" in response
+
         assert "檢查看看有沒有打錯字" in response
 
     def test_parse_location_input_too_many_matches(
@@ -165,6 +169,7 @@ class TestLocationService:
 
         assert len(locations) == 0  # Should return empty when too many matches
         assert "找到太多符合的地點" in response
+
         assert "更具體的地名" in response
 
     def test_parse_location_input_invalid_format(self, session: Session) -> None:
