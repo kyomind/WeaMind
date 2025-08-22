@@ -29,6 +29,8 @@
 
 格式基於 [Keep a Changelog](https://keepachangelog.com/zh-TW/1.0.0/)，並且本專案遵循 [語意化版本](https://semver.org/lang/zh-TW/)。
 
+需要詳細的技術變更記錄，請參考 [GitHub Releases](https://github.com/kyomind/WeaMind/releases)。
+
 ---
 
 > WeaMind - 讓天氣查詢變得更簡單、更直觀 🌤️
