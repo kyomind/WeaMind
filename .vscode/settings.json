@@ -11,6 +11,7 @@
         "carryforward",
         "celerybeat",
         "Certbot",
+        "commitish",
         "conftest",
         "Connor",
         "cpython",
