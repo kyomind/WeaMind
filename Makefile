@@ -78,8 +78,6 @@ update-liff-version:
 	@zsh scripts/update_liff_version.sh
 
 # === Version & Release Management ===
-# 使用統一的 changelog.sh 腳本管理所有版本相關操作
-
 changelog-status:
 	@zsh scripts/changelog.sh status
 
