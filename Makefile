@@ -1,6 +1,7 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean changelog-status changelog-prepare changelog-release changelog-help
+
 # === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
@@ -75,3 +76,18 @@ clean-docs:
 update-liff-version:
 	@echo "🔄 Updating LIFF version..."
 	@zsh scripts/update_liff_version.sh
+
+# === Version & Release Management ===
+# 使用統一的 changelog.sh 腳本管理所有版本相關操作
+
+changelog-status:
+	@zsh scripts/changelog.sh status
+
+changelog-prepare:
+	@zsh scripts/changelog.sh prepare $(VERSION)
+
+changelog-release:
+	@zsh scripts/changelog.sh release $(VERSION)
+
+changelog-help:
+	@zsh scripts/changelog.sh quick-help
