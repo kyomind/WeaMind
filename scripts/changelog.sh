@@ -110,8 +110,11 @@ check_git_status() {
         exit 1
     fi
 
-    if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
-        log_warning "目前不在 main 分支，確定要繼續嗎？"
+    local current_branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$current_branch" != "main" ]]; then
+        log_error "版本發布必須在 main 分支進行，目前在 ${current_branch} 分支"
+        log_info "請切換到 main 分支後再執行：git checkout main"
+        exit 1
     fi
 }
 
