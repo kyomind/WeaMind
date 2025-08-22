@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 獲取完整的 git 歷史記錄，讓 GitHub 能正確比較版本
+          fetch-depth: 0
       - name: Create GitHub Release (auto notes)
         uses: softprops/action-gh-release@v2
         with:
