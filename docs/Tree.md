@@ -28,6 +28,7 @@
 │       └── service.py
 ├── blogs
 │   └── README.md
+├── CHANGELOG.md
 ├── CLAUDE.md
 ├── coverage.xml
 ├── docker-compose.dev.yml
@@ -36,13 +37,26 @@
 ├── Dockerfile
 ├── docs
 │   ├── Architecture.md
-│   ├── DISCUSS-AI-Development-Dead-Code-Prevention.md
-│   ├── DONE-LIFF-Location-Settings-Complete.md
-│   ├── DONE-User-API-Security-Optimization-Implementation-Record.md
+│   ├── changelog
+│   │   ├── AI-Agent-Guide.md
+│   │   ├── ask-page-repo-CHANGELOG.md
+│   │   ├── Implementation-Report.md
+│   │   ├── MEMORY-HOOK.md
+│   │   └── README.md
 │   ├── Example.md
+│   ├── rich_menu
+│   │   ├── implementation-plan.md
+│   │   ├── preview.html
+│   │   ├── README.md
+│   │   ├── rich_menu_config.json
+│   │   ├── rich_menu_template-min.png
+│   │   ├── rich_menu_template.png
+│   │   └── rich_menu_template.svg
+│   ├── seed
+│   │   ├── DONE-LIFF-Location-Settings-Complete.md
+│   │   └── Security-Assessment-and-Checklist.md
 │   ├── Todo.md
-│   ├── Tree.md
-│   └── User-API-Security-Design-Discussion.md
+│   └── Tree.md
 ├── GEMINI.md
 ├── LICENSE
 ├── logs
@@ -65,11 +79,13 @@
 ├── pyproject.toml
 ├── README.md
 ├── scripts
+│   ├── changelog.sh
 │   ├── clean_docs.sh
 │   ├── cleanup_local_branches_preview.sh
 │   ├── cleanup_local_branches.sh
 │   ├── export_branch_docs.sh
 │   ├── gen_tree.sh
+│   ├── rich_menu_manager.py
 │   ├── sync_instructions.sh
 │   ├── update_liff_version.sh
 │   ├── worktree_add.sh
@@ -99,4 +115,4 @@
 │       └── test_location_service.py
 └── uv.lock
 
-22 directories, 76 files
+25 directories, 89 files
