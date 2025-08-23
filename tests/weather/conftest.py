@@ -17,12 +17,7 @@ def session() -> Session:
 
 @pytest.fixture()
 def create_location() -> Callable[..., Location]:
-    """
-    Return a helper for creating test locations.
-
-    Returns:
-        Callable: Function to create Location objects with specified parameters
-    """
+    """Return a helper for creating test locations."""
 
     def _create(
         geocode: str,

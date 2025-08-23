@@ -3,6 +3,8 @@
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from app.core.logging import setup_logging
+
 
 class TestSetupLogging:
     """Test setup_logging function by mocking all logging components."""
@@ -13,8 +15,6 @@ class TestSetupLogging:
         self, mock_logging: Mock, mock_settings: Mock
     ) -> None:
         """Test that setup_logging executes without errors."""
-        from app.core.logging import setup_logging
-
         # Mock settings
         mock_settings.DEBUG = False
         mock_settings.is_production = False
@@ -50,8 +50,6 @@ class TestSetupLogging:
     @patch("app.core.logging.logging")
     def test_setup_logging_development_mode(self, mock_logging: Mock, mock_settings: Mock) -> None:
         """Test that setup_logging handles development mode correctly."""
-        from app.core.logging import setup_logging
-
         # Mock settings for development
         mock_settings.DEBUG = True
         mock_settings.is_production = False
@@ -84,8 +82,6 @@ class TestSetupLogging:
     @patch("app.core.logging.logging")
     def test_setup_logging_production_mode(self, mock_logging: Mock, mock_settings: Mock) -> None:
         """Test that setup_logging handles production mode correctly."""
-        from app.core.logging import setup_logging
-
         # Mock settings for production
         mock_settings.DEBUG = False
         mock_settings.is_production = True

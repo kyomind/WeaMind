@@ -1,0 +1,88 @@
+{
+    "size": {
+        "width": 2500,
+        "height": 1686
+    },
+    "selected": true,
+    "name": "WeaMind Main Menu",
+    "chatBarText": "選單",
+    "areas": [
+        {
+            "bounds": {
+                "x": 0,
+                "y": 0,
+                "width": 833,
+                "height": 843
+            },
+            "action": {
+                "type": "postback",
+                "data": "action=weather&type=home",
+                "displayText": "查住家天氣"
+            }
+        },
+        {
+            "bounds": {
+                "x": 833,
+                "y": 0,
+                "width": 834,
+                "height": 843
+            },
+            "action": {
+                "type": "postback",
+                "data": "action=weather&type=office",
+                "displayText": "查公司天氣"
+            }
+        },
+        {
+            "bounds": {
+                "x": 1667,
+                "y": 0,
+                "width": 833,
+                "height": 843
+            },
+            "action": {
+                "type": "postback",
+                "data": "action=recent_queries",
+                "displayText": "最近查過的地點"
+            }
+        },
+        {
+            "bounds": {
+                "x": 0,
+                "y": 843,
+                "width": 833,
+                "height": 843
+            },
+            "action": {
+                "type": "postback",
+                "data": "action=weather&type=current",
+                "displayText": "查目前位置天氣"
+            }
+        },
+        {
+            "bounds": {
+                "x": 833,
+                "y": 843,
+                "width": 834,
+                "height": 843
+            },
+            "action": {
+                "type": "uri",
+                "uri": "https://api.kyomind.tw/static/liff/location/index.html"
+            }
+        },
+        {
+            "bounds": {
+                "x": 1667,
+                "y": 843,
+                "width": 833,
+                "height": 843
+            },
+            "action": {
+                "type": "postback",
+                "data": "action=menu&type=more",
+                "displayText": "更多功能"
+            }
+        }
+    ]
+}

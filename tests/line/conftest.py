@@ -10,9 +10,7 @@ import pytest
 
 @pytest.fixture()
 def generate_line_signature() -> Callable[[bytes], str]:
-    """
-    Generate a LINE webhook signature for testing.
-    """
+    """Generate a LINE webhook signature for testing."""
 
     def _generate(body: bytes) -> str:
         digest = hmac.new(b"TEST_SECRET", body, hashlib.sha256).digest()
@@ -23,9 +21,7 @@ def generate_line_signature() -> Callable[[bytes], str]:
 
 @pytest.fixture()
 def line_text_message_data() -> dict:
-    """
-    Return a standard text message webhook body for testing.
-    """
+    """Return a standard text message webhook body for testing."""
     return {
         "events": [
             {
@@ -39,9 +35,7 @@ def line_text_message_data() -> dict:
 
 @pytest.fixture()
 def line_image_message_data() -> dict:
-    """
-    Return a non-text (image) message webhook body for testing.
-    """
+    """Return a non-text (image) message webhook body for testing."""
     return {
         "events": [{"type": "message", "replyToken": "test_token", "message": {"type": "image"}}]
     }
@@ -49,15 +43,11 @@ def line_image_message_data() -> dict:
 
 @pytest.fixture()
 def line_follow_event_data() -> dict:
-    """
-    Return a follow event webhook body for testing.
-    """
+    """Return a follow event webhook body for testing."""
     return {"events": [{"type": "follow", "replyToken": "test_token"}]}
 
 
 @pytest.fixture()
 def line_invalid_webhook_data() -> dict:
-    """
-    Return an invalid webhook body for testing error handling.
-    """
+    """Return an invalid webhook body for testing error handling."""
     return {"invalid": "data"}

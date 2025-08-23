@@ -1,6 +1,7 @@
 """Service layer for LINE Bot operations using official SDK."""
 
 import logging
+from urllib.parse import parse_qs
 
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import (
@@ -13,11 +14,17 @@ from linebot.v3.messaging import (
     ReplyMessageRequest,
     TextMessage,
 )
-from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
+from linebot.v3.webhooks import (
+    FollowEvent,
+    MessageEvent,
+    PostbackEvent,
+    TextMessageContent,
+    UnfollowEvent,
+)
 
 from app.core.config import settings
 from app.core.database import get_session
-from app.user.service import create_user_if_not_exists, deactivate_user
+from app.user.service import create_user_if_not_exists, deactivate_user, get_user_by_line_id
 from app.weather.service import LocationParseError, LocationService
 
 logger = logging.getLogger(__name__)
@@ -52,12 +59,6 @@ def handle_message_event(event: MessageEvent) -> None:
 
     # Get database session
     session = next(get_session())
-
-    # Check for special commands first
-    if message.text.strip() == "設定地點":
-        session.close()
-        send_liff_location_setting_response(event.reply_token)
-        return
 
     # Initialize variables to ensure they're always defined
     needs_quick_reply = False
@@ -217,13 +218,17 @@ def handle_default_event(event: object) -> None:
     logger.info(f"Received unhandled event: {event}")
 
 
-def send_liff_location_setting_response(reply_token: str) -> None:
+def send_liff_location_setting_response(reply_token: str | None) -> None:
     """
     Send LIFF location setting response to user.
 
     Args:
         reply_token: Reply token from LINE message event
     """
+    if not reply_token:
+        logger.warning("Cannot send LIFF response: reply_token is None")
+        return
+
     liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
     response_message = (
         "🏠 地點設定\n\n"
@@ -237,11 +242,218 @@ def send_liff_location_setting_response(reply_token: str) -> None:
         try:
             messaging_api_client.reply_message(
                 ReplyMessageRequest(
-                    reply_token=reply_token,  # type: ignore[call-arg]
-                    messages=[TextMessage(text=response_message)],  # type: ignore
-                    notification_disabled=False,  # type: ignore[call-arg]
+                    replyToken=reply_token,  # type: ignore[call-arg]
+                    messages=[
+                        TextMessage(
+                            text=response_message,
+                            quoteToken=None,  # type: ignore[call-arg]
+                            quickReply=None,  # type: ignore[call-arg]
+                        )
+                    ],  # type: ignore
+                    notificationDisabled=False,  # type: ignore[call-arg]
                 )
             )
             logger.info(f"LIFF location setting response sent: {liff_url}")
         except Exception:
             logger.exception("Failed to send LIFF location setting response")
+
+
+# PostBack Event Handlers
+
+
+def parse_postback_data(data: str) -> dict[str, str]:
+    """
+    Parse PostBack data string into dictionary.
+
+    Args:
+        data: PostBack data string (e.g., "action=weather&type=home")
+
+    Returns:
+        Dictionary of parsed data
+    """
+    try:
+        # Parse query string format
+        parsed = parse_qs(data)
+        # Convert list values to single strings
+        return {key: values[0] for key, values in parsed.items() if values}
+    except Exception:
+        logger.warning(f"Failed to parse PostBack data: {data}")
+        return {}
+
+
+@webhook_handler.add(PostbackEvent)
+def handle_postback_event(event: PostbackEvent) -> None:
+    """
+    Handle PostBack events from Rich Menu clicks.
+
+    Args:
+        event: The LINE PostBack event
+    """
+    try:
+        # Check reply token
+        if not event.reply_token:
+            logger.warning("PostBack event without reply_token")
+            return
+
+        # Parse PostBack data
+        postback_data = parse_postback_data(event.postback.data)
+
+        # Get user ID
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        if not user_id:
+            logger.warning("PostBack event without user_id")
+            return
+
+        # Route to appropriate handler
+        if postback_data.get("action") == "weather":
+            handle_weather_postback(event, user_id, postback_data)
+        elif postback_data.get("action") == "settings":
+            handle_settings_postback(event, postback_data)
+        elif postback_data.get("action") == "recent_queries":
+            handle_recent_queries_postback(event)
+        elif postback_data.get("action") == "menu":
+            handle_menu_postback(event, postback_data)
+        else:
+            logger.warning(f"Unknown PostBack action: {postback_data}")
+            send_error_response(event.reply_token, "未知的操作")
+
+    except Exception:
+        logger.exception("Error handling PostBack event")
+        if event.reply_token:
+            send_error_response(event.reply_token, "😅 系統暫時有點忙，請稍後再試一次。")
+
+
+def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, str]) -> None:
+    """
+    Handle weather-related PostBack events.
+
+    Args:
+        event: PostBack event
+        user_id: LINE user ID
+        data: Parsed PostBack data
+    """
+    location_type = data.get("type")
+
+    if location_type in ["home", "office"]:
+        handle_user_location_weather(event, user_id, location_type)
+    elif location_type == "current":
+        handle_current_location_weather(event)
+    else:
+        send_error_response(event.reply_token, "未知的地點類型")
+
+
+def handle_user_location_weather(event: PostbackEvent, user_id: str, location_type: str) -> None:
+    """
+    Handle home/office weather queries.
+
+    Args:
+        event: PostBack event
+        user_id: LINE user ID
+        location_type: "home" or "office"
+    """
+    session = next(get_session())
+
+    try:
+        # Get user from database
+        user = get_user_by_line_id(session, user_id)
+        if not user:
+            send_error_response(event.reply_token, "用戶不存在，請重新加入好友")
+            return
+
+        # Get user's location
+        if location_type == "home":
+            location = user.home_location
+            location_name = "住家"
+        else:  # office
+            location = user.work_location
+            location_name = "公司"
+
+        if not location:
+            send_location_not_set_response(event.reply_token, location_name)
+            return
+
+        # Query weather using existing logic
+        location_text = location.full_name
+        locations, response_message = LocationService.parse_location_input(session, location_text)
+
+        # Send response
+        send_text_response(event.reply_token, response_message)
+
+    except Exception:
+        logger.exception(f"Error handling {location_type} weather query")
+        send_error_response(event.reply_token, "😅 查詢時發生錯誤，請稍後再試。")
+    finally:
+        session.close()
+
+
+def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None:
+    """
+    Handle settings-related PostBack events.
+
+    Note: 「設定地點」按鈕已改為 URI Action，直接開啟 LIFF 頁面，
+    所以這個函數可能不會被 location 類型的事件觸發。
+
+    Args:
+        event: PostBack event
+        data: Parsed PostBack data
+    """
+    settings_type = data.get("type")
+
+    if settings_type == "location":
+        # This should not be reached if using URI action
+        logger.warning("Location setting via PostBack - should use URI action instead")
+        send_liff_location_setting_response(event.reply_token)
+    else:
+        send_error_response(event.reply_token, "未知的設定類型")
+
+
+def handle_recent_queries_postback(event: PostbackEvent) -> None:
+    """Handle recent queries PostBack (placeholder)."""
+    send_text_response(event.reply_token, "📜 最近查過功能即將推出，敬請期待！")
+
+
+def handle_current_location_weather(event: PostbackEvent) -> None:
+    """Handle current location weather PostBack (placeholder)."""
+    send_text_response(event.reply_token, "📍 目前位置功能即將推出，敬請期待！")
+
+
+def handle_menu_postback(event: PostbackEvent, data: dict[str, str]) -> None:
+    """Handle menu PostBack (placeholder)."""
+    send_text_response(event.reply_token, "📢 更多功能即將推出，敬請期待！")
+
+
+def send_text_response(reply_token: str | None, text: str) -> None:
+    """Send simple text response."""
+    if not reply_token:
+        logger.warning("Cannot send text response: reply_token is None")
+        return
+
+    with ApiClient(configuration) as api_client:
+        messaging_api_client = MessagingApi(api_client)
+        try:
+            messaging_api_client.reply_message(
+                ReplyMessageRequest(
+                    replyToken=reply_token,  # type: ignore[call-arg]
+                    messages=[
+                        TextMessage(
+                            text=text,
+                            quoteToken=None,  # type: ignore[call-arg]
+                            quickReply=None,  # type: ignore[call-arg]
+                        )
+                    ],  # type: ignore
+                    notificationDisabled=False,  # type: ignore[call-arg]
+                )
+            )
+        except Exception:
+            logger.exception("Error sending text response")
+
+
+def send_location_not_set_response(reply_token: str | None, location_name: str) -> None:
+    """Send response when user location is not set."""
+    message = f"請先設定{location_name}地址，點擊下方「設定地點」按鈕即可設定。"
+    send_text_response(reply_token, message)
+
+
+def send_error_response(reply_token: str | None, message: str) -> None:
+    """Send error response."""
+    send_text_response(reply_token, message)

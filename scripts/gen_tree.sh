@@ -3,4 +3,4 @@
 
 echo "# Project Directory Tree (3 Levels)" > docs/Tree.md
 echo "" >> docs/Tree.md
-tree -L 3 -a -I '.*|__pycache__' >> docs/Tree.md
+tree -L 3 -a -I '.*|__pycache__|coverage_html_report' >> docs/Tree.md

@@ -45,18 +45,18 @@ fi
 echo "建立目錄: $TARGET_DIR"
 mkdir -p "$TARGET_DIR"
 
-# 複製 docs 目錄下的所有文件
-echo "正在複製 docs 目錄下的文件..."
+# 複製 docs 目錄內容（省略 docs 父目錄，保留子目錄結構）
+echo "正在複製 docs 目錄內容..."
 cp -r "$DOCS_SOURCE_DIR"/* "$TARGET_DIR/"
 
-# 複製 prd 目錄下的所有文件
-echo "正在複製 prd 目錄下的文件..."
+# 複製 prd 目錄內容（省略 prd 父目錄，保留子目錄結構）
+echo "正在複製 prd 目錄內容..."
 cp -r "prd"/* "$TARGET_DIR/"
 
 echo "✅ 成功完成！"
-echo "已將 docs 和 prd 目錄下的所有文件複製到: $TARGET_DIR"
+echo "已將 docs 和 prd 目錄內容複製到: $TARGET_DIR"
 
-# 顯示複製的文件列表
+# 顯示複製的內容結構
 echo ""
-echo "複製的文件："
+echo "複製的內容："
 ls -la "$TARGET_DIR"
