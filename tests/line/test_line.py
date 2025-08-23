@@ -735,3 +735,232 @@ class TestPostBackEventHandlers:
             send_error_response("test_token", "錯誤訊息")
 
             mock_send.assert_called_once_with("test_token", "錯誤訊息")
+
+    def test_send_liff_location_setting_response_no_reply_token(self) -> None:
+        """Test LIFF location setting response with no reply token."""
+        from app.line.service import send_liff_location_setting_response
+
+        # Should return early without API call
+        send_liff_location_setting_response(None)
+        # No exception should be raised
+
+    def test_parse_postback_data_exception(self) -> None:
+        """Test parsing PostBack data with exception."""
+        from app.line.service import parse_postback_data
+
+        with patch("app.line.service.parse_qs", side_effect=Exception("Parse error")):
+            result = parse_postback_data("action=weather&type=home")
+            assert result == {}
+
+    def test_handle_weather_postback_unknown_type(self) -> None:
+        """Test weather PostBack with unknown type."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_weather_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch("app.line.service.send_error_response") as mock_send:
+            handle_weather_postback(
+                mock_event, "test_user_id", {"action": "weather", "type": "unknown"}
+            )
+
+            mock_send.assert_called_once_with("test_token", "未知的地點類型")
+
+    def test_handle_user_location_weather_exception(self) -> None:
+        """Test user location weather with exception."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_user_location_weather
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch("app.line.service.get_session") as mock_get_session:
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            with patch("app.line.service.get_user_by_line_id", side_effect=Exception("DB error")):
+                with patch("app.line.service.send_error_response") as mock_send:
+                    handle_user_location_weather(mock_event, "test_user_id", "home")
+
+                    mock_send.assert_called_once_with(
+                        "test_token", "😅 查詢時發生錯誤，請稍後再試。"
+                    )
+
+    def test_handle_settings_postback_location_type(self) -> None:
+        """Test settings PostBack with location type."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_settings_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch("app.line.service.send_liff_location_setting_response") as mock_send:
+            handle_settings_postback(mock_event, {"action": "settings", "type": "location"})
+
+            mock_send.assert_called_once_with("test_token")
+
+    def test_handle_settings_postback_unknown_type(self) -> None:
+        """Test settings PostBack with unknown type."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_settings_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch("app.line.service.send_error_response") as mock_send:
+            handle_settings_postback(mock_event, {"action": "settings", "type": "unknown"})
+
+            mock_send.assert_called_once_with("test_token", "未知的設定類型")
+
+    def test_handle_postback_event_unknown_action(self) -> None:
+        """Test PostBack event with unknown action."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_postback_event
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.postback = Mock()
+        mock_event.postback.data = "action=unknown"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.send_error_response") as mock_send:
+            handle_postback_event(mock_event)
+
+            mock_send.assert_called_once_with("test_token", "未知的操作")
+
+    def test_handle_postback_event_exception(self) -> None:
+        """Test PostBack event with exception."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_postback_event
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.postback = Mock()
+        mock_event.postback.data = "action=weather&type=home"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.parse_postback_data", side_effect=Exception("Parse error")):
+            with patch("app.line.service.send_error_response") as mock_send:
+                handle_postback_event(mock_event)
+
+                mock_send.assert_called_once_with(
+                    "test_token", "😅 系統暫時有點忙，請稍後再試一次。"
+                )
+
+    def test_send_text_response_api_exception(self) -> None:
+        """Test text response with API exception."""
+        from app.line.service import send_text_response
+
+        with patch(
+            "app.line.service.MessagingApi.reply_message", side_effect=Exception("API Error")
+        ):
+            with patch("app.line.service.ApiClient"):
+                # Should not raise exception, just log error
+                send_text_response("test_token", "Hello World")
+
+    def test_handle_postback_event_weather_action(self) -> None:
+        """Test PostBack event with weather action."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_postback_event
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.postback = Mock()
+        mock_event.postback.data = "action=weather&type=home"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.handle_weather_postback") as mock_handle:
+            handle_postback_event(mock_event)
+
+            mock_handle.assert_called_once_with(
+                mock_event, "test_user_id", {"action": "weather", "type": "home"}
+            )
+
+    def test_handle_postback_event_settings_action(self) -> None:
+        """Test PostBack event with settings action."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_postback_event
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.postback = Mock()
+        mock_event.postback.data = "action=settings&type=location"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.handle_settings_postback") as mock_handle:
+            handle_postback_event(mock_event)
+
+            mock_handle.assert_called_once_with(
+                mock_event, {"action": "settings", "type": "location"}
+            )
+
+    def test_handle_postback_event_recent_queries_action(self) -> None:
+        """Test PostBack event with recent queries action."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_postback_event
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.postback = Mock()
+        mock_event.postback.data = "action=recent_queries"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.handle_recent_queries_postback") as mock_handle:
+            handle_postback_event(mock_event)
+
+            mock_handle.assert_called_once_with(mock_event)
+
+    def test_handle_postback_event_menu_action(self) -> None:
+        """Test PostBack event with menu action."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_postback_event
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.postback = Mock()
+        mock_event.postback.data = "action=menu&type=more"
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with patch("app.line.service.handle_menu_postback") as mock_handle:
+            handle_postback_event(mock_event)
+
+            mock_handle.assert_called_once_with(mock_event, {"action": "menu", "type": "more"})
+
+    def test_handle_weather_postback_current_location(self) -> None:
+        """Test weather PostBack with current location."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_weather_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch("app.line.service.handle_current_location_weather") as mock_handle:
+            handle_weather_postback(
+                mock_event, "test_user_id", {"action": "weather", "type": "current"}
+            )
+
+            mock_handle.assert_called_once_with(mock_event)
