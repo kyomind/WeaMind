@@ -1,6 +1,6 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean changelog-status changelog-prepare changelog-release changelog-help
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete
 
 # === Container & Image Management ===
 dev-up:
@@ -89,3 +89,26 @@ changelog-release:
 
 changelog-help:
 	@zsh scripts/changelog.sh quick-help
+
+# === Rich Menu Management ===
+upload:
+	@echo "🚀 Uploading Rich Menu..."
+	@if [ -z "$(IMAGE)" ]; then \
+		echo "❌ 錯誤：請指定圖片路徑"; \
+		echo "使用方式：make upload IMAGE=path/to/rich_menu.png"; \
+		exit 1; \
+	fi
+	@uv run python scripts/rich_menu_manager.py create --image "$(IMAGE)" --set-default
+
+upload-list:
+	@echo "📋 列出所有 Rich Menu..."
+	@uv run python scripts/rich_menu_manager.py list
+
+upload-delete:
+	@echo "🗑️ 刪除 Rich Menu..."
+	@if [ -z "$(ID)" ]; then \
+		echo "❌ 錯誤：請指定 Rich Menu ID"; \
+		echo "使用方式：make upload-delete ID=rich_menu_id"; \
+		exit 1; \
+	fi
+	@uv run python scripts/rich_menu_manager.py delete --rich-menu-id "$(ID)"
