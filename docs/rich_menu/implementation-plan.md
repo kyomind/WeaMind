@@ -432,12 +432,13 @@ def load_rich_menu_config() -> dict:
 Rich Menu 已成功部署！PostBack 事件處理功能已完整實作並通過所有測試！ ✅
 
 **🎉 目前狀態**: 
-- ✅ Rich Menu 已上線 (ID: `richmenu-4dd9eb07d74940972085df45d6e0406c`)
+- ✅ Rich Menu 已上線 (ID: `richmenu-dacc4c2d269d988fe79a237c4b7a3a30`)
 - ✅ PostBack 事件處理完整實作
 - ✅ 查住家/查公司功能可用
-- ✅ 設定地點 (LIFF) 功能可用  
+- ✅ 設定地點 (LIFF) 功能可用 - **已修正為直接開啟 LIFF 網頁**
 - ✅ 佔位功能 (最近查過、目前位置、其它) 已準備
 - ✅ 16 個測試全數通過
+- ✅ 移除舊的純文字「設定地點」處理邏輯
 
 **🚁 建議後續步驟**:
 

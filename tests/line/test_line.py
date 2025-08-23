@@ -297,23 +297,6 @@ class TestLineService:
         handle_unfollow_event(mock_event)
         # No exception should be raised
 
-    def test_handle_message_event_location_setting_command(self) -> None:
-        """Test handling '設定地點' command."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.reply_token = "test_token"
-        mock_message = Mock(spec=TextMessageContent)
-        mock_message.text = "設定地點"
-        mock_event.message = mock_message
-
-        with patch("app.line.service.get_session") as mock_get_session:
-            mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
-
-            with patch("app.line.service.send_liff_location_setting_response") as mock_send_liff:
-                handle_message_event(mock_event)
-                mock_send_liff.assert_called_once_with("test_token")
-                mock_session.close.assert_called_once()
-
     def test_handle_message_event_location_parse_exception(self) -> None:
         """Test handling unexpected exception during location parsing."""
         mock_event = Mock(spec=MessageEvent)

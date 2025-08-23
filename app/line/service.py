@@ -60,12 +60,6 @@ def handle_message_event(event: MessageEvent) -> None:
     # Get database session
     session = next(get_session())
 
-    # Check for special commands first
-    if message.text.strip() == "設定地點":
-        session.close()
-        send_liff_location_setting_response(event.reply_token)
-        return
-
     # Initialize variables to ensure they're always defined
     needs_quick_reply = False
 
