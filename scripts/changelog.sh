@@ -165,6 +165,9 @@ prepare_changelog() {
 
     log_info "=== 準備 CHANGELOG 資料 ==="
 
+    # 檢查 Git 狀態（包含分支檢查）
+    check_git_status
+
     # 顯示基本資訊
     show_status
     echo
@@ -246,10 +249,19 @@ update_version() {
 
     log_success "版本號已更新為 ${version}"
 
+    # 更新依賴鎖定檔案
+    log_info "🔒 更新 uv.lock 檔案..."
+    if ! uv lock; then
+        log_error "uv lock 執行失敗"
+        exit 1
+    fi
+
+    log_success "依賴鎖定檔案已更新"
+
     # 提交變更
     log_info "📤 提交變更..."
-    git add pyproject.toml CHANGELOG.md
-    git commit -m "chore: bump version to v${version}"
+    git add pyproject.toml uv.lock CHANGELOG.md
+    git commit -m "Update WeaMind version to v${version}"
 
     # 創建標籤
     log_info "🏷️  創建版本標籤..."

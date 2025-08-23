@@ -1,7 +1,3 @@
----
-applyTo: "CHANGELOG.md,pyproject.toml"
----
-
 # WeaMind CHANGELOG 維護指南
 
 ## 🤖 AI 助理重要指示
@@ -15,17 +11,7 @@ applyTo: "CHANGELOG.md,pyproject.toml"
    make changelog-release VERSION=x.y.z     # 完整發布
    ```
 
-2. **標準四步驟流程**：
-   - 🔍 執行 `make changelog-status` 檢查狀態
-   - 📋 執行 `make changelog-prepare VERSION=x.y.z` 準備資料
-   - ✏️ 根據 commits 生成並編輯 CHANGELOG.md 內容
-   - 🚀 執行 `make changelog-release VERSION=x.y.z` 完成發布
-
-3. **自動化優勢**：
-   - ✅ 完整的錯誤檢查和驗證
-   - ✅ 確保不遺漏步驟（git tag、推送等）
-   - ✅ 保持團隊一致性
-   - ❌ 避免手動操作的錯誤風險
+2. **嚴格遵循後面的「標準發布流程」**，確保不遺漏任何步驟
 
 ---
 
@@ -62,7 +48,8 @@ make changelog-release VERSION=0.2.0
 ```
 - 自動更新 `pyproject.toml` 版本號
 - 執行 `uv lock` 更新 lock 檔案
-- 提交變更並建立 git tag
+- 提交所有變更（CHANGELOG.md + pyproject.toml + uv.lock）
+- 建立 git tag
 - 推送到遠端倉庫
 - 觸發 GitHub Actions 建立 Release
 
