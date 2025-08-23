@@ -293,23 +293,29 @@ update_version() {
 
     log_success "依賴鎖定檔案已更新"
 
-    # 一次性提交所有變更（CHANGELOG.md + pyproject.toml + uv.lock）
-    log_info "📤 提交所有版本相關變更..."
-    git add CHANGELOG.md pyproject.toml uv.lock
+    # 先獨立提交 CHANGELOG.md 變更（如果有的話）
+    if ! git diff --quiet HEAD -- CHANGELOG.md; then
+        log_info "📝 提交 CHANGELOG 更新..."
+        git add CHANGELOG.md
+        git commit -m "Update CHANGELOG for v${version}"
+        log_success "✅ CHANGELOG 已獨立提交"
+    else
+        log_warning "⚠️  CHANGELOG.md 沒有變更"
+    fi
+
+    # 提交版本相關變更（pyproject.toml + uv.lock）
+    log_info "📤 提交版本發布變更..."
+    git add pyproject.toml uv.lock
     
-    # 檢查是否有變更需要提交
+    # 檢查是否有版本變更需要提交
     if git diff --cached --quiet; then
-        log_error "沒有檔案變更可以提交"
+        log_error "沒有版本變更可以提交"
         exit 1
     fi
     
-    git commit -m "Release WeaMind v${version}
+    git commit -m "Release WeaMind v${version}"
 
-- Update version to ${version} in pyproject.toml
-- Update CHANGELOG.md with release notes
-- Update dependency lock file (uv.lock)"
-
-    log_success "✅ 所有變更已在單一 commit 中提交"
+    log_success "✅ 版本發布變更已提交"
 
     # 在所有本地操作完成後建立標籤
     log_info "🏷️  創建版本標籤..."
