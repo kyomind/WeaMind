@@ -85,7 +85,6 @@ class TestUserService:
 
         assert user.line_user_id == line_user_id
 
-
         assert user.display_name == display_name
         assert user.is_active
         # Verify user was saved to database
@@ -93,6 +92,7 @@ class TestUserService:
         assert db_user is not None
 
         assert db_user.id == user.id
+
     def test_create_user_if_not_exists_existing_active_user(self, session: Session) -> None:
         """Test creating user when active user already exists."""
         line_user_id = str(uuid4())
@@ -105,10 +105,10 @@ class TestUserService:
 
         assert user.id == existing_id
 
-
         assert user.line_user_id == line_user_id
         assert user.display_name == "Existing User"
         assert user.is_active
+
     def test_create_user_if_not_exists_existing_inactive_user(self, session: Session) -> None:
         """Test creating user when inactive user already exists."""
         line_user_id = str(uuid4())
@@ -122,10 +122,10 @@ class TestUserService:
 
         assert user.id == existing_id
 
-
         assert user.line_user_id == line_user_id
         assert user.display_name == "New Display Name"
         assert user.is_active
+
     def test_create_user_if_not_exists_no_display_name(self, session: Session) -> None:
         """Test creating user without display name."""
         line_user_id = str(uuid4())
@@ -134,9 +134,9 @@ class TestUserService:
 
         assert user.line_user_id == line_user_id
 
-
         assert user.display_name is None
         assert user.is_active
+
     def test_deactivate_user_exists(self, session: Session) -> None:
         """Test deactivating user when user exists."""
         line_user_id = str(uuid4())
@@ -149,13 +149,14 @@ class TestUserService:
 
         assert result is not None
 
-
         assert result.id == user_id
         assert not result.is_active
+
     def test_deactivate_user_not_exists(self, session: Session) -> None:
         """Test deactivating user when user doesn't exist."""
         result = deactivate_user(session, "nonexistent_user")
         assert result is None
+
 
 class TestUserServiceAdditional:
     """Additional test cases for user service functions."""
@@ -177,10 +178,12 @@ class TestUserServiceAdditional:
         assert retrieved_location is not None
         assert retrieved_location.county == "台北市"
         assert retrieved_location.district == "中正區"
+
     def test_get_location_by_county_district_not_exists(self, session: Session) -> None:
         """Test getting location that doesn't exist."""
         result = get_location_by_county_district(session, "不存在縣市", "不存在區域")
         assert result is None
+
     def test_set_user_location_invalid_type(self, session: Session) -> None:
         """Test setting user location with invalid location type."""
         line_user_id = str(uuid4())
@@ -191,6 +194,7 @@ class TestUserServiceAdditional:
         assert success is False
         assert message == "無效的地點類型"
         assert location is None
+
     def test_set_user_location_location_not_exists(self, session: Session) -> None:
         """Test setting user location when location doesn't exist."""
         line_user_id = str(uuid4())
@@ -201,6 +205,7 @@ class TestUserServiceAdditional:
         assert success is False
         assert message == "地點不存在"
         assert location is None
+
     def test_set_user_location_home_success(self, session: Session) -> None:
         """Test successfully setting user home location."""
         # Create location
@@ -230,6 +235,7 @@ class TestUserServiceAdditional:
         assert user is not None
 
         assert user.home_location_id == returned_location.id
+
     def test_set_user_location_work_success(self, session: Session) -> None:
         """Test successfully setting user work location."""
 
@@ -258,6 +264,7 @@ class TestUserServiceAdditional:
         assert user is not None
 
         assert user.work_location_id == location.id
+
     def test_set_user_location_existing_user(self, session: Session) -> None:
         """Test setting location for existing user."""
 
@@ -285,6 +292,7 @@ class TestUserServiceAdditional:
         # Refresh user to get updated data from database
         session.refresh(user)
         assert user.home_location_id == returned_location.id
+
 
 class TestUserRouterAdditional:
     """Additional test cases for user router endpoints."""
@@ -323,6 +331,7 @@ class TestUserRouterAdditional:
 
             assert response_body["location_type"] == "住家"
             assert response_body["location"] == "台北市中正區"
+
     def test_set_user_location_work(self, client: TestClient, session: Session) -> None:
         """Test setting work location via LIFF."""
 
@@ -357,6 +366,7 @@ class TestUserRouterAdditional:
 
             assert response_body["location_type"] == "公司"
             assert response_body["location"] == "新北市永和區"
+
     def test_set_user_location_invalid_type(self, client: TestClient) -> None:
         """Test setting user location with invalid type."""
         # Mock LINE authentication
@@ -376,6 +386,7 @@ class TestUserRouterAdditional:
 
             assert response.status_code == 400
             assert "無效的地點類型" in response.json()["detail"]
+
     def test_set_user_location_not_exists(self, client: TestClient) -> None:
         """Test setting user location that doesn't exist."""
         # Mock LINE authentication
@@ -395,6 +406,7 @@ class TestUserRouterAdditional:
 
             assert response.status_code == 400
             assert "地點不存在" in response.json()["detail"]
+
     def test_set_user_location_auth_failed(self, client: TestClient) -> None:
         """Test setting user location without proper authentication."""
         payload = {
