@@ -5,6 +5,7 @@ Rich Menu upload script.
 Script for automating Rich Menu image and configuration uploads to LINE platform.
 """
 
+import json
 import logging
 from pathlib import Path
 
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # LINE Bot API endpoints
 LINE_API_BASE = "https://api.line.me/v2/bot"
+LINE_DATA_API_BASE = "https://api-data.line.me/v2/bot"
 RICH_MENU_API = f"{LINE_API_BASE}/richmenu"
 
 # Headers for LINE API
@@ -24,59 +26,21 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-# Rich Menu 配置
-RICH_MENU_CONFIG = {
-    "size": {"width": 2500, "height": 1686},
-    "selected": False,
-    "name": "WeaMind Main Menu",
-    "chatBarText": "選單",
-    "areas": [
-        {
-            "bounds": {"x": 0, "y": 0, "width": 833, "height": 843},
-            "action": {
-                "type": "postback",
-                "data": "action=weather&type=home",
-                "displayText": "查住家",
-            },
-        },
-        {
-            "bounds": {"x": 833, "y": 0, "width": 833, "height": 843},
-            "action": {
-                "type": "postback",
-                "data": "action=weather&type=office",
-                "displayText": "查公司",
-            },
-        },
-        {
-            "bounds": {"x": 1666, "y": 0, "width": 834, "height": 843},
-            "action": {
-                "type": "postback",
-                "data": "action=recent_queries",
-                "displayText": "最近查過",
-            },
-        },
-        {
-            "bounds": {"x": 0, "y": 843, "width": 833, "height": 843},
-            "action": {
-                "type": "postback",
-                "data": "action=weather&type=current",
-                "displayText": "目前位置",
-            },
-        },
-        {
-            "bounds": {"x": 833, "y": 843, "width": 833, "height": 843},
-            "action": {
-                "type": "postback",
-                "data": "action=settings&type=location",
-                "displayText": "設定地點",
-            },
-        },
-        {
-            "bounds": {"x": 1666, "y": 843, "width": 834, "height": 843},
-            "action": {"type": "postback", "data": "action=menu&type=more", "displayText": "其它"},
-        },
-    ],
-}
+# Rich Menu 配置檔案路徑
+RICH_MENU_CONFIG_PATH = (
+    Path(__file__).parent.parent / "docs" / "rich_menu" / "rich_menu_config.json"
+)
+
+
+def load_rich_menu_config() -> dict:
+    """
+    Load Rich Menu configuration from JSON file.
+
+    Returns:
+        Rich Menu configuration dictionary
+    """
+    with open(RICH_MENU_CONFIG_PATH, encoding="utf-8") as f:
+        return json.load(f)
 
 
 def create_rich_menu() -> str | None:
@@ -87,8 +51,9 @@ def create_rich_menu() -> str | None:
         Rich Menu ID if successful, None otherwise
     """
     try:
+        config = load_rich_menu_config()
         with httpx.Client() as client:
-            response = client.post(RICH_MENU_API, headers=HEADERS, json=RICH_MENU_CONFIG)
+            response = client.post(RICH_MENU_API, headers=HEADERS, json=config)
             response.raise_for_status()
 
             rich_menu_id = response.json().get("richMenuId")
@@ -119,7 +84,7 @@ def upload_rich_menu_image(rich_menu_id: str, image_path: Path) -> bool:
         with httpx.Client() as client:
             with open(image_path, "rb") as image_file:
                 response = client.post(
-                    f"{RICH_MENU_API}/{rich_menu_id}/content",
+                    f"{LINE_DATA_API_BASE}/richmenu/{rich_menu_id}/content",
                     headers={
                         "Authorization": f"Bearer {settings.LINE_CHANNEL_ACCESS_TOKEN}",
                         "Content-Type": "image/png",
@@ -172,7 +137,7 @@ def list_rich_menus() -> list[dict]:
     try:
         with httpx.Client() as client:
             response = client.get(
-                RICH_MENU_API,
+                f"{RICH_MENU_API}/list",
                 headers={"Authorization": f"Bearer {settings.LINE_CHANNEL_ACCESS_TOKEN}"},
             )
             response.raise_for_status()

@@ -67,9 +67,8 @@
                 "height": 843
             },
             "action": {
-                "type": "postback",
-                "data": "action=settings&type=location",
-                "displayText": "設定住家與公司地點"
+                "type": "uri",
+                "uri": "https://api.kyomind.tw/static/liff/location/index.html"
             }
         },
         {

@@ -11,14 +11,14 @@
 
 ### 按鈕配置表
 
-| 位置 | 功能 | Display Text | PostBack Data | 狀態 |
-|------|------|-------------|---------------|------|
-| 上排左 | 查住家 | `查住家` | `action=weather&type=home` | ✅ 實作 |
-| 上排中 | 查公司 | `查公司` | `action=weather&type=office` | ✅ 實作 |
-| 上排右 | 最近查過 | `最近查過` | `action=recent_queries` | 🚧 佔位 |
-| 下排左 | 目前位置 | `目前位置` | `action=weather&type=current` | 🚧 佔位 |
-| 下排中 | 設定地點 | `設定地點` | `action=settings&type=location` | ✅ 實作 |
-| 下排右 | 其它 | `其它` | `action=menu&type=more` | 🚧 佔位 |
+| 位置   | 功能     | Display Text | Action Type | Action Data                   | 狀態   |
+| ------ | -------- | ------------ | ----------- | ----------------------------- | ------ |
+| 上排左 | 查住家   | `查住家`     | PostBack    | `action=weather&type=home`    | ✅ 實作 |
+| 上排中 | 查公司   | `查公司`     | PostBack    | `action=weather&type=office`  | ✅ 實作 |
+| 上排右 | 最近查過 | `最近查過`   | PostBack    | `action=recent_queries`       | 🚧 佔位 |
+| 下排左 | 目前位置 | `目前位置`   | PostBack    | `action=weather&type=current` | 🚧 佔位 |
+| 下排中 | 設定地點 | -            | URI         | LIFF 地點設定頁面 URL         | ✅ 實作 |
+| 下排右 | 其它     | `其它`       | PostBack    | `action=menu&type=more`       | 🚧 佔位 |
 
 ### Rich Menu JSON 設定
 
@@ -67,9 +67,8 @@
     {
       "bounds": {"x": 833, "y": 843, "width": 833, "height": 843},
       "action": {
-        "type": "postback",
-        "data": "action=settings&type=location",
-        "displayText": "設定地點"
+        "type": "uri",
+        "uri": "https://api.kyomind.tw/static/liff/location/index.html"
       }
     },
     {
@@ -224,6 +223,9 @@ def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None
     """
     Handle settings-related PostBack events.
     
+    Note: 「設定地點」按鈕已改為 URI Action，直接開啟 LIFF 頁面，
+    所以這個函數可能不會被 location 類型的事件觸發。
+    
     Args:
         event: PostBack event
         data: Parsed PostBack data
@@ -231,7 +233,8 @@ def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None
     settings_type = data.get("type")
     
     if settings_type == "location":
-        # Reuse existing LIFF function
+        # This should not be reached if using URI action
+        logger.warning("Location setting via PostBack - should use URI action instead")
         send_liff_location_setting_response(event.reply_token)
     else:
         send_error_response(event.reply_token, "未知的設定類型")
@@ -318,13 +321,20 @@ def test_handle_home_weather_not_set():
 
 ## 📋 實作檢查清單
 
+### Phase 0: Rich Menu 上傳 ✅ 完成
+- [x] 修正 Rich Menu 管理腳本的 API 端點問題
+- [x] 圖片上傳 API 改用 `https://api-data.line.me` 端點  
+- [x] Rich Menu 配置改為從 JSON 檔案載入
+- [x] 成功上傳 Rich Menu 並設定為預設選單
+- [x] **Rich Menu ID**: `richmenu-4dd9eb07d74940972085df45d6e0406c`
+
 ### Phase 1: 核心功能
 - [ ] 新增 PostbackEvent import 和處理器
 - [ ] 實作 parse_postback_data 函數
 - [ ] 實作 handle_postback_event 主函數
 - [ ] 實作 handle_weather_postback 功能
 - [ ] 實作查住家/查公司邏輯
-- [ ] 整合現有 LIFF 設定功能
+- [x] ~~整合現有 LIFF 設定功能~~ 改為 URI Action 直接開啟
 
 ### Phase 2: 完善功能  
 - [ ] 新增佔位回應函數
@@ -333,9 +343,34 @@ def test_handle_home_weather_not_set():
 - [ ] 執行整合測試
 
 ### Phase 3: 部署
-- [ ] Rich Menu 圖片上傳
-- [ ] Rich Menu JSON 設定
+- [x] Rich Menu 圖片上傳
+- [x] Rich Menu JSON 設定
 - [ ] 實機測試驗證
+
+## 📝 已解決的技術問題
+
+### 1. LINE API 端點修正
+**問題**: 圖片上傳時出現 404 錯誤
+**解決方案**: 
+- Rich Menu 建立/管理: `https://api.line.me/v2/bot/richmenu`
+- 圖片上傳: `https://api-data.line.me/v2/bot/richmenu/{richMenuId}/content`
+
+### 2. 配置檔案優化
+**修正內容**:
+```python
+# 修正前 - 硬編碼配置
+RICH_MENU_CONFIG = {...}
+
+# 修正後 - 從 JSON 檔案載入
+def load_rich_menu_config() -> dict:
+    with open(RICH_MENU_CONFIG_PATH, encoding="utf-8") as f:
+        return json.load(f)
+```
+
+### 3. 上傳成功記錄
+- 使用壓縮版圖片: `rich_menu_template-min.png` (122K)
+- Rich Menu ID: `richmenu-4dd9eb07d74940972085df45d6e0406c`
+- 已設定為所有用戶的預設選單
 
 ## 🎉 預期成果
 
@@ -343,13 +378,22 @@ def test_handle_home_weather_not_set():
 
 ```
 用戶點擊「查住家」
-聊天室顯示：查住家
+聊天室顯示：查住家天氣
 機器人回覆：正在查詢台北市中正區...（基於用戶設定）
 
 用戶點擊「設定地點」  
-聊天室顯示：設定地點
-機器人回覆：🏠 地點設定 請點擊下方連結...（現有LIFF功能）
+→ 直接開啟 LIFF 地點設定網頁（無聊天室訊息，一鍵直達）
 ```
+
+## 🚀 下一步行動
+
+Rich Menu 已成功部署！接下來需要：
+
+1. **實作 PostBack 事件處理** - 在 `app/line/service.py` 添加處理器
+2. **整合現有功能** - 連接天氣查詢和 LIFF 設定功能  
+3. **測試驗證** - 確保所有按鈕功能正常運作
+
+**建議開新對話進行程式實作，以獲得更好的開發體驗！** 🎯
 
 ---
 
