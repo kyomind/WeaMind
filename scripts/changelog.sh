@@ -118,6 +118,41 @@ check_git_status() {
     fi
 }
 
+# 檢查 Git 狀態（發布專用，允許 CHANGELOG.md 有變更）
+check_git_status_for_release() {
+    local current_branch=$(git rev-parse --abbrev-ref HEAD)
+    if [[ "$current_branch" != "main" ]]; then
+        log_error "版本發布必須在 main 分支進行，目前在 ${current_branch} 分支"
+        log_info "請切換到 main 分支後再執行：git checkout main"
+        exit 1
+    fi
+
+    # 檢查除了 CHANGELOG.md 之外是否有其他未提交變更
+    local changed_files=$(git diff --name-only HEAD)
+    local non_changelog_changes=$(echo "$changed_files" | grep -v "^CHANGELOG\.md$" | wc -l | tr -d ' ')
+    
+    if [[ "$non_changelog_changes" -gt 0 ]]; then
+        log_error "除了 CHANGELOG.md 之外還有其他未提交的變更："
+        echo "$changed_files" | grep -v "^CHANGELOG\.md$"
+        log_info "請先提交或暫存這些變更"
+        exit 1
+    fi
+
+    # 檢查是否有 CHANGELOG.md 變更
+    if ! git diff --quiet HEAD -- CHANGELOG.md; then
+        log_info "✅ 發現 CHANGELOG.md 變更，將包含在版本 commit 中"
+        return 0
+    else
+        log_warning "⚠️  CHANGELOG.md 沒有變更，請確認是否已更新版本內容"
+        read -p "是否繼續？(y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "發布已取消"
+            exit 0
+        fi
+    fi
+}
+
 # 獲取最新標籤
 get_latest_tag() {
     git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0"
@@ -233,8 +268,8 @@ update_version() {
 
     log_info "=== 發布版本 v${version} ==="
 
-    # 檢查 Git 狀態
-    check_git_status
+    # 檢查 Git 狀態（允許 CHANGELOG.md 有未提交變更）
+    check_git_status_for_release
 
     # 更新 pyproject.toml
     log_info "📝 更新 pyproject.toml 版本號..."
@@ -258,19 +293,37 @@ update_version() {
 
     log_success "依賴鎖定檔案已更新"
 
-    # 提交變更
-    log_info "📤 提交變更..."
-    git add pyproject.toml uv.lock CHANGELOG.md
-    git commit -m "Update WeaMind version to v${version}"
+    # 一次性提交所有變更（CHANGELOG.md + pyproject.toml + uv.lock）
+    log_info "📤 提交所有版本相關變更..."
+    git add CHANGELOG.md pyproject.toml uv.lock
+    
+    # 檢查是否有變更需要提交
+    if git diff --cached --quiet; then
+        log_error "沒有檔案變更可以提交"
+        exit 1
+    fi
+    
+    git commit -m "Release WeaMind v${version}
 
-    # 創建標籤
+- Update version to ${version} in pyproject.toml
+- Update CHANGELOG.md with release notes
+- Update dependency lock file (uv.lock)"
+
+    log_success "✅ 所有變更已在單一 commit 中提交"
+
+    # 在所有本地操作完成後建立標籤
     log_info "🏷️  創建版本標籤..."
     git tag -a "v${version}" -m "Release v${version}"
+    log_success "✅ 版本標籤已建立"
 
-    # 推送
-    log_info "🚀 推送到遠端..."
-    git push origin main
-    git push origin "v${version}"
+    # 一次性推送所有內容（commit + tag）
+    log_info "🚀 推送所有變更到遠端..."
+    if ! git push origin main --tags; then
+        log_error "推送失敗，版本發布中止"
+        log_info "💡 提示：可能需要先 git pull 或解決衝突"
+        log_warning "⚠️  本地已完成 commit 和 tag，可稍後手動推送"
+        exit 1
+    fi
 
     log_success "🎉 版本 v${version} 發布完成！"
     log_info "💡 GitHub Actions 將自動建立 Release"
