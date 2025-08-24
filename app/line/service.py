@@ -24,7 +24,13 @@ from linebot.v3.webhooks import (
 
 from app.core.config import settings
 from app.core.database import get_session
-from app.user.service import create_user_if_not_exists, deactivate_user, get_user_by_line_id
+from app.user.service import (
+    create_user_if_not_exists,
+    deactivate_user,
+    get_recent_queries,
+    get_user_by_line_id,
+    record_user_query,
+)
 from app.weather.service import LocationParseError, LocationService
 
 logger = logging.getLogger(__name__)
@@ -69,6 +75,19 @@ def handle_message_event(event: MessageEvent) -> None:
 
         # Check if Quick Reply is needed (2-3 locations found)
         needs_quick_reply = 2 <= len(locations) <= 3
+
+        # Record successful location queries for history
+        # This includes both direct single matches and Quick Reply selections
+        if len(locations) == 1:
+            # Get user for recording query history
+            user_id = getattr(event.source, "user_id", None) if event.source else None
+            if user_id:
+                user = get_user_by_line_id(session, user_id)
+                if user:
+                    record_user_query(session, user.id, locations[0].id)
+                    logger.info(
+                        f"Recorded query history for user {user.id}, location {locations[0].id}"
+                    )
 
         # Log the parsing result
         logger.info(
@@ -354,11 +373,11 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
     session = next(get_session())
 
     try:
-        # Get user from database
+        # Get or create user from database
         user = get_user_by_line_id(session, user_id)
         if not user:
-            send_error_response(event.reply_token, "用戶不存在，請重新加入好友")
-            return
+            # Auto-create user for authenticated LINE users
+            user = create_user_if_not_exists(session, user_id, display_name=None)
 
         # Get user's location
         if location_type == "home":
@@ -374,7 +393,10 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
 
         # Query weather using existing logic
         location_text = location.full_name
-        locations, response_message = LocationService.parse_location_input(session, location_text)
+        _, response_message = LocationService.parse_location_input(session, location_text)
+
+        # Record query for home/office weather lookups (but don't duplicate in history)
+        # Note: These are not recorded as they are the user's preset locations
 
         # Send response
         send_text_response(event.reply_token, response_message)
@@ -408,8 +430,80 @@ def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None
 
 
 def handle_recent_queries_postback(event: PostbackEvent) -> None:
-    """Handle recent queries PostBack (placeholder)."""
-    send_text_response(event.reply_token, "📜 最近查過功能即將推出，敬請期待！")
+    """Handle recent queries PostBack events."""
+    try:
+        # Get user ID
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        if not user_id:
+            logger.warning("Recent queries PostBack event without user_id")
+            send_error_response(event.reply_token, "用戶識別錯誤")
+            return
+
+        session = next(get_session())
+
+        try:
+            # Get or create user from database
+            user = get_user_by_line_id(session, user_id)
+            if not user:
+                # Auto-create user for authenticated LINE users
+                user = create_user_if_not_exists(session, user_id, display_name=None)
+
+            # Get recent queries
+            recent_locations = get_recent_queries(session, user.id, limit=3)
+
+            if not recent_locations:
+                send_text_response(
+                    event.reply_token,
+                    "📜 您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
+                )
+                return
+
+            # Create Quick Reply items for recent locations
+            quick_reply_items = [
+                QuickReplyItem(
+                    type="action",
+                    imageUrl=None,
+                    action=MessageAction(
+                        type="message",
+                        label=location.full_name,
+                        text=location.full_name,
+                    ),
+                )
+                for location in recent_locations
+            ]
+
+            quick_reply = QuickReply(items=quick_reply_items)
+
+            # Send response with Quick Reply
+            response_message = "📜 最近查過的地點："
+
+            with ApiClient(configuration) as api_client:
+                messaging_api_client = MessagingApi(api_client)
+                try:
+                    messaging_api_client.reply_message(
+                        ReplyMessageRequest(
+                            reply_token=event.reply_token,  # type: ignore[call-arg]
+                            messages=[
+                                TextMessage(
+                                    text=response_message,
+                                    quick_reply=quick_reply,  # type: ignore[call-arg]
+                                )
+                            ],  # type: ignore
+                            notification_disabled=False,  # type: ignore[call-arg]
+                        )
+                    )
+                    logger.info(
+                        f"Recent queries response sent with {len(recent_locations)} options"
+                    )
+                except Exception:
+                    logger.exception("Error sending recent queries response")
+                    send_error_response(event.reply_token, "😅 查詢時發生錯誤，請稍後再試。")
+        finally:
+            session.close()
+
+    except Exception:
+        logger.exception("Error handling recent queries PostBack")
+        send_error_response(event.reply_token, "😅 系統暫時有點忙，請稍後再試一次。")
 
 
 def handle_current_location_weather(event: PostbackEvent) -> None:
@@ -419,6 +513,7 @@ def handle_current_location_weather(event: PostbackEvent) -> None:
 
 def handle_menu_postback(event: PostbackEvent, data: dict[str, str]) -> None:
     """Handle menu PostBack (placeholder)."""
+    _ = data  # Acknowledge unused parameter
     send_text_response(event.reply_token, "📢 更多功能即將推出，敬請期待！")
 
 

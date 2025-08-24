@@ -39,3 +39,25 @@ class User(Base):
     work_location: Mapped["Location"] = relationship(
         "Location", foreign_keys=[work_location_id], lazy="select"
     )
+
+
+class UserQuery(Base):
+    """
+    Database model for user query history.
+
+    Records each location query made by users to enable recent query features
+    and provide usage analytics.
+    """
+
+    __tablename__ = "user_query"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False, index=True)
+    location_id: Mapped[int] = mapped_column(ForeignKey("location.id"), nullable=False)
+    query_time: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(UTC), index=True
+    )
+
+    # Relationships
+    user: Mapped["User"] = relationship("User", lazy="select")
+    location: Mapped["Location"] = relationship("Location", lazy="select")

@@ -1,8 +1,11 @@
 """User service logic."""
 
+from datetime import UTC, datetime
+
+from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
-from app.user.models import User
+from app.user.models import User, UserQuery
 from app.weather.models import Location
 
 
@@ -127,3 +130,77 @@ def set_user_location(
     session.refresh(user)
 
     return True, "地點設定成功", location
+
+
+def record_user_query(session: Session, user_id: int, location_id: int) -> None:
+    """
+    Record a user query for location history tracking.
+
+    Args:
+        session: database Session object
+        user_id: internal user ID
+        location_id: location ID that was queried
+    """
+    query_record = UserQuery(user_id=user_id, location_id=location_id, query_time=datetime.now(UTC))
+    session.add(query_record)
+    session.commit()
+
+
+def get_recent_queries(session: Session, user_id: int, limit: int = 3) -> list[Location]:
+    """
+    Get user's recent query locations, excluding home/work locations.
+
+    Args:
+        session: database Session object
+        user_id: internal user ID
+        limit: maximum number of recent queries to return
+
+    Returns:
+        List of Location objects for recent queries
+    """
+    # Get user's home and work location IDs for exclusion
+    user = session.query(User).filter(User.id == user_id).first()
+    if not user:
+        return []
+
+    excluded_location_ids = []
+    if user.home_location_id:
+        excluded_location_ids.append(user.home_location_id)
+    if user.work_location_id:
+        excluded_location_ids.append(user.work_location_id)
+
+    # Build base query for recent user queries
+    query = (
+        session.query(UserQuery)
+        .filter(UserQuery.user_id == user_id)
+        .order_by(desc(UserQuery.query_time))
+    )
+
+    # Exclude home/work locations if they exist
+    if excluded_location_ids:
+        query = query.filter(~UserQuery.location_id.in_(excluded_location_ids))
+
+    # Get most recent query for each distinct location
+    # Use a more complex approach for cross-database compatibility
+    # TODO: Optimize with PostgreSQL DISTINCT ON when test environment uses PostgreSQL
+    # Limit initial query to avoid loading too much data
+    recent_queries = []
+    seen_locations = set()
+
+    for user_query in query.limit(100):  # Reasonable limit to avoid loading all records
+        if user_query.location_id not in seen_locations:
+            recent_queries.append(user_query)
+            seen_locations.add(user_query.location_id)
+            if len(recent_queries) >= limit:
+                break
+
+    # Fetch corresponding Location objects
+    location_ids = [q.location_id for q in recent_queries]
+    if not location_ids:
+        return []
+
+    locations = session.query(Location).filter(Location.id.in_(location_ids)).all()
+
+    # Maintain order from recent queries
+    location_dict = {loc.id: loc for loc in locations}
+    return [location_dict[loc_id] for loc_id in location_ids if loc_id in location_dict]

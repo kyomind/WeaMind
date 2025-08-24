@@ -23,7 +23,18 @@ down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
 deploy:
+	@echo "🚀 開始部署..."
+	@echo "📦 建立並啟動容器..."
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+	@echo "⏳ 等待服務啟動..."
+	@sleep 10
+	@echo "🔄 執行資料庫遷移..."
+	@if docker compose exec $(APP_SERVICE) uv run alembic upgrade head; then \
+		echo "✅ 資料庫遷移完成"; \
+	else \
+		echo "⚠️  資料庫遷移失敗，請檢查是否有新的遷移檔案或資料庫連線"; \
+	fi
+	@echo "✅ 部署完成！"
 
 # === Database Migration ===
 migrate:
