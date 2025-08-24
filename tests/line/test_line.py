@@ -1025,3 +1025,232 @@ class TestPostBackEventHandlers:
             )
 
             mock_handle.assert_called_once_with(mock_event)
+
+    def test_handle_message_event_with_user_query_recording(self) -> None:
+        """Test message handling with user query recording."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "台北"
+        mock_source = Mock()
+        mock_source.user_id = "test_line_user_id"
+        mock_event.source = mock_source
+
+        # Mock single location result to trigger recording
+        mock_location = Mock(spec=Location)
+        mock_location.id = 123
+        mock_location.full_name = "臺北市中正區"
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.LocationService.parse_location_input") as mock_parse,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.record_user_query") as mock_record_query,
+            patch("app.line.service.MessagingApi") as mock_messaging_api,
+            patch("app.line.service.ApiClient"),
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            # Single location triggers recording
+            mock_parse.return_value = ([mock_location], "天氣查詢結果")
+
+            # Mock user found for recording
+            mock_user = Mock()
+            mock_user.id = 456
+            mock_get_user.return_value = mock_user
+
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            handle_message_event(mock_event)
+
+            # Verify query was recorded
+            mock_record_query.assert_called_once_with(mock_session, 456, 123)
+
+    def test_handle_message_event_no_user_for_recording(self) -> None:
+        """Test message handling when user not found for recording."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "台北"
+        mock_source = Mock()
+        mock_source.user_id = "test_line_user_id"
+        mock_event.source = mock_source
+
+        mock_location = Mock(spec=Location)
+        mock_location.id = 123
+        mock_location.full_name = "臺北市中正區"
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.LocationService.parse_location_input") as mock_parse,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.record_user_query") as mock_record_query,
+            patch("app.line.service.MessagingApi") as mock_messaging_api,
+            patch("app.line.service.ApiClient"),
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            # Single location triggers recording attempt
+            mock_parse.return_value = ([mock_location], "天氣查詢結果")
+
+            # User not found - no recording
+            mock_get_user.return_value = None
+
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            handle_message_event(mock_event)
+
+            # Verify query was NOT recorded
+            mock_record_query.assert_not_called()
+
+    def test_handle_message_event_no_source_for_recording(self) -> None:
+        """Test message handling when no source for recording."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.message = Mock(spec=TextMessageContent)
+        mock_event.message.text = "台北"
+        mock_event.source = None  # No source
+
+        mock_location = Mock(spec=Location)
+        mock_location.id = 123
+        mock_location.full_name = "臺北市中正區"
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.LocationService.parse_location_input") as mock_parse,
+            patch("app.line.service.record_user_query") as mock_record_query,
+            patch("app.line.service.MessagingApi") as mock_messaging_api,
+            patch("app.line.service.ApiClient"),
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            # Single location triggers recording attempt
+            mock_parse.return_value = ([mock_location], "天氣查詢結果")
+
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            handle_message_event(mock_event)
+
+            # Verify query was NOT recorded (no user_id available)
+            mock_record_query.assert_not_called()
+
+    def test_handle_recent_queries_postback_with_history(self) -> None:
+        """Test recent queries PostBack with Quick Reply history."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_recent_queries_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.source = Mock()
+        mock_event.source.user_id = "test_line_user_id"
+
+        # Mock recent locations
+        mock_location1 = Mock(spec=Location)
+        mock_location1.full_name = "台北市中正區"
+        mock_location2 = Mock(spec=Location)
+        mock_location2.full_name = "新北市板橋區"
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.get_recent_queries") as mock_get_recent,
+            patch("app.line.service.MessagingApi") as mock_messaging_api,
+            patch("app.line.service.ApiClient"),
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+            mock_user = Mock()
+            mock_user.id = 1
+            mock_get_user.return_value = mock_user
+            mock_get_recent.return_value = [mock_location1, mock_location2]
+
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            handle_recent_queries_postback(mock_event)
+
+            # Verify API was called with Quick Reply
+            mock_api_instance.reply_message.assert_called_once()
+            call_args = mock_api_instance.reply_message.call_args[0]
+            request = call_args[0]
+            message = request.messages[0]
+            assert message.quick_reply is not None
+            assert len(message.quick_reply.items) == 2
+
+    def test_handle_recent_queries_postback_no_user_id(self) -> None:
+        """Test recent queries PostBack without user ID."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_recent_queries_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.source = None  # No user_id
+
+        with patch("app.line.service.send_error_response") as mock_send:
+            handle_recent_queries_postback(mock_event)
+
+            mock_send.assert_called_once_with("test_token", "用戶識別錯誤")
+
+    def test_handle_recent_queries_postback_api_error(self) -> None:
+        """Test recent queries PostBack with API error."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_recent_queries_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.source = Mock()
+        mock_event.source.user_id = "test_line_user_id"
+
+        mock_location = Mock(spec=Location)
+        mock_location.full_name = "台北市中正區"
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.get_recent_queries") as mock_get_recent,
+            patch(
+                "app.line.service.MessagingApi.reply_message", side_effect=Exception("API Error")
+            ),
+            patch("app.line.service.send_error_response") as mock_send,
+            patch("app.line.service.ApiClient"),
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+            mock_user = Mock()
+            mock_user.id = 1
+            mock_get_user.return_value = mock_user
+            mock_get_recent.return_value = [mock_location]
+
+            handle_recent_queries_postback(mock_event)
+
+            # Should send fallback error message
+            mock_send.assert_called_once_with("test_token", "😅 查詢時發生錯誤，請稍後再試。")
+
+    def test_handle_recent_queries_postback_general_exception(self) -> None:
+        """Test recent queries PostBack with general exception."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_recent_queries_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.source = Mock()
+        mock_event.source.user_id = "test_line_user_id"
+
+        with (
+            patch("app.line.service.get_session", side_effect=Exception("DB Error")),
+            patch("app.line.service.send_error_response") as mock_send,
+        ):
+            handle_recent_queries_postback(mock_event)
+
+            # Should send general error message
+            mock_send.assert_called_once_with("test_token", "😅 系統暫時有點忙，請稍後再試一次。")
