@@ -634,7 +634,7 @@ class TestPostBackEventHandlers:
                         mock_send.assert_called_once_with("test_token", "新北市板橋區的天氣...")
 
     def test_handle_weather_postback_user_not_found(self) -> None:
-        """Test weather PostBack when user not found."""
+        """Test weather PostBack when user not found - should auto-create user."""
         from linebot.v3.webhooks import PostbackEvent
 
         from app.line.service import handle_weather_postback
@@ -646,13 +646,19 @@ class TestPostBackEventHandlers:
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
 
-            with patch("app.line.service.get_user_by_line_id", return_value=None):
-                with patch("app.line.service.send_error_response") as mock_send:
-                    handle_weather_postback(
-                        mock_event, "test_user_id", {"action": "weather", "type": "home"}
-                    )
+            # Mock auto-created user without home location
+            mock_user = Mock()
+            mock_user.home_location = None
+            mock_user.work_location = None
 
-                    mock_send.assert_called_once_with("test_token", "用戶不存在，請重新加入好友")
+            with patch("app.line.service.get_user_by_line_id", return_value=None):
+                with patch("app.line.service.create_user_if_not_exists", return_value=mock_user):
+                    with patch("app.line.service.send_location_not_set_response") as mock_send:
+                        handle_weather_postback(
+                            mock_event, "test_user_id", {"action": "weather", "type": "home"}
+                        )
+
+                        mock_send.assert_called_once_with("test_token", "住家")
 
     def test_handle_current_location_weather_placeholder(self) -> None:
         """Test current location weather placeholder."""
@@ -668,19 +674,74 @@ class TestPostBackEventHandlers:
 
             mock_send.assert_called_once_with("test_token", "📍 目前位置功能即將推出，敬請期待！")
 
-    def test_handle_recent_queries_postback_placeholder(self) -> None:
-        """Test recent queries PostBack placeholder."""
+    def test_handle_recent_queries_postback_no_history(self) -> None:
+        """Test recent queries PostBack when user has no query history."""
         from linebot.v3.webhooks import PostbackEvent
 
         from app.line.service import handle_recent_queries_postback
 
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
+        mock_event.source = Mock()
+        mock_event.source.user_id = "test_line_user_id"
 
-        with patch("app.line.service.send_text_response") as mock_send:
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.get_recent_queries") as mock_get_recent,
+            patch("app.line.service.send_text_response") as mock_send,
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+            mock_user = Mock()
+            mock_user.id = 1
+            mock_get_user.return_value = mock_user
+            mock_get_recent.return_value = []  # No recent queries
+
             handle_recent_queries_postback(mock_event)
 
-            mock_send.assert_called_once_with("test_token", "📜 最近查過功能即將推出，敬請期待！")
+            mock_send.assert_called_once_with(
+                "test_token", "📜 您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
+            )
+
+    def test_handle_recent_queries_postback_user_not_found(self) -> None:
+        """Test recent queries PostBack when user not found - should auto-create user."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        from app.line.service import handle_recent_queries_postback
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.source = Mock()
+        mock_event.source.user_id = "test_line_user_id"
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.create_user_if_not_exists") as mock_create_user,
+            patch("app.line.service.get_recent_queries") as mock_get_recent,
+            patch("app.line.service.send_text_response") as mock_send,
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+            mock_get_user.return_value = None  # User not found initially
+
+            # Mock auto-created user
+            mock_user = Mock()
+            mock_user.id = 1
+            mock_create_user.return_value = mock_user
+            mock_get_recent.return_value = []  # No recent queries for new user
+
+            handle_recent_queries_postback(mock_event)
+
+            # Verify user was auto-created
+            mock_create_user.assert_called_once_with(
+                mock_session, "test_line_user_id", display_name=None
+            )
+            # Verify appropriate message was sent for new user with no history
+            mock_send.assert_called_once_with(
+                "test_token", "📜 您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
+            )
 
     def test_handle_menu_postback_placeholder(self) -> None:
         """Test menu PostBack placeholder."""

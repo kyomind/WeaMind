@@ -9,12 +9,14 @@ from uuid import uuid4
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.user.models import User
+from app.user.models import User, UserQuery
 from app.user.service import (
     create_user_if_not_exists,
     deactivate_user,
     get_location_by_county_district,
+    get_recent_queries,
     get_user_by_line_id,
+    record_user_query,
     set_user_location,
 )
 from app.weather.models import Location
@@ -417,3 +419,164 @@ class TestUserRouterAdditional:
         response = client.post("/users/locations", json=payload)
 
         assert response.status_code == 403
+
+
+class TestUserQueryHistory:
+    """Test user query history functionality."""
+
+    def test_record_user_query(self, session: Session) -> None:
+        """Test recording a user query."""
+        # Create user and location
+        line_user_id = str(uuid4())
+        user = User(line_user_id=line_user_id, display_name="Test User")
+        session.add(user)
+
+        location = Location(
+            geocode="test_query001",
+            county="台北市",
+            district="中正區",
+            full_name="台北市中正區",
+        )
+        session.add(location)
+        session.commit()
+
+        # Record query
+        record_user_query(session, user.id, location.id)
+
+        # Verify query was recorded
+        query_record = (
+            session.query(UserQuery)
+            .filter(UserQuery.user_id == user.id, UserQuery.location_id == location.id)
+            .first()
+        )
+
+        assert query_record is not None
+        assert query_record.user_id == user.id
+        assert query_record.location_id == location.id
+        assert query_record.query_time is not None
+
+    def test_get_recent_queries_no_queries(self, session: Session) -> None:
+        """Test getting recent queries when user has no queries."""
+        # Create user
+        line_user_id = str(uuid4())
+        user = User(line_user_id=line_user_id, display_name="Test User")
+        session.add(user)
+        session.commit()
+
+        # Get recent queries
+        recent_locations = get_recent_queries(session, user.id)
+        assert recent_locations == []
+
+    def test_get_recent_queries_with_queries(self, session: Session) -> None:
+        """Test getting recent queries when user has queries."""
+        # Create user
+        line_user_id = str(uuid4())
+        user = User(line_user_id=line_user_id, display_name="Test User")
+        session.add(user)
+
+        # Create locations
+        location1 = Location(
+            geocode="test_query002",
+            county="台北市",
+            district="中正區",
+            full_name="台北市中正區",
+        )
+        location2 = Location(
+            geocode="test_query003",
+            county="新北市",
+            district="永和區",
+            full_name="新北市永和區",
+        )
+        session.add_all([location1, location2])
+        session.commit()
+
+        # Record queries
+        record_user_query(session, user.id, location1.id)
+        record_user_query(session, user.id, location2.id)
+
+        # Get recent queries
+        recent_locations = get_recent_queries(session, user.id)
+        assert len(recent_locations) == 2
+
+        # Should return most recent first (location2)
+        assert recent_locations[0].id == location2.id
+        assert recent_locations[1].id == location1.id
+
+    def test_get_recent_queries_excludes_home_work(self, session: Session) -> None:
+        """Test that recent queries exclude home and work locations."""
+        # Create user
+        line_user_id = str(uuid4())
+        user = User(line_user_id=line_user_id, display_name="Test User")
+        session.add(user)
+
+        # Create locations
+        home_location = Location(
+            geocode="test_query004",
+            county="台北市",
+            district="中正區",
+            full_name="台北市中正區",
+        )
+        work_location = Location(
+            geocode="test_query005",
+            county="新北市",
+            district="永和區",
+            full_name="新北市永和區",
+        )
+        other_location = Location(
+            geocode="test_query006",
+            county="台中市",
+            district="西區",
+            full_name="台中市西區",
+        )
+        session.add_all([home_location, work_location, other_location])
+        session.commit()
+
+        # Set home and work locations for user
+        user.home_location_id = home_location.id
+        user.work_location_id = work_location.id
+        session.commit()
+
+        # Record queries for all locations
+        record_user_query(session, user.id, home_location.id)
+        record_user_query(session, user.id, work_location.id)
+        record_user_query(session, user.id, other_location.id)
+
+        # Get recent queries
+        recent_locations = get_recent_queries(session, user.id)
+
+        # Should only return other_location, not home/work
+        assert len(recent_locations) == 1
+        assert recent_locations[0].id == other_location.id
+
+    def test_get_recent_queries_limit(self, session: Session) -> None:
+        """Test that recent queries respects the limit parameter."""
+        # Create user
+        line_user_id = str(uuid4())
+        user = User(line_user_id=line_user_id, display_name="Test User")
+        session.add(user)
+
+        # Create multiple locations
+        locations = []
+        for i in range(5):
+            location = Location(
+                geocode=f"test_query_limit_{i:03d}",
+                county="台北市",
+                district=f"區域{i}",
+                full_name=f"台北市區域{i}",
+            )
+            locations.append(location)
+        session.add_all(locations)
+        session.commit()
+
+        # Record queries for all locations
+        for location in locations:
+            record_user_query(session, user.id, location.id)
+
+        # Get recent queries with limit=2
+        recent_locations = get_recent_queries(session, user.id, limit=2)
+        assert len(recent_locations) == 2
+
+    def test_get_recent_queries_nonexistent_user(self, session: Session) -> None:
+        """Test getting recent queries for nonexistent user."""
+        recent_locations = get_recent_queries(session, 99999)
+        assert recent_locations == []
