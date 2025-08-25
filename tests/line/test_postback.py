@@ -327,15 +327,32 @@ class TestPostBackEventHandlers:
                         "test_token", "😅 查詢時發生錯誤，請稍後再試。"
                     )
 
-    def test_handle_current_location_weather_placeholder(self) -> None:
-        """Test current location weather placeholder."""
+    def test_handle_current_location_weather_request(self) -> None:
+        """Test current location weather sends location request."""
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.send_text_response") as mock_send:
-            handle_current_location_weather(mock_event)
+        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
 
-            mock_send.assert_called_once_with("test_token", "📍 目前位置功能即將推出，敬請期待！")
+            with patch("app.line.service.ApiClient"):
+                handle_current_location_weather(mock_event)
+
+                # Should send location request message with Quick Reply
+                mock_api_instance.reply_message.assert_called_once()
+                call_args = mock_api_instance.reply_message.call_args[0]
+                request = call_args[0]
+
+                # Check message content
+                message = request.messages[0]
+                assert message.text == "請分享您的位置，我將為您查詢當地的天氣資訊 🌤️"
+
+                # Check Quick Reply contains location action
+                assert message.quick_reply is not None
+                assert len(message.quick_reply.items) == 1
+                assert message.quick_reply.items[0].action.type == "location"
+                assert message.quick_reply.items[0].action.label == "分享我的位置"
 
     def test_handle_settings_postback_location_type(self) -> None:
         """Test settings PostBack with location type."""

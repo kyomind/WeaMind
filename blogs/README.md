@@ -1,7 +1,7 @@
 # WeaMind 系列文章索引
 
-[![Blog](https://img.shields.io/badge/Blog-Code%20and%20Me-forestgreen)](https://blog.kyomind.tw) 
-[![Author](https://img.shields.io/badge/Author-Kyo%20Huang-blue)](https://blog.kyomind.tw/about) 
+[![Blog](https://img.shields.io/badge/Blog-Code%20and%20Me-forestgreen)](https://blog.kyomind.tw)
+[![Author](https://img.shields.io/badge/Author-Kyo%20Huang-blue)](https://blog.kyomind.tw/about)
 [![Subscribe](https://img.shields.io/badge/Subscribe-%20Email-forestgreen?style=flat&logo=gmail)](https://blog.kyomind.tw/subscribe/)
 
 記錄 WeaMind 專案開發過程中的關鍵技術實作和經驗分享。

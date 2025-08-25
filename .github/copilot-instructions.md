@@ -22,7 +22,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 
 ### Git Commit Messages
 - **Natural English**: Use clear, descriptive English sentences
-- **Examples**: 
+- **Examples**:
   - "Update CHANGELOG for v0.1.3"
   - "Enhance GitHub Actions release with full git history"
   - "Add location settings feature"

@@ -43,10 +43,10 @@ if git show-ref --verify --quiet refs/heads/$TARGET_BRANCH; then
         echo "   2. 然後再執行: make worktree-add"
         exit 1
     fi
-    
+
     echo "🌳 為現有分支 '$TARGET_BRANCH' 創建 worktree..."
     echo "📁 路徑: $WORKTREE_PATH"
-    
+
     if git worktree add "$WORKTREE_PATH" "$TARGET_BRANCH"; then
         echo "✅ 成功創建 worktree!"
         echo "📂 cd $WORKTREE_PATH"
@@ -58,7 +58,7 @@ else
     # 分支不存在，創建新分支
     echo "🌱 分支 '$TARGET_BRANCH' 不存在，將創建新分支..."
     echo "📁 路徑: $WORKTREE_PATH"
-    
+
     if git worktree add -b "$TARGET_BRANCH" "$WORKTREE_PATH"; then
         echo "✅ 成功創建新分支和 worktree!"
         echo "📂 cd $WORKTREE_PATH"

@@ -44,3 +44,4 @@
   - [ ] LIFF SDK 的錯誤訊息問題，以及scope write是否真的必要(登入會比較讓人謹慎)
   - [ ] 設定地址時使用者不存在與 follow 時的整合！
 - [ ] 單元測試的 db 應該由 SQLite 改為 PostgreSQL，因為兩者的方言可能會有差異，應以 PostgreSQL 為主，參考「最近查詢」的 TODO
+- [ ] 重新調整 rich menu 位置分配

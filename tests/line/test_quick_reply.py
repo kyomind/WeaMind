@@ -160,7 +160,7 @@ class TestQuickReplyFeature:
         # Mock 4 locations - should not trigger Quick Reply
         mock_locations = [Mock(spec=Location) for _ in range(4)]
         for i, location in enumerate(mock_locations):
-            location.full_name = f"地點{i+1}"
+            location.full_name = f"地點{i + 1}"
 
         with patch("app.line.service.get_session") as mock_get_session:
             mock_session = Mock()
