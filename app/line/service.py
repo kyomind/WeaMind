@@ -87,9 +87,7 @@ def handle_message_event(event: MessageEvent) -> None:
                 user = get_user_by_line_id(session, user_id)
                 if user:
                     record_user_query(session, user.id, locations[0].id)
-                    logger.info(
-                        f"Recorded query history for user {user.id}, location {locations[0].id}"
-                    )
+                    logger.info("Recorded query history for user")
 
         # Log the parsing result
         logger.info(
@@ -144,7 +142,7 @@ def handle_message_event(event: MessageEvent) -> None:
                     notification_disabled=False,  # type: ignore[call-arg]
                 )
             )
-            logger.info(f"Response sent: {response_message}")
+            logger.info("Response sent to user")
         except Exception:
             logger.exception("Error sending LINE message")
 
@@ -168,30 +166,38 @@ def handle_location_message_event(event: MessageEvent) -> None:
         logger.warning(f"Unexpected message type: {type(message)}")
         return
 
-    # Extract GPS coordinates
+    # Extract GPS coordinates and address information
     lat = message.latitude
     lon = message.longitude
+    address = getattr(message, "address", None)
 
-    logger.info(f"Received location: lat={lat}, lon={lon}")
+    logger.info("Received location message from user")
+    if address:
+        logger.info("Location message includes address information")
 
     # Get database session
     session = next(get_session())
 
     try:
-        # Use WeatherService to handle location-based weather query
-        response_message = WeatherService.handle_location_weather_query(session, lat, lon)
+        # Use WeatherService to handle location-based weather query with address verification
+        response_message = WeatherService.handle_location_weather_query(session, lat, lon, address)
 
         # Record query for user history if location was found in Taiwan
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if user_id:
+            # Try GPS location first
             location = LocationService.find_nearest_location(session, lat, lon)
+            # If no GPS result but we have address, try address location
+            if not location and address:
+                location = LocationService.extract_location_from_address(session, address)
+
             if location:
                 user = get_user_by_line_id(session, user_id)
                 if user:
                     record_user_query(session, user.id, location.id)
-                    logger.info(f"Recorded GPS query for user {user.id}, location {location.id}")
+                    logger.info("Recorded location query for user")
 
-        logger.info(f"Location query result: {response_message}")
+        logger.info("Location query completed")
 
     except Exception:
         logger.exception(f"Error handling location message: lat={lat}, lon={lon}")
@@ -222,8 +228,8 @@ def handle_follow_event(event: FollowEvent) -> None:
         session = next(get_session())  # Corrected call
         try:
             # Create user if not exists or reactivate if inactive
-            user = create_user_if_not_exists(session, user_id)
-            logger.info(f"User {user_id} followed - user record created/activated (ID: {user.id})")
+            create_user_if_not_exists(session, user_id)
+            logger.info("User followed - user record created/activated")
 
             # Send welcome message if reply token exists
             if event.reply_token:
@@ -243,7 +249,7 @@ def handle_follow_event(event: FollowEvent) -> None:
                                 notification_disabled=False,  # type: ignore[call-arg]
                             )
                         )
-                        logger.info(f"Welcome message sent to user {user_id}")
+                        logger.info("Welcome message sent to user")
                     except Exception:
                         logger.exception(f"Error sending welcome message to user {user_id}")
         finally:
@@ -273,7 +279,7 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
             # Deactivate user
             user = deactivate_user(session, user_id)
             if user:
-                logger.info(f"User {user_id} unfollowed - user record deactivated (ID: {user.id})")
+                logger.info("User unfollowed - user record deactivated")
             else:
                 logger.warning(f"Unfollow event for unknown user {user_id}")
         finally:
@@ -291,7 +297,7 @@ def handle_default_event(event: object) -> None:
     Args:
         event: The LINE event
     """
-    logger.info(f"Received unhandled event: {event}")
+    logger.info("Received unhandled event type")
 
 
 def send_liff_location_setting_response(reply_token: str | None) -> None:
