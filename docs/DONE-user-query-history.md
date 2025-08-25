@@ -4,8 +4,8 @@
 
 實作用戶查詢歷史記錄功能，提供「最近查過」快捷查詢，解決多地點查詢的效率問題。此功能為 Rich Menu 核心體驗的重要組成部分。
 
-**實作日期**：2025-08-24  
-**分支**：`feature/user-query-history`  
+**實作日期**：2025-08-24
+**分支**：`feature/user-query-history`
 **相關 Todo**：#27
 
 ## 技術架構
@@ -15,7 +15,7 @@
 ```python
 class UserQuery(Base):
     __tablename__ = "user_query"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False, index=True)
     location_id: Mapped[int] = mapped_column(ForeignKey("location.id"), nullable=False)
@@ -46,11 +46,11 @@ def get_recent_queries(session: Session, user_id: int, limit: int = 3) -> list[L
         excluded_location_ids.append(user.home_location_id)
     if user.work_location_id:
         excluded_location_ids.append(user.work_location_id)
-    
+
     # 取得最近查詢且去重的地點
     recent_queries = []
     seen_locations = set()
-    
+
     for user_query in query.all():
         if user_query.location_id not in seen_locations:
             recent_queries.append(user_query)
@@ -130,11 +130,11 @@ if len(locations) == 1:  # 只有單一匹配結果
 def handle_recent_queries_postback(event: PostbackEvent) -> None:
     user = get_user_by_line_id(session, user_id)
     recent_locations = get_recent_queries(session, user.id, limit=3)
-    
+
     if not recent_locations:
         # 顯示引導訊息
         return
-    
+
     # 建立 Quick Reply 選項
     quick_reply_items = [
         QuickReplyItem(
@@ -213,14 +213,14 @@ def test_get_recent_queries_excludes_home_work(self, session: Session) -> None:
     # 設置住家和公司地點
     user.home_location_id = home_location.id
     user.work_location_id = work_location.id
-    
+
     # 記錄所有地點查詢
     record_user_query(session, user.id, home_location.id)
     record_user_query(session, user.id, work_location.id)
     record_user_query(session, user.id, other_location.id)
-    
+
     recent_locations = get_recent_queries(session, user.id)
-    
+
     # 驗證只返回其他地點
     assert len(recent_locations) == 1
     assert recent_locations[0].id == other_location.id

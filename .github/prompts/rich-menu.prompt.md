@@ -29,7 +29,7 @@ WeaMind 專案提供完整的 Rich Menu 自動化管理工具，包含圖片上�
 #### 1. 圖片規格確認
 ```
 尺寸: 2500 x 1686 像素
-格式: PNG 或 JPEG  
+格式: PNG 或 JPEG
 大小: < 1MB
 配置: 六格 (2x3) 佈局
 ```
@@ -37,7 +37,7 @@ WeaMind 專案提供完整的 Rich Menu 自動化管理工具，包含圖片上�
 #### 2. 按鈕配置 (已預設)
 ```
 上排左 (查住家): x=0, y=0, width=833, height=843
-上排中 (查公司): x=833, y=0, width=833, height=843  
+上排中 (查公司): x=833, y=0, width=833, height=843
 上排右 (最近查過): x=1666, y=0, width=834, height=843
 下排左 (目前位置): x=0, y=843, width=833, height=843
 下排中 (設定地點): x=833, y=843, width=833, height=843
@@ -60,7 +60,7 @@ make upload IMAGE=docs/rich_menu/rich_menu.png
 # 列出所有 Rich Menu
 make upload-list
 
-# 刪除指定 Rich Menu  
+# 刪除指定 Rich Menu
 make upload-delete ID=richmenu-xxx-xxx-xxx
 ```
 
@@ -75,7 +75,7 @@ make upload-delete ID=richmenu-xxx-xxx-xxx
     "displayText": "查住家"
   },
   "查公司": {
-    "data": "action=weather&type=office", 
+    "data": "action=weather&type=office",
     "displayText": "查公司"
   },
   "最近查過": {
@@ -111,7 +111,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
     """處理 Rich Menu PostBack 事件"""
     # 解析 PostBack 資料
     data = parse_postback_data(event.postback.data)
-    
+
     # 路由到對應處理器
     if data.get("action") == "weather":
         handle_weather_postback(event, user_id, data)

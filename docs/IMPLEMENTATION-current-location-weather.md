@@ -39,8 +39,8 @@ class WeatherService:
     @staticmethod
     def handle_location_weather_query(session: Session, lat: float, lon: float) -> str:
         """處理 GPS 座標天氣查詢"""
-        
-    @staticmethod  
+
+    @staticmethod
     def handle_text_weather_query(session: Session, text_input: str) -> str:
         """處理文字輸入天氣查詢（現有邏輯重構）"""
 ```
@@ -51,11 +51,11 @@ class LocationService:
     @staticmethod
     def haversine_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
         """使用 Haversine 公式計算地球表面兩點間距離"""
-        
+
     @staticmethod
     def is_in_taiwan_bounds(lat: float, lon: float) -> bool:
         """檢查座標是否在台灣邊界範圍內"""
-        
+
     @staticmethod
     def find_nearest_location(session: Session, lat: float, lon: float) -> Location | None:
         """找出最近的行政區位置"""

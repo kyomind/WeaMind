@@ -43,7 +43,7 @@
     {
       "bounds": {"x": 833, "y": 0, "width": 833, "height": 843},
       "action": {
-        "type": "postback", 
+        "type": "postback",
         "data": "action=weather&type=office",
         "displayText": "查公司"
       }
@@ -52,7 +52,7 @@
       "bounds": {"x": 1666, "y": 0, "width": 834, "height": 843},
       "action": {
         "type": "postback",
-        "data": "action=recent_queries", 
+        "data": "action=recent_queries",
         "displayText": "最近查過"
       }
     },
@@ -96,20 +96,20 @@ from urllib.parse import parse_qs
 def handle_postback_event(event: PostbackEvent) -> None:
     """
     Handle PostBack events from Rich Menu clicks.
-    
+
     Args:
         event: The LINE PostBack event
     """
     try:
         # Parse PostBack data
         postback_data = parse_postback_data(event.postback.data)
-        
+
         # Get user ID
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("PostBack event without user_id")
             return
-            
+
         # Route to appropriate handler
         if postback_data.get("action") == "weather":
             handle_weather_postback(event, user_id, postback_data)
@@ -122,7 +122,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
         else:
             logger.warning(f"Unknown PostBack action: {postback_data}")
             send_error_response(event.reply_token, "未知的操作")
-            
+
     except Exception:
         logger.exception("Error handling PostBack event")
         send_error_response(event.reply_token, "😅 系統暫時有點忙，請稍後再試一次。")
@@ -134,10 +134,10 @@ def handle_postback_event(event: PostbackEvent) -> None:
 def parse_postback_data(data: str) -> dict[str, str]:
     """
     Parse PostBack data string into dictionary.
-    
+
     Args:
         data: PostBack data string (e.g., "action=weather&type=home")
-        
+
     Returns:
         Dictionary of parsed data
     """
@@ -157,14 +157,14 @@ def parse_postback_data(data: str) -> dict[str, str]:
 def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, str]) -> None:
     """
     Handle weather-related PostBack events.
-    
+
     Args:
         event: PostBack event
         user_id: LINE user ID
         data: Parsed PostBack data
     """
     location_type = data.get("type")
-    
+
     if location_type in ["home", "office"]:
         handle_user_location_weather(event, user_id, location_type)
     elif location_type == "current":
@@ -175,40 +175,40 @@ def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, 
 def handle_user_location_weather(event: PostbackEvent, user_id: str, location_type: str) -> None:
     """
     Handle home/office weather queries.
-    
+
     Args:
         event: PostBack event
-        user_id: LINE user ID  
+        user_id: LINE user ID
         location_type: "home" or "office"
     """
     session = next(get_session())
-    
+
     try:
         # Get user from database
         user = get_user_by_line_id(session, user_id)
         if not user:
             send_error_response(event.reply_token, "用戶不存在，請重新加入好友")
             return
-            
+
         # Get user's location
         if location_type == "home":
             location = user.home_location
             location_name = "住家"
         else:  # office
-            location = user.work_location  
+            location = user.work_location
             location_name = "公司"
-            
+
         if not location:
             send_location_not_set_response(event.reply_token, location_name)
             return
-            
+
         # Query weather using existing logic
         location_text = location.full_name
         locations, response_message = LocationService.parse_location_input(session, location_text)
-        
+
         # Send response
         send_text_response(event.reply_token, response_message)
-        
+
     except Exception:
         logger.exception(f"Error handling {location_type} weather query")
         send_error_response(event.reply_token, "😅 查詢時發生錯誤，請稍後再試。")
@@ -222,16 +222,16 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
 def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None:
     """
     Handle settings-related PostBack events.
-    
+
     Note: 「設定地點」按鈕已改為 URI Action，直接開啟 LIFF 頁面，
     所以這個函數可能不會被 location 類型的事件觸發。
-    
+
     Args:
         event: PostBack event
         data: Parsed PostBack data
     """
     settings_type = data.get("type")
-    
+
     if settings_type == "location":
         # This should not be reached if using URI action
         logger.warning("Location setting via PostBack - should use URI action instead")
@@ -248,7 +248,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
     send_text_response(event.reply_token, "📜 最近查過功能即將推出，敬請期待！")
 
 def handle_current_location_weather(event: PostbackEvent) -> None:
-    """Handle current location weather PostBack (placeholder).""" 
+    """Handle current location weather PostBack (placeholder)."""
     send_text_response(event.reply_token, "📍 目前位置功能即將推出，敬請期待！")
 
 def handle_menu_postback(event: PostbackEvent, data: dict[str, str]) -> None:
@@ -302,7 +302,7 @@ def test_handle_home_weather_success():
     # Assert correct response
 
 def test_handle_home_weather_not_set():
-    """Test home weather query when location not set.""" 
+    """Test home weather query when location not set."""
     # Mock user without home location
     # Assert "please set location" response
 ```
@@ -323,7 +323,7 @@ def test_handle_home_weather_not_set():
 
 ### Phase 0: Rich Menu 上傳 ✅ 完成
 - [x] 修正 Rich Menu 管理腳本的 API 端點問題
-- [x] 圖片上傳 API 改用 `https://api-data.line.me` 端點  
+- [x] 圖片上傳 API 改用 `https://api-data.line.me` 端點
 - [x] Rich Menu 配置改為從 JSON 檔案載入
 - [x] 成功上傳 Rich Menu 並設定為預設選單
 - [x] **Rich Menu ID**: `richmenu-4dd9eb07d74940972085df45d6e0406c`
@@ -393,7 +393,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
 
 ### 1. LINE API 端點修正
 **問題**: 圖片上傳時出現 404 錯誤
-**解決方案**: 
+**解決方案**:
 - Rich Menu 建立/管理: `https://api.line.me/v2/bot/richmenu`
 - 圖片上傳: `https://api-data.line.me/v2/bot/richmenu/{richMenuId}/content`
 
@@ -423,7 +423,7 @@ def load_rich_menu_config() -> dict:
 聊天室顯示：查住家天氣
 機器人回覆：正在查詢台北市中正區...（基於用戶設定）
 
-用戶點擊「設定地點」  
+用戶點擊「設定地點」
 → 直接開啟 LIFF 地點設定網頁（無聊天室訊息，一鍵直達）
 ```
 
@@ -431,7 +431,7 @@ def load_rich_menu_config() -> dict:
 
 Rich Menu 已成功部署！PostBack 事件處理功能已完整實作並通過所有測試！ ✅
 
-**🎉 目前狀態**: 
+**🎉 目前狀態**:
 - ✅ Rich Menu 已上線 (ID: `richmenu-dacc4c2d269d988fe79a237c4b7a3a30`)
 - ✅ PostBack 事件處理完整實作
 - ✅ 查住家/查公司功能可用

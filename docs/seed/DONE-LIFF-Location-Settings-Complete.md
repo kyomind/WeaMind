@@ -2,9 +2,9 @@
 
 ## 📋 功能概述
 
-**開發分支**: `feature/liff-location-settings`  
-**開發時間**: 2025年8月16日  
-**完成狀態**: ✅ 核心功能已完成，滿足主要驗收標準  
+**開發分支**: `feature/liff-location-settings`
+**開發時間**: 2025年8月16日
+**完成狀態**: ✅ 核心功能已完成，滿足主要驗收標準
 **LIFF ID**: `2007938807-GQzRrDoy`
 
 實作 WeaMind LINE Bot 的地點設定功能，讓使用者透過 LIFF (LINE Front-end Framework) 頁面設定住家和公司地點，後續可透過 Rich Menu 快速查詢天氣。
@@ -158,7 +158,7 @@ liff.closeWindow();
 updateDistricts() {
     const selectedCounty = countySelect.value;
     districtSelect.innerHTML = '<option value="">請選擇行政區</option>';
-    
+
     if (selectedCounty && this.adminData[selectedCounty]) {
         districtSelect.disabled = false;
         const districts = this.adminData[selectedCounty].sort();
@@ -178,7 +178,7 @@ validateForm() {
     const locationType = document.querySelector('input[name="locationType"]:checked');
     const county = document.getElementById('county').value;
     const district = document.getElementById('district').value;
-    
+
     const isValid = locationType && county && district;
     submitBtn.disabled = !isValid;
 }
@@ -205,30 +205,30 @@ Body:
 ```python
 # app/user/service.py
 def set_user_location(
-    session: Session, line_user_id: str, location_type: str, 
+    session: Session, line_user_id: str, location_type: str,
     county: str, district: str
 ) -> tuple[bool, str, Location | None]:
     # 1. 驗證地點類型
     if location_type not in ["home", "work"]:
         return False, "無效的地點類型", None
-    
+
     # 2. 檢查用戶存在性
     user = get_user_by_line_id(session, line_user_id)
     if not user:
         # 自動創建新用戶
         user = create_user_if_not_exists(session, line_user_id, display_name=None)
-    
+
     # 3. 驗證地點存在性
     location = get_location_by_county_district(session, county, district)
     if not location:
         return False, "地點不存在", None
-    
+
     # 4. 更新用戶地點
     if location_type == "home":
         user.home_location_id = location.id
     else:
         user.work_location_id = location.id
-    
+
     session.commit()
     return True, "地點設定成功", location
 ```
@@ -278,12 +278,12 @@ const response = await fetch('/api/users/locations', {
 @webhook_handler.add(MessageEvent, message=TextMessageContent)
 def handle_message_event(event: MessageEvent) -> None:
     message = event.message
-    
+
     # 檢查特殊指令
     if message.text.strip() == "設定地點":
         send_liff_location_setting_response(event.reply_token)
         return
-    
+
     # 原有地點解析邏輯...
 ```
 
