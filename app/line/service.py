@@ -7,6 +7,7 @@ from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import (
     ApiClient,
     Configuration,
+    LocationAction,
     MessageAction,
     MessagingApi,
     QuickReply,
@@ -16,6 +17,7 @@ from linebot.v3.messaging import (
 )
 from linebot.v3.webhooks import (
     FollowEvent,
+    LocationMessageContent,
     MessageEvent,
     PostbackEvent,
     TextMessageContent,
@@ -31,7 +33,7 @@ from app.user.service import (
     get_user_by_line_id,
     record_user_query,
 )
-from app.weather.service import LocationParseError, LocationService
+from app.weather.service import LocationParseError, LocationService, WeatherService
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +147,61 @@ def handle_message_event(event: MessageEvent) -> None:
             logger.info(f"Response sent: {response_message}")
         except Exception:
             logger.exception("Error sending LINE message")
+
+
+@webhook_handler.add(MessageEvent, message=LocationMessageContent)
+def handle_location_message_event(event: MessageEvent) -> None:
+    """
+    Handle location message events from user location sharing.
+
+    Args:
+        event: The LINE message event containing location data
+    """
+    # Ensure reply_token is not empty
+    if not event.reply_token:
+        logger.warning("Reply token is empty for location message")
+        return
+
+    # Type assertion since webhook_handler decorator ensures this is LocationMessageContent
+    message = event.message
+    if not isinstance(message, LocationMessageContent):
+        logger.warning(f"Unexpected message type: {type(message)}")
+        return
+
+    # Extract GPS coordinates
+    lat = message.latitude
+    lon = message.longitude
+
+    logger.info(f"Received location: lat={lat}, lon={lon}")
+
+    # Get database session
+    session = next(get_session())
+
+    try:
+        # Use WeatherService to handle location-based weather query
+        response_message = WeatherService.handle_location_weather_query(session, lat, lon)
+
+        # Record query for user history if location was found in Taiwan
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        if user_id:
+            location = LocationService.find_nearest_location(session, lat, lon)
+            if location:
+                user = get_user_by_line_id(session, user_id)
+                if user:
+                    record_user_query(session, user.id, location.id)
+                    logger.info(f"Recorded GPS query for user {user.id}, location {location.id}")
+
+        logger.info(f"Location query result: {response_message}")
+
+    except Exception:
+        logger.exception(f"Error handling location message: lat={lat}, lon={lon}")
+        response_message = "😅 系統暫時有點忙，請稍後再試一次。"
+
+    finally:
+        session.close()
+
+    # Send response to user
+    send_text_response(event.reply_token, response_message)
 
 
 @webhook_handler.add(FollowEvent)
@@ -507,8 +564,46 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
 
 
 def handle_current_location_weather(event: PostbackEvent) -> None:
-    """Handle current location weather PostBack (placeholder)."""
-    send_text_response(event.reply_token, "📍 目前位置功能即將推出，敬請期待！")
+    """Handle current location weather PostBack - request user to share location."""
+    if not event.reply_token:
+        logger.warning("Cannot request location: reply_token is None")
+        return
+
+    # Create location request message with Quick Reply
+    message_text = "請分享您的位置，我將為您查詢當地的天氣資訊 🌤️"
+
+    # Create Quick Reply with location sharing button
+    quick_reply_items = [
+        QuickReplyItem(
+            type="action",
+            imageUrl=None,
+            action=LocationAction(
+                type="location",
+                label="分享我的位置",
+            ),
+        )
+    ]
+    quick_reply = QuickReply(items=quick_reply_items)
+
+    with ApiClient(configuration) as api_client:
+        messaging_api_client = MessagingApi(api_client)
+        try:
+            messaging_api_client.reply_message(
+                ReplyMessageRequest(
+                    replyToken=event.reply_token,
+                    messages=[
+                        TextMessage(
+                            text=message_text,
+                            quoteToken=None,
+                            quickReply=quick_reply,
+                        )
+                    ],
+                    notificationDisabled=False,
+                )
+            )
+            logger.info("Location request sent successfully")
+        except Exception:
+            logger.exception("Error sending location request")
 
 
 def handle_menu_postback(event: PostbackEvent, data: dict[str, str]) -> None:
