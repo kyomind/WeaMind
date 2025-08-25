@@ -487,8 +487,8 @@ class TestLocationMessageHandler:
 
             handle_location_message_event(mock_event)
 
-            # Should query weather with coordinates
-            mock_weather.assert_called_once_with(mock_session, 25.0330, 121.5654)
+            # Should query weather with coordinates and address
+            mock_weather.assert_called_once_with(mock_session, 25.0330, 121.5654, None)
 
             # Should record query for user history
             mock_record.assert_called_once_with(mock_session, 456, 123)
@@ -536,8 +536,8 @@ class TestLocationMessageHandler:
 
             handle_location_message_event(mock_event)
 
-            # Should query weather with coordinates
-            mock_weather.assert_called_once_with(mock_session, 35.6762, 139.6503)
+            # Should query weather with coordinates and address
+            mock_weather.assert_called_once_with(mock_session, 35.6762, 139.6503, None)
 
             # Should send outside Taiwan response
             mock_send.assert_called_once_with("test_token", "抱歉，目前僅支援台灣地區的天氣查詢 🌏")

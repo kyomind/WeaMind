@@ -256,6 +256,15 @@ class TestLocationServiceGeographic:
         # Hong Kong
         assert LocationService._is_in_taiwan_bounds(22.3193, 114.1694) is False
 
+    def test_is_in_taiwan_bounds_outlying_islands(self) -> None:
+        """Test Taiwan bounds check includes outlying islands (Kinmen and Matsu)."""
+        # Kinmen coordinates (should now be included)
+        assert LocationService._is_in_taiwan_bounds(24.4315, 118.3175) is True
+        # Matsu coordinates (should now be included)
+        assert LocationService._is_in_taiwan_bounds(26.2, 119.9) is True
+        # Penghu (should still be included)
+        assert LocationService._is_in_taiwan_bounds(23.6, 119.6) is True
+
     def test_find_nearest_location_success(self, session: Session) -> None:
         """Test finding nearest location within Taiwan."""
         # Create test locations
@@ -362,3 +371,177 @@ class TestWeatherService:
         result = WeatherService.handle_text_weather_query(session, "臺北")
 
         assert "找到了 臺北市中正區" in result
+
+
+class TestLocationServiceAddressParsing:
+    """Test address parsing functionality of LocationService."""
+
+    def test_extract_location_from_address_basic(
+        self, session: Session, create_location: Callable[..., Location]
+    ) -> None:
+        """Test basic address extraction for direct municipalities."""
+        # Create test locations
+        create_location(
+            geocode="6300000001", county="臺北市", district="信義區", full_name="臺北市信義區"
+        )
+        create_location(
+            geocode="6500000001", county="新北市", district="永和區", full_name="新北市永和區"
+        )
+
+        # Test address extraction
+        address = "台北市信義區信義路五段7號"
+        result = LocationService.extract_location_from_address(session, address)
+        assert result is not None
+        assert result.full_name == "臺北市信義區"
+
+        # Test different format
+        address = "新北市永和區中正路123號"
+        result = LocationService.extract_location_from_address(session, address)
+        assert result is not None
+        assert result.full_name == "新北市永和區"
+
+    def test_extract_location_from_address_county_format(
+        self, session: Session, create_location: Callable[..., Location]
+    ) -> None:
+        """Test address extraction for county + town/city format."""
+        # Create test locations
+        create_location(
+            geocode="1000700001", county="新竹縣", district="竹北市", full_name="新竹縣竹北市"
+        )
+        create_location(
+            geocode="1000800001", county="南投縣", district="魚池鄉", full_name="南投縣魚池鄉"
+        )
+
+        # Test county + city format
+        address = "新竹縣竹北市縣政九路146號"
+        result = LocationService.extract_location_from_address(session, address)
+        assert result is not None
+        assert result.full_name == "新竹縣竹北市"
+
+        # Test county + township format
+        address = "南投縣魚池鄉水社村中山路123號"
+        result = LocationService.extract_location_from_address(session, address)
+        assert result is not None
+        assert result.full_name == "南投縣魚池鄉"
+
+    def test_extract_location_from_address_taiwan_character_normalization(
+        self, session: Session, create_location: Callable[..., Location]
+    ) -> None:
+        """Test Taiwan character normalization in address parsing."""
+        # Create test locations with official "臺" character
+        create_location(
+            geocode="6600000001", county="臺中市", district="西區", full_name="臺中市西區"
+        )
+        create_location(
+            geocode="6700000001", county="臺南市", district="中西區", full_name="臺南市中西區"
+        )
+
+        # Test address with common "台" character should find results
+        address = "台中市西區台灣大道二段123號"
+        result = LocationService.extract_location_from_address(session, address)
+        assert result is not None
+        assert result.full_name == "臺中市西區"
+
+        # Test address with official "臺" character
+        address = "臺南市中西區民權路456號"
+        result = LocationService.extract_location_from_address(session, address)
+        assert result is not None
+        assert result.full_name == "臺南市中西區"
+
+    def test_extract_location_from_address_no_match(self, session: Session) -> None:
+        """Test address extraction when no administrative area can be extracted."""
+        # Test invalid/incomplete address
+        result = LocationService.extract_location_from_address(session, "信義路五段7號")
+        assert result is None
+
+        # Test non-Taiwan address
+        result = LocationService.extract_location_from_address(session, "東京都新宿區西新宿123號")
+        assert result is None
+
+        # Test empty address
+        result = LocationService.extract_location_from_address(session, "")
+        assert result is None
+
+
+class TestWeatherServiceAddressIntegration:
+    """Test WeatherService with address verification integration."""
+
+    def test_handle_location_weather_query_with_address_verification(
+        self, session: Session
+    ) -> None:
+        """Test location weather query with GPS and address verification."""
+        # Create test location
+        location = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="信義區",
+            full_name="臺北市信義區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        session.add(location)
+        session.commit()
+
+        # Test GPS coordinates with matching address
+        result = WeatherService.handle_location_weather_query(
+            session, 25.0340, 121.5660, "台北市信義區信義路五段7號"
+        )
+        assert result == "找到了 臺北市信義區，正在查詢天氣..."
+
+    def test_handle_location_weather_query_address_overrides_gps(self, session: Session) -> None:
+        """Test that address takes priority when GPS and address conflict."""
+        # Create test locations
+        location1 = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="信義區",
+            full_name="臺北市信義區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        location2 = Location(
+            geocode="6500100",
+            county="新北市",
+            district="永和區",
+            full_name="新北市永和區",
+            latitude=25.0100,
+            longitude=121.5150,
+        )
+        session.add_all([location1, location2])
+        session.commit()
+
+        # GPS points to 信義區 but address says 永和區 - should use address
+        result = WeatherService.handle_location_weather_query(
+            session, 25.0340, 121.5660, "新北市永和區中正路123號"
+        )
+        assert result == "找到了 新北市永和區，正在查詢天氣..."
+
+    def test_handle_location_weather_query_gps_outside_address_inside(
+        self, session: Session
+    ) -> None:
+        """Test GPS outside Taiwan but address indicates Taiwan location."""
+        # Create test location
+        location = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="信義區",
+            full_name="臺北市信義區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        session.add(location)
+        session.commit()
+
+        # GPS outside Taiwan bounds but address is Taiwan - should use address
+        result = WeatherService.handle_location_weather_query(
+            session, 35.6762, 139.6503, "台北市信義區信義路五段7號"
+        )
+        assert result == "找到了 臺北市信義區，正在查詢天氣..."
+
+    def test_handle_location_weather_query_both_outside_taiwan(self, session: Session) -> None:
+        """Test both GPS and address outside Taiwan."""
+        # GPS and address both outside Taiwan
+        result = WeatherService.handle_location_weather_query(
+            session, 35.6762, 139.6503, "東京都新宿區西新宿123號"
+        )
+        assert result == "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
