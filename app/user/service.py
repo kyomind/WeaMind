@@ -146,7 +146,7 @@ def record_user_query(session: Session, user_id: int, location_id: int) -> None:
     session.commit()
 
 
-def get_recent_queries(session: Session, user_id: int, limit: int = 3) -> list[Location]:
+def get_recent_queries(session: Session, user_id: int, limit: int = 5) -> list[Location]:
     """
     Get user's recent query locations, excluding home/work locations.
 

@@ -449,7 +449,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
                 user = create_user_if_not_exists(session, user_id, display_name=None)
 
             # Get recent queries
-            recent_locations = get_recent_queries(session, user.id, limit=3)
+            recent_locations = get_recent_queries(session, user.id, limit=5)
 
             if not recent_locations:
                 send_text_response(
