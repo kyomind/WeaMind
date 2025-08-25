@@ -9,9 +9,6 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    labels:
-      - "dependencies"
-      - "python"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -21,6 +18,3 @@ updates:
     commit-message:
       prefix: "chore(actions)"
       include: "scope"
-    labels:
-      - "dependencies"
-      - "github-actions"
