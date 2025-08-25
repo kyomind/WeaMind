@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.weather.models import Location
-from app.weather.service import LocationParseError, LocationService
+from app.weather.service import LocationParseError, LocationService, WeatherService
 
 
 class TestLocationService:
@@ -211,3 +211,154 @@ class TestLocationService:
         assert len(locations) == 1
         assert locations[0].full_name == "臺中市西區"
         assert "找到了 臺中市西區" in response
+
+
+class TestLocationServiceGeographic:
+    """Test geographic functionality of LocationService."""
+
+    def test_haversine_distance_calculation(self) -> None:
+        """Test Haversine distance calculation."""
+        # Test distance between Taipei and Taichung (approximately 135 km)
+        taipei_lat, taipei_lon = 25.0330, 121.5654
+        taichung_lat, taichung_lon = 24.1477, 120.6736
+
+        distance = LocationService._calculate_haversine_distance(
+            taipei_lat, taipei_lon, taichung_lat, taichung_lon
+        )
+
+        # Should be approximately 135 km (±10 km tolerance)
+        assert 125 <= distance <= 145
+
+    def test_haversine_distance_same_point(self) -> None:
+        """Test Haversine distance for same point."""
+        lat, lon = 25.0330, 121.5654
+
+        distance = LocationService._calculate_haversine_distance(lat, lon, lat, lon)
+
+        # Distance should be 0
+        assert distance == 0.0
+
+    def test_is_in_taiwan_bounds_valid_coordinates(self) -> None:
+        """Test Taiwan bounds check for valid coordinates."""
+        # Taipei
+        assert LocationService._is_in_taiwan_bounds(25.0330, 121.5654) is True
+        # Kaohsiung
+        assert LocationService._is_in_taiwan_bounds(22.6273, 120.3014) is True
+        # Taitung
+        assert LocationService._is_in_taiwan_bounds(22.7569, 121.1444) is True
+
+    def test_is_in_taiwan_bounds_invalid_coordinates(self) -> None:
+        """Test Taiwan bounds check for invalid coordinates."""
+        # Tokyo, Japan
+        assert LocationService._is_in_taiwan_bounds(35.6762, 139.6503) is False
+        # Manila, Philippines
+        assert LocationService._is_in_taiwan_bounds(14.5995, 120.9842) is False
+        # Hong Kong
+        assert LocationService._is_in_taiwan_bounds(22.3193, 114.1694) is False
+
+    def test_find_nearest_location_success(self, session: Session) -> None:
+        """Test finding nearest location within Taiwan."""
+        # Create test locations
+        location1 = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        location2 = Location(
+            geocode="6600100",
+            county="臺中市",
+            district="西區",
+            full_name="臺中市西區",
+            latitude=24.1477,
+            longitude=120.6736,
+        )
+
+        session.add_all([location1, location2])
+        session.commit()
+
+        # Test coordinates near Taipei (should find Taipei location)
+        result = LocationService.find_nearest_location(session, 25.0340, 121.5660)
+
+        assert result is not None
+        assert result.full_name == "臺北市中正區"
+
+    def test_find_nearest_location_outside_bounds(self, session: Session) -> None:
+        """Test finding nearest location outside Taiwan bounds."""
+        # Tokyo coordinates - outside Taiwan bounds
+        result = LocationService.find_nearest_location(session, 35.6762, 139.6503)
+
+        assert result is None
+
+    def test_find_nearest_location_too_far(self, session: Session) -> None:
+        """Test finding nearest location when distance exceeds threshold."""
+        # Create a test location
+        location = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        session.add(location)
+        session.commit()
+
+        # Test coordinates within bounds but far from any location (simulated ocean)
+        result = LocationService.find_nearest_location(session, 23.0, 119.5)
+
+        assert result is None
+
+    def test_find_nearest_location_no_locations(self, session: Session) -> None:
+        """Test finding nearest location when no locations in database."""
+        result = LocationService.find_nearest_location(session, 25.0330, 121.5654)
+
+        assert result is None
+
+
+class TestWeatherService:
+    """Test WeatherService functionality."""
+
+    def test_handle_location_weather_query_success(self, session: Session) -> None:
+        """Test successful location weather query."""
+        # Create a test location
+        location = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        session.add(location)
+        session.commit()
+
+        result = WeatherService.handle_location_weather_query(session, 25.0340, 121.5660)
+
+        assert result == "找到了 臺北市中正區，正在查詢天氣..."
+
+    def test_handle_location_weather_query_outside_taiwan(self, session: Session) -> None:
+        """Test location weather query outside Taiwan."""
+        result = WeatherService.handle_location_weather_query(session, 35.6762, 139.6503)
+
+        assert result == "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
+
+    def test_handle_text_weather_query_success(self, session: Session) -> None:
+        """Test successful text weather query."""
+        # Create test locations
+        location = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        session.add(location)
+        session.commit()
+
+        result = WeatherService.handle_text_weather_query(session, "臺北")
+
+        assert "找到了 臺北市中正區" in result
