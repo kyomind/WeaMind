@@ -19,6 +19,7 @@ class TestLocationService:
         assert LocationService.validate_location_input("信義區") == "信義區"
         assert LocationService.validate_location_input("魚池鄉") == "魚池鄉"
         assert LocationService.validate_location_input(" 中山區 ") == "中山區"  # Whitespace removal
+        assert LocationService.validate_location_input("台東縣太麻里鄉") == "臺東縣太麻里鄉"
 
         # Test "台" to "臺" conversion
         assert LocationService.validate_location_input("台北") == "臺北"
@@ -32,7 +33,7 @@ class TestLocationService:
             LocationService.validate_location_input("區")
         assert "輸入的字數不對" in exc_info.value.message
 
-        # Test too long (7+ characters)
+        # Test too long (8+ characters)
         with pytest.raises(LocationParseError) as exc_info:
             LocationService.validate_location_input("新北市永和區中正路")
         assert "輸入的字數不對" in exc_info.value.message

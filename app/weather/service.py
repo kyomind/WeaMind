@@ -46,10 +46,10 @@ class LocationService:
         if not cleaned_text:
             raise LocationParseError("輸入不能為空", text)
 
-        # Check character count (2-6 Chinese characters)
+        # Check character count (2-7 Chinese characters)
         char_count = len(cleaned_text)
-        if char_count < 2 or char_count > 6:
-            raise LocationParseError("🤔 輸入的字數不對喔！請輸入 2 到 6 個字的地名", text)
+        if char_count < 2 or char_count > 7:
+            raise LocationParseError("🤔 輸入的字數不對喔！請輸入 2 到 7 個字的地名", text)
 
         # Check if input contains only Chinese characters (and some common district suffixes)
         if not re.match(r"^[\u4e00-\u9fff]+$", cleaned_text):
