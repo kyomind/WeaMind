@@ -205,7 +205,7 @@ class LocationService:
         """
         # First validation: boundary rectangle check
         if not LocationService._is_in_taiwan_bounds(lat, lon):
-            logger.info("Coordinates outside Taiwan boundary rectangle")
+            logger.warning("Coordinates outside Taiwan boundary rectangle")
             return None
 
         # Get all locations with coordinates
@@ -237,7 +237,7 @@ class LocationService:
 
         # Second validation: distance threshold check (50km)
         if nearest_location is None or min_distance > 50.0:
-            logger.info(
+            logger.warning(
                 f"Nearest location is {min_distance:.1f}km away, outside Taiwan service area"
             )
             return None
@@ -294,7 +294,7 @@ class LocationService:
 
         # Step 3: Validate against known administrative divisions
         if not is_valid_taiwan_division(normalized_admin):
-            logger.info(f"Administrative area not in valid divisions: {normalized_admin}")
+            logger.warning(f"Administrative area not in valid divisions: {normalized_admin}")
             return None
 
         # Step 4: Search in database using exact match
@@ -304,7 +304,7 @@ class LocationService:
             logger.info(f"Found location in database: {location.full_name}")
             return location
         else:
-            logger.info(f"Administrative area not found in database: {normalized_admin}")
+            logger.warning(f"Administrative area not found in database: {normalized_admin}")
             return None
 
 
@@ -361,7 +361,7 @@ class WeatherService:
                 return f"找到了 {address_location.full_name}，正在查詢天氣..."
             else:
                 # Address parsing failed - log and continue to GPS fallback
-                logger.info("Address parsing failed, falling back to GPS")
+                logger.warning("Address parsing failed, falling back to GPS")
 
         # Step 2: GPS fallback (if address failed or not available)
         gps_location = LocationService.find_nearest_location(session, lat, lon)
@@ -370,5 +370,5 @@ class WeatherService:
             return f"找到了 {gps_location.full_name}，正在查詢天氣..."
 
         # Step 3: Both methods failed
-        logger.info("Both address parsing and GPS calculation failed")
+        logger.warning("Both address parsing and GPS calculation failed")
         return "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
