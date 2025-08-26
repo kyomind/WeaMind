@@ -576,7 +576,7 @@ def handle_current_location_weather(event: PostbackEvent) -> None:
         return
 
     # Create location request message with Quick Reply
-    message_text = "請分享您的位置，我將為您查詢當地的天氣資訊 🌤️"
+    message_text = "請分享您的位置，我將為您查詢當地天氣 🌤️"
 
     # Create Quick Reply with location sharing button
     quick_reply_items = [

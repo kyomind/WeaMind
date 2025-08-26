@@ -346,7 +346,7 @@ class TestPostBackEventHandlers:
 
                 # Check message content
                 message = request.messages[0]
-                assert message.text == "請分享您的位置，我將為您查詢當地的天氣資訊 🌤️"
+                assert message.text == "請分享您的位置，我將為您查詢當地天氣 🌤️"
 
                 # Check Quick Reply contains location action
                 assert message.quick_reply is not None

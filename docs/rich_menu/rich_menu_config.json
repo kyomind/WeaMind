@@ -54,9 +54,8 @@
                 "height": 843
             },
             "action": {
-                "type": "postback",
-                "data": "action=weather&type=current",
-                "displayText": "查目前位置天氣"
+                "type": "uri",
+                "uri": "https://api.kyomind.tw/static/liff/location/index.html"
             }
         },
         {
@@ -67,8 +66,9 @@
                 "height": 843
             },
             "action": {
-                "type": "uri",
-                "uri": "https://api.kyomind.tw/static/liff/location/index.html"
+                "type": "postback",
+                "data": "action=weather&type=current",
+                "displayText": "查目前位置天氣"
             }
         },
         {
