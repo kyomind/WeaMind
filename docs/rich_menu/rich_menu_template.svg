@@ -36,49 +36,49 @@
   <g id="office-weather">
     <rect x="833" y="0" width="834" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
     <!-- 辦公大樓圖示 - 放大版本，增加右邊部分使其對稱 -->
-    <rect x="1100" y="120" width="290" height="320" fill="#4A90E2" rx="15"/>
+    <rect x="1100" y="122" width="290" height="320" fill="#4A90E2" rx="15"/>
     <!-- 窗戶 - 調整為每層6個窗戶 -->
-    <rect x="1130" y="150" width="30" height="30" fill="white"/>
-    <rect x="1170" y="150" width="30" height="30" fill="white"/>
-    <rect x="1210" y="150" width="30" height="30" fill="white"/>
-    <rect x="1250" y="150" width="30" height="30" fill="white"/>
-    <rect x="1290" y="150" width="30" height="30" fill="white"/>
-    <rect x="1330" y="150" width="30" height="30" fill="white"/>
+    <rect x="1130" y="152" width="30" height="30" fill="white"/>
+    <rect x="1170" y="152" width="30" height="30" fill="white"/>
+    <rect x="1210" y="152" width="30" height="30" fill="white"/>
+    <rect x="1250" y="152" width="30" height="30" fill="white"/>
+    <rect x="1290" y="152" width="30" height="30" fill="white"/>
+    <rect x="1330" y="152" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="195" width="30" height="30" fill="white"/>
-    <rect x="1170" y="195" width="30" height="30" fill="white"/>
-    <rect x="1210" y="195" width="30" height="30" fill="white"/>
-    <rect x="1250" y="195" width="30" height="30" fill="white"/>
-    <rect x="1290" y="195" width="30" height="30" fill="white"/>
-    <rect x="1330" y="195" width="30" height="30" fill="white"/>
+    <rect x="1130" y="197" width="30" height="30" fill="white"/>
+    <rect x="1170" y="197" width="30" height="30" fill="white"/>
+    <rect x="1210" y="197" width="30" height="30" fill="white"/>
+    <rect x="1250" y="197" width="30" height="30" fill="white"/>
+    <rect x="1290" y="197" width="30" height="30" fill="white"/>
+    <rect x="1330" y="197" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="240" width="30" height="30" fill="white"/>
-    <rect x="1170" y="240" width="30" height="30" fill="white"/>
-    <rect x="1210" y="240" width="30" height="30" fill="white"/>
-    <rect x="1250" y="240" width="30" height="30" fill="white"/>
-    <rect x="1290" y="240" width="30" height="30" fill="white"/>
-    <rect x="1330" y="240" width="30" height="30" fill="white"/>
+    <rect x="1130" y="242" width="30" height="30" fill="white"/>
+    <rect x="1170" y="242" width="30" height="30" fill="white"/>
+    <rect x="1210" y="242" width="30" height="30" fill="white"/>
+    <rect x="1250" y="242" width="30" height="30" fill="white"/>
+    <rect x="1290" y="242" width="30" height="30" fill="white"/>
+    <rect x="1330" y="242" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="285" width="30" height="30" fill="white"/>
-    <rect x="1170" y="285" width="30" height="30" fill="white"/>
-    <rect x="1210" y="285" width="30" height="30" fill="white"/>
-    <rect x="1250" y="285" width="30" height="30" fill="white"/>
-    <rect x="1290" y="285" width="30" height="30" fill="white"/>
-    <rect x="1330" y="285" width="30" height="30" fill="white"/>
+    <rect x="1130" y="287" width="30" height="30" fill="white"/>
+    <rect x="1170" y="287" width="30" height="30" fill="white"/>
+    <rect x="1210" y="287" width="30" height="30" fill="white"/>
+    <rect x="1250" y="287" width="30" height="30" fill="white"/>
+    <rect x="1290" y="287" width="30" height="30" fill="white"/>
+    <rect x="1330" y="287" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="330" width="30" height="30" fill="white"/>
-    <rect x="1170" y="330" width="30" height="30" fill="white"/>
-    <rect x="1210" y="330" width="30" height="30" fill="white"/>
-    <rect x="1250" y="330" width="30" height="30" fill="white"/>
-    <rect x="1290" y="330" width="30" height="30" fill="white"/>
-    <rect x="1330" y="330" width="30" height="30" fill="white"/>
+    <rect x="1130" y="332" width="30" height="30" fill="white"/>
+    <rect x="1170" y="332" width="30" height="30" fill="white"/>
+    <rect x="1210" y="332" width="30" height="30" fill="white"/>
+    <rect x="1250" y="332" width="30" height="30" fill="white"/>
+    <rect x="1290" y="332" width="30" height="30" fill="white"/>
+    <rect x="1330" y="332" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="375" width="30" height="30" fill="white"/>
-    <rect x="1170" y="375" width="30" height="30" fill="white"/>
-    <rect x="1210" y="375" width="30" height="30" fill="white"/>
-    <rect x="1250" y="375" width="30" height="30" fill="white"/>
-    <rect x="1290" y="375" width="30" height="30" fill="white"/>
-    <rect x="1330" y="375" width="30" height="30" fill="white"/>
+    <rect x="1130" y="377" width="30" height="30" fill="white"/>
+    <rect x="1170" y="377" width="30" height="30" fill="white"/>
+    <rect x="1210" y="377" width="30" height="30" fill="white"/>
+    <rect x="1250" y="377" width="30" height="30" fill="white"/>
+    <rect x="1290" y="377" width="30" height="30" fill="white"/>
+    <rect x="1330" y="377" width="30" height="30" fill="white"/>
 
     <text x="1250" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">查公司</text>
   </g>
