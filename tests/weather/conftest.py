@@ -5,6 +5,7 @@ from collections.abc import Callable, Iterator
 import pytest
 from sqlalchemy.orm import Session
 
+from app.core.admin_divisions import initialize_admin_divisions
 from app.core.database import get_session
 from app.weather.models import Location
 
@@ -48,8 +49,11 @@ def create_location() -> Callable[..., Location]:
 
 
 @pytest.fixture(autouse=True)
-def clean_location_table() -> Iterator[None]:
-    """Clean location table after each test."""
+def setup_weather_tests() -> Iterator[None]:
+    """Setup admin divisions and clean up after weather tests."""
+    # Initialize admin divisions before tests
+    initialize_admin_divisions()
+
     yield  # Run the test
 
     # Clean up after test

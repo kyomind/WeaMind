@@ -1,5 +1,8 @@
 """Test Taiwan administrative divisions management."""
 
+from pathlib import Path
+from unittest.mock import patch
+
 from app.core.admin_divisions import (
     AdminDivisionsManager,
     initialize_admin_divisions,
@@ -60,3 +63,37 @@ class TestAdminDivisionsManager:
 
         # Test case sensitivity and extra characters
         assert not is_valid_taiwan_division("臺北市信義區ABC")  # Extra characters
+
+    def test_file_not_found_error(self) -> None:
+        """Test behavior when admin divisions JSON file is missing."""
+        with patch.object(Path, "exists", return_value=False):
+            # Create a new manager instance to trigger file loading
+            manager = AdminDivisionsManager.__new__(AdminDivisionsManager)
+            manager._valid_divisions = None
+            manager._load_admin_divisions()
+
+            # Should handle missing file gracefully
+            assert manager._valid_divisions == set()
+            assert manager.get_valid_divisions_count() == 0
+
+    def test_json_load_exception(self) -> None:
+        """Test behavior when JSON loading fails."""
+        with patch("builtins.open", side_effect=Exception("File read error")):
+            # Create a new manager instance to trigger file loading
+            manager = AdminDivisionsManager.__new__(AdminDivisionsManager)
+            manager._valid_divisions = None
+            manager._load_admin_divisions()
+
+            # Should handle JSON load error gracefully
+            assert manager._valid_divisions == set()
+            assert manager.get_valid_divisions_count() == 0
+
+    def test_validation_with_unloaded_divisions(self) -> None:
+        """Test validation behavior when divisions are not loaded."""
+        # Create a manager with unloaded divisions
+        manager = AdminDivisionsManager.__new__(AdminDivisionsManager)
+        manager._valid_divisions = None
+
+        # Should return False and log warning
+        result = manager.is_valid_division("臺北市信義區")
+        assert result is False
