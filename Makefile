@@ -26,8 +26,11 @@ deploy:
 	@echo "🚀 開始部署..."
 	@echo "📦 建立並啟動容器..."
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
-	@echo "⏳ 等待服務啟動..."
-	@sleep 10
+	@echo "⏳ 等待資料庫服務啟動..."
+	@until docker compose exec db pg_isready -U wea_bot -d weamind -q; do \
+		echo "等待資料庫準備中..."; \
+		sleep 2; \
+	done
 	@echo "🔄 執行資料庫遷移..."
 	@if docker compose exec $(APP_SERVICE) uv run alembic upgrade head; then \
 		echo "✅ 資料庫遷移完成"; \
