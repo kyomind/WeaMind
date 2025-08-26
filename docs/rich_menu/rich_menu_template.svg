@@ -106,36 +106,36 @@
   <!-- 格子4：目前位置 -->
   <g id="current-location">
     <rect x="0" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
-    <!-- 定位圖示 - 放大版本 -->
+    <!-- 設定齒輪圖示 - 放大版本 -->
     <circle cx="416" cy="1123" r="160" fill="#4A90E2"/>
-    <circle cx="416" cy="1123" r="130" fill="white"/>
-    <circle cx="416" cy="1090" r="40" fill="#4A90E2"/>
-    <polygon points="416,1166 391,1216 441,1216" fill="#4A90E2"/>
-    <!-- 外圍定位圈 -->
-    <circle cx="416" cy="1123" r="150" fill="none" stroke="#4A90E2" stroke-width="10" stroke-dasharray="25,12"/>
+    <circle cx="416" cy="1123" r="115" fill="white"/>
+    <circle cx="416" cy="1123" r="45" fill="#4A90E2"/>
+    <!-- 齒輪齒 - 更大更多 -->
+    <rect x="406" y="963" width="20" height="50" fill="#4A90E2"/>
+    <rect x="406" y="1283" width="20" height="50" fill="#4A90E2"/>
+    <rect x="256" y="1113" width="50" height="20" fill="#4A90E2"/>
+    <rect x="526" y="1113" width="50" height="20" fill="#4A90E2"/>
+    <!-- 對角線齒 -->
+    <polygon points="316,1033 341,1008 366,1033 341,1058" fill="#4A90E2"/>
+    <polygon points="516,1033 491,1008 466,1033 491,1058" fill="#4A90E2"/>
+    <polygon points="316,1213 341,1238 366,1213 341,1188" fill="#4A90E2"/>
+    <polygon points="516,1213 491,1238 466,1213 491,1188" fill="#4A90E2"/>
 
-    <text x="416" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">目前位置</text>
+    <text x="416" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">設定地點</text>
   </g>
 
   <!-- 格子5：設定地點 -->
   <g id="location-settings">
     <rect x="833" y="843" width="834" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
-    <!-- 設定齒輪圖示 - 放大版本 -->
+    <!-- 定位圖示 - 放大版本 -->
     <circle cx="1250" cy="1123" r="160" fill="#4A90E2"/>
-    <circle cx="1250" cy="1123" r="115" fill="white"/>
-    <circle cx="1250" cy="1123" r="45" fill="#4A90E2"/>
-    <!-- 齒輪齒 - 更大更多 -->
-    <rect x="1240" y="963" width="20" height="50" fill="#4A90E2"/>
-    <rect x="1240" y="1283" width="20" height="50" fill="#4A90E2"/>
-    <rect x="1090" y="1113" width="50" height="20" fill="#4A90E2"/>
-    <rect x="1360" y="1113" width="50" height="20" fill="#4A90E2"/>
-    <!-- 對角線齒 -->
-    <polygon points="1150,1033 1175,1008 1200,1033 1175,1058" fill="#4A90E2"/>
-    <polygon points="1350,1033 1325,1008 1300,1033 1325,1058" fill="#4A90E2"/>
-    <polygon points="1150,1213 1175,1238 1200,1213 1175,1188" fill="#4A90E2"/>
-    <polygon points="1350,1213 1325,1238 1300,1213 1325,1188" fill="#4A90E2"/>
+    <circle cx="1250" cy="1123" r="130" fill="white"/>
+    <circle cx="1250" cy="1090" r="40" fill="#4A90E2"/>
+    <polygon points="1250,1166 1225,1216 1275,1216" fill="#4A90E2"/>
+    <!-- 外圍定位圈 -->
+    <circle cx="1250" cy="1123" r="150" fill="none" stroke="#4A90E2" stroke-width="10" stroke-dasharray="25,12"/>
 
-    <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">設定地點</text>
+    <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">目前位置</text>
   </g>
 
   <!-- 格子6：其它 -->
