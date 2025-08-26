@@ -1,6 +1,7 @@
 """Test LINE webhook endpoint functionality."""
 
 from collections.abc import Callable
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -46,8 +47,6 @@ class TestLineWebhook:
         signature = generate_line_signature(body)
 
         # Mock the webhook handler to not raise any exceptions
-        from unittest.mock import patch
-
         with patch("app.line.service.webhook_handler.handle"):
             response = client.post(
                 "/line/webhook",

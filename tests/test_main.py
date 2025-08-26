@@ -3,6 +3,7 @@
 from unittest.mock import Mock, patch
 
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from app.core.config import Settings
 
@@ -33,13 +34,8 @@ class TestMainApplication:
                 assert prod_app.redoc_url is None
                 assert prod_app.openapi_url is None
 
-    def test_root_endpoint(self) -> None:
+    def test_root_endpoint(self, client: TestClient) -> None:
         """Test the root endpoint returns welcome message."""
-        from fastapi.testclient import TestClient
-
-        from app.main import app
-
-        client = TestClient(app)
         response = client.get("/")
 
         assert response.status_code == 200
