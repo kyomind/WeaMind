@@ -13,7 +13,7 @@ description = "Your smart LINE assistant for instant weather updates."
 name = "WeaMind"
 readme = "README.md"
 requires-python = ">=3.12" # Affects pyupgrade auto fixes and replaces target-version
-version = "0.3.1"
+version = "0.4.0"
 
 [dependency-groups]
 dev = [
