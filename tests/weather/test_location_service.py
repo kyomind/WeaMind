@@ -235,8 +235,8 @@ class TestLocationServiceGeographic:
 
         distance = LocationService._calculate_haversine_distance(lat, lon, lat, lon)
 
-        # Distance should be 0
-        assert distance == 0.0
+        # Distance should be very close to 0 (within floating point precision)
+        assert distance < 1e-10
 
     def test_is_in_taiwan_bounds_valid_coordinates(self) -> None:
         """Test Taiwan bounds check for valid coordinates."""
