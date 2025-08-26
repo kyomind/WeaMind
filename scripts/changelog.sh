@@ -130,7 +130,7 @@ check_git_status_for_release() {
     # 檢查除了 CHANGELOG.md 之外是否有其他未提交變更
     local changed_files=$(git diff --name-only HEAD)
     local non_changelog_changes=$(echo "$changed_files" | grep -v "^CHANGELOG\.md$" | wc -l | tr -d ' ')
-    
+
     if [[ "$non_changelog_changes" -gt 0 ]]; then
         log_error "除了 CHANGELOG.md 之外還有其他未提交的變更："
         echo "$changed_files" | grep -v "^CHANGELOG\.md$"
@@ -306,13 +306,13 @@ update_version() {
     # 提交版本相關變更（pyproject.toml + uv.lock）
     log_info "📤 提交版本發布變更..."
     git add pyproject.toml uv.lock
-    
+
     # 檢查是否有版本變更需要提交
     if git diff --cached --quiet; then
         log_error "沒有版本變更可以提交"
         exit 1
     fi
-    
+
     git commit -m "Release WeaMind v${version}"
 
     log_success "✅ 版本發布變更已提交"

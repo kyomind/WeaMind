@@ -6,19 +6,19 @@
       <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:1" />
     </linearGradient>
   </defs>
-  
+
   <rect width="2500" height="1686" fill="url(#backgroundGrad)"/>
-  
+
   <!-- 格線分隔 -->
   <!-- 垂直線 -->
   <line x1="833" y1="0" x2="833" y2="1686" stroke="#E0E0E0" stroke-width="2"/>
   <line x1="1667" y1="0" x2="1667" y2="1686" stroke="#E0E0E0" stroke-width="2"/>
-  
+
   <!-- 水平線 -->
   <line x1="0" y1="843" x2="2500" y2="843" stroke="#E0E0E0" stroke-width="2"/>
-  
+
   <!-- 第一行：查住家、查公司、最近查過 -->
-  
+
   <!-- 格子1：查住家 -->
   <g id="home-weather">
     <rect x="0" y="0" width="833" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
@@ -28,10 +28,10 @@
     <rect x="346" y="245" width="140" height="140" fill="white"/>
     <rect x="381" y="315" width="30" height="70" fill="#4A90E2"/>
     <circle cx="450" cy="295" r="8" fill="#4A90E2"/>
-    
+
     <text x="416" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">查住家</text>
   </g>
-  
+
   <!-- 格子2：查公司 -->
   <g id="office-weather">
     <rect x="833" y="0" width="834" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
@@ -43,40 +43,40 @@
     <rect x="1230" y="150" width="30" height="30" fill="white"/>
     <rect x="1275" y="150" width="30" height="30" fill="white"/>
     <rect x="1320" y="150" width="30" height="30" fill="white"/>
-    
+
     <rect x="1140" y="195" width="30" height="30" fill="white"/>
     <rect x="1185" y="195" width="30" height="30" fill="white"/>
     <rect x="1230" y="195" width="30" height="30" fill="white"/>
     <rect x="1275" y="195" width="30" height="30" fill="white"/>
     <rect x="1320" y="195" width="30" height="30" fill="white"/>
-    
+
     <rect x="1140" y="240" width="30" height="30" fill="white"/>
     <rect x="1185" y="240" width="30" height="30" fill="white"/>
     <rect x="1230" y="240" width="30" height="30" fill="white"/>
     <rect x="1275" y="240" width="30" height="30" fill="white"/>
     <rect x="1320" y="240" width="30" height="30" fill="white"/>
-    
+
     <rect x="1140" y="285" width="30" height="30" fill="white"/>
     <rect x="1185" y="285" width="30" height="30" fill="white"/>
     <rect x="1230" y="285" width="30" height="30" fill="white"/>
     <rect x="1275" y="285" width="30" height="30" fill="white"/>
     <rect x="1320" y="285" width="30" height="30" fill="white"/>
-    
+
     <rect x="1140" y="330" width="30" height="30" fill="white"/>
     <rect x="1185" y="330" width="30" height="30" fill="white"/>
     <rect x="1230" y="330" width="30" height="30" fill="white"/>
     <rect x="1275" y="330" width="30" height="30" fill="white"/>
     <rect x="1320" y="330" width="30" height="30" fill="white"/>
-    
+
     <rect x="1140" y="375" width="30" height="30" fill="white"/>
     <rect x="1185" y="375" width="30" height="30" fill="white"/>
     <rect x="1230" y="375" width="30" height="30" fill="white"/>
     <rect x="1275" y="375" width="30" height="30" fill="white"/>
     <rect x="1320" y="375" width="30" height="30" fill="white"/>
-    
+
     <text x="1250" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">查公司</text>
   </g>
-  
+
   <!-- 格子3：最近查過 -->
   <g id="recent-queries">
     <rect x="1667" y="0" width="833" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
@@ -91,12 +91,12 @@
     <line x1="2203" y1="280" x2="2183" y2="280" stroke="#4A90E2" stroke-width="8"/>
     <line x1="2083" y1="400" x2="2083" y2="380" stroke="#4A90E2" stroke-width="8"/>
     <line x1="1963" y1="280" x2="1983" y2="280" stroke="#4A90E2" stroke-width="8"/>
-    
+
     <text x="2083" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">最近查過</text>
   </g>
-  
+
   <!-- 第二行：目前位置、設定地點、其它 -->
-  
+
   <!-- 格子4：目前位置 -->
   <g id="current-location">
     <rect x="0" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
@@ -107,10 +107,10 @@
     <polygon points="416,1166 391,1216 441,1216" fill="#4A90E2"/>
     <!-- 外圍定位圈 -->
     <circle cx="416" cy="1123" r="150" fill="none" stroke="#4A90E2" stroke-width="10" stroke-dasharray="25,12"/>
-    
+
     <text x="416" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">目前位置</text>
   </g>
-  
+
   <!-- 格子5：設定地點 -->
   <g id="location-settings">
     <rect x="833" y="843" width="834" height="843" fill="rgba(76,144,226,0.1)" stroke="#4A90E2" stroke-width="1"/>
@@ -128,10 +128,10 @@
     <polygon points="1350,1033 1325,1008 1300,1033 1325,1058" fill="#4A90E2"/>
     <polygon points="1150,1213 1175,1238 1200,1213 1175,1188" fill="#4A90E2"/>
     <polygon points="1350,1213 1325,1238 1300,1213 1325,1188" fill="#4A90E2"/>
-    
+
     <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">設定地點</text>
   </g>
-  
+
   <!-- 格子6：其它 -->
   <g id="more-options">
     <rect x="1667" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
@@ -142,7 +142,7 @@
     <circle cx="2033" cy="1123" r="15" fill="#4A90E2"/>
     <circle cx="2083" cy="1123" r="15" fill="#4A90E2"/>
     <circle cx="2133" cy="1123" r="15" fill="#4A90E2"/>
-    
+
     <text x="2083" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">其它</text>
   </g>
 </svg>

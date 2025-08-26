@@ -2,12 +2,19 @@
 
 from unittest.mock import Mock, patch
 
-from linebot.v3.webhooks import FollowEvent, MessageEvent, TextMessageContent, UnfollowEvent
+from linebot.v3.webhooks import (
+    FollowEvent,
+    LocationMessageContent,
+    MessageEvent,
+    TextMessageContent,
+    UnfollowEvent,
+)
 
 from app.core.config import settings
 from app.line.service import (
     handle_default_event,
     handle_follow_event,
+    handle_location_message_event,
     handle_message_event,
     handle_unfollow_event,
     send_liff_location_setting_response,
@@ -437,3 +444,125 @@ class TestLineService:
 
             # Verify query was NOT recorded (no user_id available)
             mock_record_query.assert_not_called()
+
+
+class TestLocationMessageHandler:
+    """Test location message handler functionality."""
+
+    def test_handle_location_message_event_success(self) -> None:
+        """Test successful location message handling."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_message = Mock(spec=LocationMessageContent)
+        mock_message.latitude = 25.0330
+        mock_message.longitude = 121.5654
+        mock_event.message = mock_message
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
+            patch("app.line.service.LocationService.find_nearest_location") as mock_find,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.record_user_query") as mock_record,
+            patch("app.line.service.send_text_response") as mock_send,
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            # Mock successful location query
+            mock_weather.return_value = "找到了 臺北市中正區，正在查詢天氣..."
+
+            # Mock location found for recording
+            mock_location = Mock()
+            mock_location.id = 123
+            mock_find.return_value = mock_location
+
+            # Mock user for recording
+            mock_user = Mock()
+            mock_user.id = 456
+            mock_get_user.return_value = mock_user
+
+            handle_location_message_event(mock_event)
+
+            # Should query weather with coordinates and address
+            mock_weather.assert_called_once_with(mock_session, 25.0330, 121.5654, None)
+
+            # Should record query for user history
+            mock_record.assert_called_once_with(mock_session, 456, 123)
+
+            # Should send response
+            mock_send.assert_called_once_with("test_token", "找到了 臺北市中正區，正在查詢天氣...")
+
+    def test_handle_location_message_event_empty_reply_token(self) -> None:
+        """Test location message handling with empty reply token."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = None
+
+        # Should return early without processing
+        handle_location_message_event(mock_event)
+
+    def test_handle_location_message_event_wrong_message_type(self) -> None:
+        """Test location message handling with wrong message type."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_event.message = Mock()  # Not LocationMessageContent
+
+        # Should return early without processing
+        handle_location_message_event(mock_event)
+
+    def test_handle_location_message_event_outside_taiwan(self) -> None:
+        """Test location message handling for coordinates outside Taiwan."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_message = Mock(spec=LocationMessageContent)
+        mock_message.latitude = 35.6762  # Tokyo coordinates
+        mock_message.longitude = 139.6503
+        mock_event.message = mock_message
+        mock_event.source = None  # No source for this test
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
+            patch("app.line.service.send_text_response") as mock_send,
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            # Mock location outside Taiwan response
+            mock_weather.return_value = "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
+
+            handle_location_message_event(mock_event)
+
+            # Should query weather with coordinates and address
+            mock_weather.assert_called_once_with(mock_session, 35.6762, 139.6503, None)
+
+            # Should send outside Taiwan response
+            mock_send.assert_called_once_with("test_token", "抱歉，目前僅支援台灣地區的天氣查詢 🌏")
+
+    def test_handle_location_message_event_exception(self) -> None:
+        """Test location message handling with exception."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_message = Mock(spec=LocationMessageContent)
+        mock_message.latitude = 25.0330
+        mock_message.longitude = 121.5654
+        mock_event.message = mock_message
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch(
+                "app.line.service.WeatherService.handle_location_weather_query",
+                side_effect=Exception("Database error"),
+            ),
+            patch("app.line.service.send_text_response") as mock_send,
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            handle_location_message_event(mock_event)
+
+            # Should send error response
+            mock_send.assert_called_once_with("test_token", "😅 系統暫時有點忙，請稍後再試一次。")
