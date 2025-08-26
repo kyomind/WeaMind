@@ -193,7 +193,7 @@ class LocationService:
 
         Uses double validation:
         1. Boundary rectangle check for Taiwan
-        2. Distance threshold check (50km) to exclude overseas locations
+        2. Distance threshold check (15km) to exclude distant locations
 
         Args:
             session: Database session
@@ -235,9 +235,9 @@ class LocationService:
                 min_distance = distance
                 nearest_location = location
 
-        # Second validation: distance threshold check (50km)
-        if nearest_location is None or min_distance > 50.0:
-            logger.warning(
+        # Second validation: distance threshold check (15km)
+        if nearest_location is None or min_distance > 15.0:
+            logger.info(
                 f"Nearest location is {min_distance:.1f}km away, outside Taiwan service area"
             )
             return None
