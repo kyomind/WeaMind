@@ -7,6 +7,7 @@ from collections.abc import Sequence
 
 from sqlalchemy.orm import Session
 
+from app.core.admin_divisions import is_valid_taiwan_division
 from app.weather.models import Location
 
 logger = logging.getLogger(__name__)
@@ -249,9 +250,10 @@ class LocationService:
     @staticmethod
     def extract_location_from_address(session: Session, address: str) -> Location | None:
         """
-        Extract Taiwan administrative area from address string.
+        Extract Taiwan administrative area from address string with validation.
 
-        Uses strategy B: extract admin area first, then normalize Taiwan characters.
+        Uses strategy B: extract admin area first, then normalize Taiwan characters,
+        and validate against known administrative divisions.
 
         Args:
             session: Database session
@@ -290,14 +292,19 @@ class LocationService:
 
         logger.info(f"Extracted admin area: '{admin_area}' → normalized: '{normalized_admin}'")
 
-        # Step 3: Search in database using exact match
+        # Step 3: Validate against known administrative divisions
+        if not is_valid_taiwan_division(normalized_admin):
+            logger.info(f"Administrative area not in valid divisions: {normalized_admin}")
+            return None
+
+        # Step 4: Search in database using exact match
         location = session.query(Location).filter(Location.full_name == normalized_admin).first()
 
         if location:
-            logger.info(f"Found exact match: {location.full_name}")
+            logger.info(f"Found location in database: {location.full_name}")
             return location
         else:
-            logger.info(f"No exact match found for admin area: '{normalized_admin}'")
+            logger.info(f"Administrative area not found in database: {normalized_admin}")
             return None
 
 
@@ -328,12 +335,13 @@ class WeatherService:
         session: Session, lat: float, lon: float, address: str | None = None
     ) -> str:
         """
-        Handle weather query from GPS coordinates with optional address verification.
+        Handle weather query from GPS coordinates with address-first strategy.
 
-        Implementation of "GPS coordinates priority + address verification" strategy:
-        1. Use GPS coordinates to find candidate location (filters 99% noise)
-        2. If result is None but address indicates Taiwan, use address as authority
-        3. If result exists but conflicts with address, use address as authority
+        Implementation of "address priority + GPS fallback" strategy:
+        1. If address is available, try to parse it first
+        2. If address parsing succeeds, use address result directly
+        3. If address parsing fails, fallback to GPS coordinates
+        4. If both fail, return "not in Taiwan" message
 
         Args:
             session: Database session
@@ -344,31 +352,23 @@ class WeatherService:
         Returns:
             str: Weather response message
         """
-        # Step 1: GPS coordinates calculation (primary filter)
-        gps_location = LocationService.find_nearest_location(session, lat, lon)
-
-        # Step 2: Address parsing (if available)
-        address_location = None
+        # Step 1: Address-first strategy (if available)
         if address:
             address_location = LocationService.extract_location_from_address(session, address)
-
-        # Step 3: Decision logic - address is the final authority
-        if gps_location is None:
             if address_location:
-                # Case: GPS says "not in Taiwan" but address indicates Taiwan location
-                logger.info(f"GPS outside bounds but address found: {address_location.full_name}")
+                # Address parsing succeeded - use it directly
+                logger.info(f"Address parsing succeeded: {address_location.full_name}")
                 return f"找到了 {address_location.full_name}，正在查詢天氣..."
             else:
-                # Case: GPS outside bounds and no valid Taiwan address
-                return "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
-        else:
-            if address_location and address_location.id != gps_location.id:
-                # Case: GPS and address conflict - trust address
-                logger.info(
-                    f"GPS/Address conflict: GPS={gps_location.full_name}, "
-                    f"Address={address_location.full_name} - using address"
-                )
-                return f"找到了 {address_location.full_name}，正在查詢天氣..."
-            else:
-                # Case: GPS and address consistent, or no address available
-                return f"找到了 {gps_location.full_name}，正在查詢天氣..."
+                # Address parsing failed - log and continue to GPS fallback
+                logger.info(f"Address parsing failed for: {address}")
+
+        # Step 2: GPS fallback (if address failed or not available)
+        gps_location = LocationService.find_nearest_location(session, lat, lon)
+        if gps_location:
+            logger.info(f"GPS calculation succeeded: {gps_location.full_name}")
+            return f"找到了 {gps_location.full_name}，正在查詢天氣..."
+
+        # Step 3: Both methods failed
+        logger.info("Both address parsing and GPS calculation failed")
+        return "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
