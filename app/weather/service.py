@@ -284,7 +284,7 @@ class LocationService:
                 break
 
         if not admin_area:
-            logger.info(f"Could not extract administrative area from address: {address}")
+            logger.warning("Could not extract administrative area from address")
             return None
 
         # Step 2: Normalize Taiwan characters (台 → 臺) for admin area only
@@ -357,11 +357,11 @@ class WeatherService:
             address_location = LocationService.extract_location_from_address(session, address)
             if address_location:
                 # Address parsing succeeded - use it directly
-                logger.info(f"Address parsing succeeded: {address_location.full_name}")
+                logger.info("Address parsing succeeded")
                 return f"找到了 {address_location.full_name}，正在查詢天氣..."
             else:
                 # Address parsing failed - log and continue to GPS fallback
-                logger.info(f"Address parsing failed for: {address}")
+                logger.info("Address parsing failed, falling back to GPS")
 
         # Step 2: GPS fallback (if address failed or not available)
         gps_location = LocationService.find_nearest_location(session, lat, lon)

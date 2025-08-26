@@ -69,7 +69,7 @@ async def verify_line_access_token(access_token: str) -> str:
             if not line_user_id:
                 raise ValueError("No user ID in profile")
 
-            logger.info(f"Access token verified successfully for user: {line_user_id}")
+            logger.info("Access token verified successfully")
             return line_user_id
 
     except httpx.RequestError as e:
@@ -149,7 +149,7 @@ def verify_line_id_token(token: str) -> str:
             raise ValueError("No user ID in token")
 
         # Log successful verification for debugging
-        logger.info(f"Token verified successfully for user: {line_user_id}")
+        logger.info("Token verified successfully")
 
         # TODO: 完整的生產環境實作應該：
         # 1. 從 LINE 的 JWK endpoint 取得公鑰

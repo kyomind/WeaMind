@@ -200,7 +200,7 @@ def handle_location_message_event(event: MessageEvent) -> None:
         logger.info("Location query completed")
 
     except Exception:
-        logger.exception(f"Error handling location message: lat={lat}, lon={lon}")
+        logger.exception("Error handling location message from user")
         response_message = "😅 系統暫時有點忙，請稍後再試一次。"
 
     finally:
@@ -251,7 +251,7 @@ def handle_follow_event(event: FollowEvent) -> None:
                         )
                         logger.info("Welcome message sent to user")
                     except Exception:
-                        logger.exception(f"Error sending welcome message to user {user_id}")
+                        logger.exception("Error sending welcome message to user")
         finally:
             session.close()
 
@@ -281,7 +281,7 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
             if user:
                 logger.info("User unfollowed - user record deactivated")
             else:
-                logger.warning(f"Unfollow event for unknown user {user_id}")
+                logger.warning("Unfollow event for unknown user")
         finally:
             session.close()
 
