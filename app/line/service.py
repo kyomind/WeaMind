@@ -815,7 +815,7 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
                     {
                         "type": "text",
                         "text": level_text,
-                        "size": "xs",
+                        "size": "md",
                         "color": level_color,
                         "margin": "sm",
                     },
@@ -826,7 +826,7 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
                 "type": "box",
                 "layout": "vertical",
                 "contents": [
-                    {"type": "text", "text": body, "wrap": True, "size": "sm", "color": "#666666"}
+                    {"type": "text", "text": body, "wrap": True, "size": "md", "color": "#666666"}
                 ],
             },
             "footer": {
