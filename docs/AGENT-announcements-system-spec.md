@@ -73,7 +73,7 @@ LINE Bot 的 Rich Menu 有一個「其它」按鈕功能未定，需要建立與
 ### 實作要點
 1. **後端處理**：
    - 在 `app/line/service.py` 新增「其它」按鈕事件處理
-   - 實作 `handle_other_announcements` postback 處理函式
+   - 實作 `handle_announcements` postback 處理函式
    - 動態讀取 JSON 並生成 Flex Message Carousel
 
 2. **前端處理**：

@@ -91,7 +91,7 @@ make upload-delete ID=richmenu-xxx-xxx-xxx
     "displayText": "設定地點"
   },
   "其它": {
-    "data": "action=menu&type=more",
+    "data": "action=other&type=menu",
     "displayText": "其它"
   }
 }
