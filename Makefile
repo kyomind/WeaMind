@@ -1,6 +1,6 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete
+.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete update-static-version
 
 # === Container & Image Management ===
 dev-up:
@@ -90,6 +90,11 @@ clean-docs:
 update-liff-version:
 	@echo "🔄 Updating LIFF version..."
 	@zsh scripts/update_liff_version.sh
+
+# === Static Pages Cache Management ===
+update-static-version:
+	@echo "🔄 Updating static pages version..."
+	@zsh scripts/update_static_pages_version.sh
 
 # === Version & Release Management ===
 changelog-status:
