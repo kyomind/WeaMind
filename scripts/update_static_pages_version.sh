@@ -33,16 +33,6 @@ update_file_version() {
     <meta name=\"cache-version\" content=\"$VERSION\">/g" "$file"
         echo "   ✅ Added cache-version meta tag"
     fi
-
-    # Update or add version comment in head
-    if grep -q "Static Page Version:" "$file"; then
-        sed -i '' "s/Static Page Version: [^-]*-[^-]*-[^-]*/Static Page Version: $VERSION/g" "$file"
-        echo "   ✅ Updated version comment"
-    else
-        sed -i '' "s/<\/head>/    <!-- Static Page Version: $VERSION -->\
-<\/head>/g" "$file"
-        echo "   ✅ Added version comment"
-    fi
 }
 
 # Update all static pages
@@ -70,6 +60,21 @@ for file in "$ANNOUNCEMENTS_FILE" "$HELP_FILE" "$ABOUT_FILE"; do
     if [ -f "$file" ]; then
         echo ""
         echo "$(basename "$file"):"
-        grep -n "cache-version\|Static Page Version:" "$file" | head -2
+        grep -n "cache-version" "$file" | head -1
+    fi
+done
+echo "   - $ABOUT_FILE"
+echo ""
+echo "💡 Browser cache will be busted on next deployment"
+echo "🚀 Changes ready for commit and deploy"
+
+# Display verification
+echo ""
+echo "=== Version Verification ==="
+for file in "$ANNOUNCEMENTS_FILE" "$HELP_FILE" "$ABOUT_FILE"; do
+    if [ -f "$file" ]; then
+        echo ""
+        echo "$(basename "$file"):"
+        grep -n "cache-version" "$file" | head -1
     fi
 done
