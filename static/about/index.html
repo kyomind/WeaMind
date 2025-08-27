@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ℹ️ 專案介紹 - WeaMind</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 16px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .intro {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .intro h3 {
+            color: #1976d2;
+            margin-bottom: 12px;
+        }
+
+        .intro p {
+            color: #424242;
+            font-size: 16px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .feature-card {
+            background: #eee;
+            border-radius: 8px;
+            padding: 16px;
+            border-left: 4px solid #2196f3;
+            transition: transform 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-card h3 {
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .tech-stack {
+            background: #eee;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .tech-stack h4 {
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tech-tag {
+            background: #2196f3;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196f3;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .footer {
+            padding: 16px 24px;
+            background: #f8f9fa;
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .footer a {
+            color: #2196f3;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .header {
+                padding: 20px 16px;
+            }
+
+            .content {
+                padding: 16px;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ℹ️ 專案介紹</h1>
+            <p>關於 WeaMind 天氣查詢服務</p>
+        </div>
+
+        <div class="content">
+            <div class="intro">
+                <h3>🌤️ WeaMind - 智慧天氣助手</h3>
+                <p>
+                    提供快速、直觀的天氣查詢服務，透過 LINE Bot 讓您隨時掌握天氣資訊，
+                    無論是居住地、工作地，還是旅遊目的地，都能輕鬆獲得準確的天氣預報。
+                </p>
+            </div>
+
+            <div class="section">
+                <h2>✨ 核心特色</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h3>
+                            <span>⚡</span>
+                            快速響應
+                        </h3>
+                        <p>毫秒級的查詢響應，即時獲得天氣資訊</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>
+                            <span>🎯</span>
+                            精準定位
+                        </h3>
+                        <p>支援文字地名和 GPS 定位雙重查詢方式</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>
+                            <span>🔄</span>
+                            智慧記憶
+                        </h3>
+                        <p>記住您的常用地點，提供個人化體驗</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <h3>
+                            <span>📱</span>
+                            LINE 整合
+                        </h3>
+                        <p>無需額外下載 App，直接在 LINE 中使用</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🛠️ 技術架構</h2>
+                <div class="tech-stack">
+                    <h4>後端技術</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">FastAPI</span>
+                        <span class="tech-tag">PostgreSQL</span>
+                        <span class="tech-tag">SQLAlchemy</span>
+                        <span class="tech-tag">Alembic</span>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <h4>服務整合</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">LINE Bot API</span>
+                        <span class="tech-tag">中央氣象署 API</span>
+                        <span class="tech-tag">Docker</span>
+                        <span class="tech-tag">Nginx</span>
+                    </div>
+                </div>
+
+                <div class="tech-stack">
+                    <h4>開發工具</h4>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Ruff</span>
+                        <span class="tech-tag">Pyright</span>
+                        <span class="tech-tag">Pytest</span>
+                        <span class="tech-tag">GitHub Actions</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📊 專案數據</h2>
+                <div class="stats">
+                    <div class="stat-item">
+                        <div class="stat-number">v1.0</div>
+                        <div class="stat-label">目前版本</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">2025</div>
+                        <div class="stat-label">發布年份</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">90%+</div>
+                        <div class="stat-label">測試覆蓋率</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">服務時間</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎯 設計理念</h2>
+                <div class="feature-card">
+                    <h3>
+                        <span>🚀</span>
+                        簡單易用
+                    </h3>
+                    <p>
+                        我們相信好的工具應該讓使用者專注在需求本身，而不是學習如何使用工具。
+                        WeaMind 採用直觀的對話式介面，讓查詢天氣就像跟朋友聊天一樣自然。
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>
+                        <span>🔧</span>
+                        高度可靠
+                    </h3>
+                    <p>
+                        採用現代化的技術架構，配合完整的測試覆蓋和監控機制，
+                        確保服務的穩定性和資料的準確性。
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <h3>
+                        <span>🌱</span>
+                        持續改進
+                    </h3>
+                    <p>
+                        我們持續收集使用者回饋，不斷優化功能和體驗，
+                        讓 WeaMind 成為您最信賴的天氣助手。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>WeaMind 天氣查詢服務</p>
+            <p>
+                開源專案 |
+                <a href="https://github.com/kyomind/WeaMind" target="_blank">GitHub</a> |
+                Made with ❤️ in Taiwan
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
