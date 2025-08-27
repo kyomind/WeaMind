@@ -80,7 +80,7 @@
             },
             "action": {
                 "type": "postback",
-                "data": "action=menu&type=more",
+                "data": "action=other&type=menu",
                 "displayText": "更多功能"
             }
         }
