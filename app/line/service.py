@@ -1,19 +1,25 @@
 """Service layer for LINE Bot operations using official SDK."""
 
+import json
 import logging
+from pathlib import Path
 from urllib.parse import parse_qs
 
 from linebot.v3 import WebhookHandler
 from linebot.v3.messaging import (
     ApiClient,
     Configuration,
+    FlexContainer,
+    FlexMessage,
     LocationAction,
     MessageAction,
     MessagingApi,
+    PostbackAction,
     QuickReply,
     QuickReplyItem,
     ReplyMessageRequest,
     TextMessage,
+    URIAction,
 )
 from linebot.v3.webhooks import (
     FollowEvent,
@@ -387,14 +393,14 @@ def handle_postback_event(event: PostbackEvent) -> None:
             return
 
         # Route to appropriate handler
-        if postback_data.get("action") == "weather":
+        if postback_data.get("action") == "weather":  # include 3 types: home, office, current
             handle_weather_postback(event, user_id, postback_data)
         elif postback_data.get("action") == "settings":
             handle_settings_postback(event, postback_data)
         elif postback_data.get("action") == "recent_queries":
             handle_recent_queries_postback(event)
-        elif postback_data.get("action") == "menu":
-            handle_menu_postback(event, postback_data)
+        elif postback_data.get("action") == "other":
+            handle_other_postback(event, postback_data)
         else:
             logger.warning(f"Unknown PostBack action: {postback_data}")
             send_error_response(event.reply_token, "未知的操作")
@@ -612,10 +618,242 @@ def handle_current_location_weather(event: PostbackEvent) -> None:
             logger.exception("Error sending location request")
 
 
-def handle_menu_postback(event: PostbackEvent, data: dict[str, str]) -> None:
-    """Handle menu PostBack (placeholder)."""
-    _ = data  # Acknowledge unused parameter
-    send_text_response(event.reply_token, "📢 更多功能即將推出，敬請期待！")
+def handle_other_postback(event: PostbackEvent, data: dict[str, str]) -> None:
+    """
+    Handle "其它" (Other) PostBack events.
+
+    Args:
+        event: PostBack event from Rich Menu "其它" button
+        data: Parsed PostBack data containing action type
+    """
+    postback_type = data.get("type")
+
+    if postback_type == "menu":  # action=other&type=menu
+        # Show Quick Reply menu with 4 options
+        send_other_menu_quick_reply(event.reply_token)
+    elif postback_type == "announcements":
+        # Show announcements as Flex Message Carousel
+        handle_announcements(event.reply_token)
+    else:
+        logger.warning(f"Unknown other PostBack type: {postback_type}")
+        send_error_response(event.reply_token, "未知的操作")
+
+
+def send_other_menu_quick_reply(reply_token: str | None) -> None:
+    """
+    Send Quick Reply menu for "其它" feature with 4 options.
+
+    Args:
+        reply_token: LINE reply token
+    """
+    if not reply_token:
+        logger.warning("Cannot send other menu: reply_token is None")
+        return
+
+    quick_reply_items = [
+        QuickReplyItem(
+            type="action",
+            imageUrl=None,
+            action=PostbackAction(
+                type="postback",
+                label="📢 公告",
+                data="action=other&type=announcements",  # important
+                displayText="查看系統公告",
+                inputOption=None,
+                fillInText=None,
+            ),
+        ),
+        QuickReplyItem(
+            type="action",
+            imageUrl=None,
+            action=URIAction(
+                type="uri",
+                label="🔄 更新",
+                uri="https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md",
+                altUri=None,
+            ),
+        ),
+        QuickReplyItem(
+            type="action",
+            imageUrl=None,
+            action=URIAction(
+                type="uri",
+                label="📖 使用說明",
+                uri="https://api.kyomind.tw/static/help/index.html",
+                altUri=None,
+            ),
+        ),
+        QuickReplyItem(
+            type="action",
+            imageUrl=None,
+            action=URIAction(
+                type="uri",
+                label="ℹ️ 專案介紹",
+                uri="https://api.kyomind.tw/static/about/index.html",
+                altUri=None,
+            ),
+        ),
+    ]
+
+    quick_reply = QuickReply(items=quick_reply_items)
+
+    with ApiClient(configuration) as api_client:
+        messaging_api_client = MessagingApi(api_client)
+        try:
+            messaging_api_client.reply_message(
+                ReplyMessageRequest(
+                    replyToken=reply_token,
+                    messages=[
+                        TextMessage(
+                            text="🌟 請選擇您想了解的資訊：",
+                            quoteToken=None,
+                            quickReply=quick_reply,
+                        )
+                    ],
+                    notificationDisabled=False,
+                )
+            )
+            logger.info("Other menu Quick Reply sent successfully")
+        except Exception:
+            logger.exception("Error sending other menu Quick Reply")
+
+
+def handle_announcements(reply_token: str | None) -> None:
+    """
+    Handle announcements PostBack and send Flex Message Carousel.
+
+    Args:
+        reply_token: LINE reply token
+    """
+    if not reply_token:
+        logger.warning("Cannot send announcements: reply_token is None")
+        return
+
+    try:
+        # Load announcements from JSON file
+        announcements_path = Path("static/announcements.json")
+        if not announcements_path.exists():
+            logger.warning("Announcements file not found")
+            send_error_response(reply_token, "公告資料載入失敗")
+            return
+
+        with announcements_path.open(encoding="utf-8") as file:
+            announcements_data = json.load(file)
+
+        # Filter visible announcements and sort by start_at (newest first)
+        visible_announcements = [
+            item for item in announcements_data.get("items", []) if item.get("visible", False)
+        ]
+        visible_announcements.sort(key=lambda x: x.get("start_at", ""), reverse=True)
+
+        # Take only the latest 3 announcements for Flex Message
+        latest_announcements = visible_announcements[:3]
+
+        if not latest_announcements:
+            send_text_response(reply_token, "📢 目前沒有新公告")
+            return
+
+        # Create Flex Message Carousel
+        flex_message = create_announcements_flex_message(latest_announcements)
+
+        with ApiClient(configuration) as api_client:
+            messaging_api_client = MessagingApi(api_client)
+            messaging_api_client.reply_message(
+                ReplyMessageRequest(
+                    replyToken=reply_token,
+                    messages=[flex_message],
+                    notificationDisabled=False,
+                )
+            )
+            logger.info("Announcements Flex Message sent successfully")
+
+    except Exception:
+        logger.exception("Error handling announcements")
+        send_error_response(reply_token, "載入公告時發生錯誤")
+
+
+def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
+    """
+    Create Flex Message Carousel for announcements.
+
+    Args:
+        announcements: List of announcement items
+
+    Returns:
+        FlexMessage: Flex Message containing announcements carousel
+    """
+    bubbles = []
+
+    for announcement in announcements:
+        # Truncate title and body for Flex Message limits
+        title = announcement.get("title", "")[:20]
+        body = announcement.get("body", "")[:50]
+        level = announcement.get("level", "info")
+
+        # Choose color based on level
+        level_colors = {"info": "#2196F3", "warning": "#FF9800", "maintenance": "#F44336"}
+        level_color = level_colors.get(level, "#2196F3")
+
+        # Choose level text
+        level_texts = {"info": "一般資訊", "warning": "重要提醒", "maintenance": "維護公告"}
+        level_text = level_texts.get(level, "資訊")
+
+        bubble = {
+            "type": "bubble",
+            "header": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": title,
+                        "weight": "bold",
+                        "size": "lg",
+                        "wrap": True,
+                        "color": "#333333",
+                    },
+                    {
+                        "type": "text",
+                        "text": level_text,
+                        "size": "xs",
+                        "color": level_color,
+                        "margin": "sm",
+                    },
+                ],
+                "backgroundColor": "#F8F9FA",
+            },
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {"type": "text", "text": body, "wrap": True, "size": "sm", "color": "#666666"}
+                ],
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "button",
+                        "action": {
+                            "type": "uri",
+                            "label": "查看完整內容",
+                            "uri": "https://api.kyomind.tw/static/announcements/index.html",
+                        },
+                        "style": "primary",
+                        "color": level_color,
+                    }
+                ],
+            },
+        }
+        bubbles.append(bubble)
+
+    carousel_container = {"type": "carousel", "contents": bubbles}
+
+    return FlexMessage(
+        altText="📢 系統公告",
+        contents=FlexContainer.from_dict(carousel_container),  # type: ignore
+    )
 
 
 def send_text_response(reply_token: str | None, text: str) -> None:
