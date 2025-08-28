@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 from linebot.v3.webhooks import PostbackEvent
 
 from app.line.service import (
+    handle_announcements,
     handle_current_location_weather,
     handle_other_postback,
     handle_postback_event,
@@ -15,6 +16,7 @@ from app.line.service import (
     parse_postback_data,
     send_error_response,
     send_location_not_set_response,
+    send_other_menu_quick_reply,
     send_text_response,
 )
 from app.user.models import User
@@ -603,3 +605,54 @@ class TestPostBackEventHandlers:
         with patch("app.line.service.send_error_response") as mock_send:
             handle_other_postback(mock_event, data)
             mock_send.assert_called_once_with("test_reply_token", "未知的操作")
+
+    def test_send_other_menu_no_reply_token(self) -> None:
+        """Test send other menu with no reply token."""
+        # Should return early without processing
+        send_other_menu_quick_reply(None)
+
+    def test_send_other_menu_success(self) -> None:
+        """Test successful other menu sending."""
+        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            with patch("app.line.service.ApiClient"):
+                send_other_menu_quick_reply("test_token")
+
+                mock_api_instance.reply_message.assert_called_once()
+
+    def test_send_other_menu_api_error(self) -> None:
+        """Test other menu sending with API error."""
+        with patch(
+            "app.line.service.MessagingApi.reply_message",
+            side_effect=Exception("API Error"),
+        ):
+            with patch("app.line.service.ApiClient"):
+                # Should not raise exception, just log error
+                send_other_menu_quick_reply("test_token")
+
+    def test_handle_announcements_no_reply_token(self) -> None:
+        """Test handle announcements with no reply token."""
+        # Should return early without processing
+        handle_announcements(None)
+
+    def test_handle_announcements_success(self) -> None:
+        """Test successful announcements handling."""
+        with patch("app.line.service.Path.exists", return_value=True):
+            with patch("app.line.service.Path.open") as mock_open:
+                mock_file = Mock()
+                mock_file.read.return_value = (
+                    '{"announcements": [{"title": "Test", "content": "Test content", '
+                    '"date": "2024-01-01"}]}'
+                )
+                mock_open.return_value.__enter__.return_value = mock_file
+
+                with patch("app.line.service.MessagingApi") as mock_messaging_api:
+                    mock_api_instance = Mock()
+                    mock_messaging_api.return_value = mock_api_instance
+
+                    with patch("app.line.service.ApiClient"):
+                        handle_announcements("test_token")
+
+                        mock_api_instance.reply_message.assert_called_once()

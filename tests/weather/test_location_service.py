@@ -546,3 +546,18 @@ class TestWeatherServiceAddressIntegration:
             session, 35.6762, 139.6503, "東京都新宿區西新宿123號"
         )
         assert result == "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
+
+    def test_extract_location_invalid_division(self, session: Session) -> None:
+        """Test extract location with invalid administrative division."""
+        # Invalid administrative division (not in valid Taiwan divisions)
+        result = LocationService.extract_location_from_address(session, "火星市外星區123號")
+        assert result is None
+
+    def test_extract_location_not_in_database(self, session: Session) -> None:
+        """Test extract location not found in database."""
+        from unittest.mock import patch
+
+        # Mock a valid division that doesn't exist in database
+        with patch("app.weather.service.is_valid_taiwan_division", return_value=True):
+            result = LocationService.extract_location_from_address(session, "臺北市不存在區123號")
+            assert result is None

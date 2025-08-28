@@ -12,6 +12,7 @@ from linebot.v3.webhooks import (
 
 from app.core.config import settings
 from app.line.service import (
+    handle_current_location_weather,
     handle_default_event,
     handle_follow_event,
     handle_location_message_event,
@@ -566,3 +567,48 @@ class TestLocationMessageHandler:
 
             # Should send error response
             mock_send.assert_called_once_with("test_token", "😅 系統暫時有點忙，請稍後再試一次。")
+
+
+class TestCurrentLocationWeatherHandler:
+    """Test current location weather handler functionality."""
+
+    def test_handle_current_location_weather_no_reply_token(self) -> None:
+        """Test current location weather with no reply token."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = None
+
+        # Should return early without processing
+        handle_current_location_weather(mock_event)
+
+    def test_handle_current_location_weather_success(self) -> None:
+        """Test successful current location weather request."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+            mock_api_instance = Mock()
+            mock_messaging_api.return_value = mock_api_instance
+
+            with patch("app.line.service.ApiClient"):
+                handle_current_location_weather(mock_event)
+
+                mock_api_instance.reply_message.assert_called_once()
+
+    def test_handle_current_location_weather_api_error(self) -> None:
+        """Test current location weather with API error."""
+        from linebot.v3.webhooks import PostbackEvent
+
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_token"
+
+        with patch(
+            "app.line.service.MessagingApi.reply_message",
+            side_effect=Exception("API Error"),
+        ):
+            with patch("app.line.service.ApiClient"):
+                # Should not raise exception, just log error
+                handle_current_location_weather(mock_event)
