@@ -38,6 +38,11 @@ fi
 TO_DELETE=()
 
 for item in "${ALL_ITEMS[@]}"; do
+    # 跳過目錄，只處理檔案
+    if [ -d "$item" ]; then
+        continue
+    fi
+
     # 檢查是否在保留列表中
     keep=false
     for keep_file in "${KEEP_FILES[@]}"; do
@@ -60,13 +65,13 @@ if [ ${#TO_DELETE[@]} -eq 0 ]; then
 fi
 
 echo ""
-echo "將要刪除的項目："
+echo "將要刪除的檔案："
 for item in "${TO_DELETE[@]}"; do
     echo "  - $item"
 done
 
 echo ""
-read -q "REPLY?確認刪除以上項目？(y/n): "
+read -q "REPLY?確認刪除以上檔案？(y/n): "
 echo
 
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -75,9 +80,6 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         if [ -f "$item" ]; then
             rm "$item"
             echo "已刪除檔案: $item"
-        elif [ -d "$item" ]; then
-            rm -rf "$item"
-            echo "已刪除目錄: $item"
         fi
     done
 
