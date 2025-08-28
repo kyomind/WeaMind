@@ -51,7 +51,7 @@
 - 最近查過：`action=recent_queries`
 - 目前位置：`action=weather&type=current`
 - 設定地點：`action=settings&type=location`
-- 其它：`action=menu&type=more`
+- 其它：`action=other&type=menu`
 
 ## 檔案命名
 - 設計檔案：`rich_menu_design.psd` 或 `rich_menu_design.sketch`

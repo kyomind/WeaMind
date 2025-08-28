@@ -1,8 +1,27 @@
 #!/usr/bin/env python3
 """
-Rich Menu upload script.
+Rich Menu management script for LINE Bot.
 
-Script for automating Rich Menu image and configuration uploads to LINE platform.
+This script automates Rich Menu operations for WeaMind LINE Bot, implementing
+the complete LINE Rich Menu API workflow. Rich Menus provide persistent
+interactive buttons at the bottom of the LINE chat interface.
+
+Key Features:
+- Create Rich Menu with JSON configuration
+- Upload PNG images (max 1MB, specific dimensions)
+- Set default Rich Menu for all users
+- List and delete existing Rich Menus
+
+LINE API Constraints:
+- Rich Menu JSON configuration cannot be modified once created
+- Images can be updated independently without recreating the Rich Menu
+- Only one Rich Menu can be set as default at a time
+- Maximum 1000 Rich Menus per LINE Bot account
+
+Usage:
+    python scripts/rich_menu_manager.py create --image path/to/image.png
+    python scripts/rich_menu_manager.py list
+    python scripts/rich_menu_manager.py delete --rich-menu-id MENU_ID
 """
 
 import json
@@ -36,6 +55,10 @@ def load_rich_menu_config() -> dict:
     """
     Load Rich Menu configuration from JSON file.
 
+    Reads the Rich Menu structure, button areas, and PostBack actions from
+    the configuration file. This JSON defines the interactive regions and
+    their corresponding actions (weather, other menu, announcements).
+
     Returns:
         Rich Menu configuration dictionary
     """
@@ -45,7 +68,12 @@ def load_rich_menu_config() -> dict:
 
 def create_rich_menu() -> str | None:
     """
-    Create Rich Menu and return rich_menu_id.
+    Create Rich Menu with JSON configuration.
+
+    Step 1 of the LINE Rich Menu API workflow. Creates a Rich Menu object
+    with the configuration from rich_menu_config.json. Note that LINE API
+    does not allow modification of existing Rich Menu settings - a new Rich
+    Menu must be created for any JSON configuration changes.
 
     Returns:
         Rich Menu ID if successful, None otherwise
@@ -67,11 +95,15 @@ def create_rich_menu() -> str | None:
 
 def upload_rich_menu_image(rich_menu_id: str, image_path: Path) -> bool:
     """
-    Upload Rich Menu image.
+    Upload Rich Menu image to existing Rich Menu.
+
+    Step 2 of the LINE Rich Menu API workflow. Uploads an image to an
+    existing Rich Menu ID. Unlike JSON configuration, images can be updated
+    independently without recreating the Rich Menu object.
 
     Args:
-        rich_menu_id: Rich Menu ID
-        image_path: Image file path
+        rich_menu_id: Rich Menu ID from create_rich_menu()
+        image_path: Path to PNG image file (max 1MB, 2500x1686px or 2500x843px)
 
     Returns:
         True if successful, False otherwise
@@ -103,10 +135,14 @@ def upload_rich_menu_image(rich_menu_id: str, image_path: Path) -> bool:
 
 def set_default_rich_menu(rich_menu_id: str) -> bool:
     """
-    Set default Rich Menu.
+    Set Rich Menu as default for all users.
+
+    Step 3 of the LINE Rich Menu API workflow. Makes the Rich Menu
+    visible to all users. Only one Rich Menu can be set as default at a time.
+    This replaces any previously set default Rich Menu.
 
     Args:
-        rich_menu_id: Rich Menu ID
+        rich_menu_id: Rich Menu ID to set as default
 
     Returns:
         True if successful, False otherwise
@@ -129,10 +165,14 @@ def set_default_rich_menu(rich_menu_id: str) -> bool:
 
 def list_rich_menus() -> list[dict]:
     """
-    List all Rich Menus.
+    List all Rich Menus on the LINE platform.
+
+    Retrieves all Rich Menus associated with the LINE Bot account.
+    Useful for debugging and cleanup operations to see existing Rich Menus
+    before creating new ones or deleting old ones.
 
     Returns:
-        List of Rich Menu objects
+        List of Rich Menu objects with their IDs and configurations
     """
     try:
         with httpx.Client() as client:
@@ -151,10 +191,14 @@ def list_rich_menus() -> list[dict]:
 
 def delete_rich_menu(rich_menu_id: str) -> bool:
     """
-    Delete Rich Menu.
+    Delete Rich Menu from LINE platform.
+
+    Permanently removes a Rich Menu. This is typically used to clean up
+    old Rich Menus after deploying a new one. Cannot be undone.
+    Best practice: always list existing Rich Menus before deletion.
 
     Args:
-        rich_menu_id: Rich Menu ID
+        rich_menu_id: Rich Menu ID to delete
 
     Returns:
         True if successful, False otherwise
@@ -176,7 +220,21 @@ def delete_rich_menu(rich_menu_id: str) -> bool:
 
 
 def main() -> None:
-    """Main execution function."""
+    """
+    Main execution function for Rich Menu management.
+
+    Provides command-line interface for Rich Menu operations. Supports the
+    complete LINE Rich Menu API workflow:
+
+    1. create: Full 3-step process (create → upload image → set default)
+    2. list: Display all Rich Menus
+    3. delete: Remove specific Rich Menu by ID
+
+    Update Rules:
+    - JSON config changes: Must create new Rich Menu (cannot modify existing)
+    - Image only changes: Can update existing Rich Menu image
+    - Both changes: Full recreation required
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description="Rich Menu 管理工具")

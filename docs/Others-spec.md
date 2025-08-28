@@ -5,10 +5,11 @@
 ## 一、問題背景與核心功能定義
 
 - **問題**：LINE Bot 的 Rich Menu 有一個「其它」按鈕，其功能未定，需要設計實用、易於維護且體驗良好的功能。
-- **決策**：經過討論，此選單應包含三個核心功能：
+- **決策**：經過討論，此選單應包含四個核心功能：
   - 📢 **服務公告**：發布系統維護、新功能等資訊。
-  - 📄 **更新日誌 (Changelog)**：提供版本迭代的紀錄。
-  - ℹ️ **產品介紹與使用說明**：幫助新用戶快速上手。
+  - � **更新日誌 (Changelog)**：提供版本迭代的紀錄。
+  - 📖 **使用說明**：產品功能操作指南。
+  - ℹ️ **專案介紹**：產品背景、理念與特色說明。
 
 ## 二、互動流程的演進與決策
 
@@ -19,7 +20,7 @@
 - **討論點**：點擊「其它」後，是直接顯示某個預設內容，還是先提供一個選單讓使用者選擇？
 - **最終決策**：**使用 Quick Reply 選單**。
 - **決策思路**：
-  - **使用者控制權**：點擊後先提供選項（公告、日誌、說明），能給予使用者明確的控制權，避免呈現非預期的資訊。
+  - **使用者控制權**：點擊後先提供選項（公告、更新、使用說明、專案介紹），能給予使用者明確的控制權，避免呈現非預期的資訊。
   - **最佳反應速度**：Quick Reply 是 LINE 中反應最快、最輕量的互動元件，幾乎沒有延遲，體驗遠優於載入一個複雜的 Flex Message 或等待網頁跳轉。
 
 ### 2. 內容呈現方式的探討：Flex Message vs. 外部網頁
@@ -44,10 +45,15 @@
 - **最終方案**：**直接連結到 GitHub 上的 `CHANGELOG.md` 渲染頁面**。
 - **決策思路**：這是**零成本、零維護**的最佳實踐。開發者本來就會在版本控制中維護 `CHANGELOG.md`，而 GitHub 會自動將其渲染成美觀的網頁，無需任何額外開發。
 
-#### (3) 介紹與說明
+#### (3) 使用說明
 
 - **最終方案**：**建立一個靜態網頁**。
-- **決策思路**：這部分內容相對固定，變動頻率低。使用靜態網頁最容易進行內容排版和長期維護。
+- **決策思路**：專注於功能操作指南，內容相對固定，變動頻率低。使用靜態網頁最容易進行內容排版和長期維護。
+
+#### (4) 專案介紹
+
+- **最終方案**：**建立一個靜態網頁**。
+- **決策思路**：專注於產品背景、理念與特色說明，內容穩定。與使用說明分離讓資訊架構更清晰，用戶更容易找到目標資訊。
 
 ## 三、技術實現與架構決策
 
@@ -65,7 +71,7 @@
 
 ### 2. 部署與託管
 
-- **決策**：將所有靜態資源（說明頁、公告頁、`announcements.json`）都放在 Bot 專案的 `/static` 目錄下，並透過現有的網域 (`https://api.kyomind.tw`) 提供服務。
+- **決策**：將所有靜態資源（使用說明、專案介紹、公告頁、`announcements.json`）都放在 Bot 專案的 `/static` 目錄下，並透過現有的網域 (`https://api.kyomind.tw`) 提供服務。
 - **決策思路**：
   - **簡化管理**：所有資源都在同一個程式庫 (Repo) 中，方便版本控制與統一一部署。
   - **避免 CORS**：由於靜態頁面和其抓取的 `announcements.json` 檔案同源，完全不存在跨域資源共用 (CORS) 的問題。
@@ -73,14 +79,15 @@
 
 ## 四、最終方案總結
 
-| 元件                        | 設計方案                                                                                                                                                                                                                                  |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Rich Menu「其它」按鈕**   | 觸發一個 **Quick Reply** 選單。                                                                                                                                                                                                           |
-| **Quick Reply 選單**        | 包含三個選項：<br>1. `[📢 公告]` (Postback Action)<br>2. `[📄 Changelog]` (URI Action)<br>3. `[ℹ️ 介紹與說明]` (URI Action)                                                                                                                  |
-| **`[📢 公告]` 的行為**       | 1. 觸發後端邏輯。<br>2. 後端讀取 `/static/announcements.json`。<br>3. 動態生成 **Flex Message Carousel** (顯示最新 1-3 則)。<br>4. 回傳 Flex Message 給使用者。<br>5. Flex Message 內含按鈕，可連結至 `/static/announcements/` 完整頁面。 |
-| **`[📄 Changelog]` 的行為**  | 直接開啟 **GitHub** 上的 `CHANGELOG.md` 渲染頁面。                                                                                                                                                                                        |
-| **`[ℹ️ 介紹與說明]` 的行為** | 直接開啟 `/static/help/` **靜態頁面**。                                                                                                                                                                                                   |
-| **日常維護流程**            | - **發布公告**：僅需修改 `/static/announcements.json` 檔案。<br>- **更新日誌**：僅需修改 `CHANGELOG.md` 檔案。<br>- **修改說明**：修改 `/static/help/index.html` 檔案。                                                                   |
+| 元件                      | 設計方案                                                                                                                                                                                                                                  |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Rich Menu「其它」按鈕** | 觸發一個 **Quick Reply** 選單。                                                                                                                                                                                                           |
+| **Quick Reply 選單**      | 包含四個選項：<br>1. `[📢 公告]` (Postback Action)<br>2. `[� 更新]` (URI Action)<br>3. `[📖 使用說明]` (URI Action)<br>4. `[ℹ️ 專案介紹]` (URI Action)                                                                                       |
+| **`[📢 公告]` 的行為**     | 1. 觸發後端邏輯。<br>2. 後端讀取 `/static/announcements.json`。<br>3. 動態生成 **Flex Message Carousel** (顯示最新 1-3 則)。<br>4. 回傳 Flex Message 給使用者。<br>5. Flex Message 內含按鈕，可連結至 `/static/announcements/` 完整頁面。 |
+| **`[� 更新]` 的行為**     | 直接開啟 **GitHub** 上的 `CHANGELOG.md` 渲染頁面。                                                                                                                                                                                        |
+| **`[📖 使用說明]` 的行為** | 直接開啟 `/static/help/` **靜態頁面**，專注於功能操作指南。                                                                                                                                                                               |
+| **`[ℹ️ 專案介紹]` 的行為** | 直接開啟 `/static/about/` **靜態頁面**，專注於產品背景與理念。                                                                                                                                                                            |
+| **日常維護流程**          | - **發布公告**：僅需修改 `/static/announcements.json` 檔案。<br>- **更新日誌**：僅需修改 `CHANGELOG.md` 檔案。<br>- **修改使用說明**：修改 `/static/help/index.html` 檔案。<br>- **修改專案介紹**：修改 `/static/about/index.html` 檔案。 |
 # 摘要：其他功能討論(by claude)
 
 ## 核心問題與解答
@@ -95,11 +102,12 @@
 ## 最終解決方案
 
 ### Rich Menu「其它」設計
-- **實作方式**：Quick Reply 三鍵（最快速、體驗最佳）
-- **三個選項**：
+- **實作方式**：Quick Reply 四鍵（最快速、體驗最佳）
+- **四個選項**：
   1. 📢 公告 → Flex Message（來源：`static/announcements.json`）
-  2. 📄 Changelog → 直接開 GitHub 的 CHANGELOG.md 頁面
-  3. ℹ️ 介紹與說明 → 內建靜態頁面（`https://api.kyomind.tw/static/help/`）
+  2. � 更新 → 直接開 GitHub 的 CHANGELOG.md 頁面
+  3. 📖 使用說明 → 內建靜態頁面（`https://api.kyomind.tw/static/help/`）
+  4. ℹ️ 專案介紹 → 內建靜態頁面（`https://api.kyomind.tw/static/about/`）
 
 ### 公告系統架構
 - **資料來源**：單一 `static/announcements.json` 檔案
@@ -172,6 +180,7 @@
   /static/
   ├─ announcements/index.html
   ├─ help/index.html
+  ├─ about/index.html
   └─ announcements.json
   ```
 
@@ -202,8 +211,9 @@
   "quickReply": {
     "items": [
       {"type":"action","action":{"type":"postback","label":"📢 公告","data":"type=OTHER_ANNOUNCEMENTS"}},
-      {"type":"action","action":{"type":"uri","label":"📄 Changelog","uri":"https://github.com/<user>/<repo>/blob/main/CHANGELOG.md"}},
-      {"type":"action","action":{"type":"uri","label":"ℹ️ 使用說明","uri":"https://api.kyomind.tw/static/help/"}}
+      {"type":"action","action":{"type":"uri","label":"� 更新","uri":"https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md"}},
+      {"type":"action","action":{"type":"uri","label":"📖 使用說明","uri":"https://api.kyomind.tw/static/help/"}},
+      {"type":"action","action":{"type":"uri","label":"ℹ️ 專案介紹","uri":"https://api.kyomind.tw/static/about/"}}
     ]
   }
 }

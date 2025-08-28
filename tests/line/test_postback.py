@@ -6,7 +6,7 @@ from linebot.v3.webhooks import PostbackEvent
 
 from app.line.service import (
     handle_current_location_weather,
-    handle_menu_postback,
+    handle_other_postback,
     handle_postback_event,
     handle_recent_queries_postback,
     handle_settings_postback,
@@ -33,10 +33,6 @@ class TestPostBackEventHandlers:
         # Test recent queries action
         result = parse_postback_data("action=recent_queries")
         assert result == {"action": "recent_queries"}
-
-        # Test menu action
-        result = parse_postback_data("action=menu&type=more")
-        assert result == {"action": "menu", "type": "more"}
 
     def test_parse_postback_data_empty(self) -> None:
         """Test parsing empty PostBack data."""
@@ -175,20 +171,20 @@ class TestPostBackEventHandlers:
 
             mock_handle.assert_called_once_with(mock_event)
 
-    def test_handle_postback_event_menu_action(self) -> None:
-        """Test PostBack event with menu action."""
+    def test_handle_postback_event_other_action(self) -> None:
+        """Test PostBack event with other action."""
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
         mock_event.postback = Mock()
-        mock_event.postback.data = "action=menu&type=more"
+        mock_event.postback.data = "action=other&type=menu"
         mock_source = Mock()
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.handle_menu_postback") as mock_handle:
+        with patch("app.line.service.handle_other_postback") as mock_handle:
             handle_postback_event(mock_event)
 
-            mock_handle.assert_called_once_with(mock_event, {"action": "menu", "type": "more"})
+            mock_handle.assert_called_once_with(mock_event, {"action": "other", "type": "menu"})
 
     def test_handle_weather_postback_home_success(self) -> None:
         """Test successful home weather PostBack."""
@@ -373,16 +369,6 @@ class TestPostBackEventHandlers:
             handle_settings_postback(mock_event, {"action": "settings", "type": "unknown"})
 
             mock_send.assert_called_once_with("test_token", "未知的設定類型")
-
-    def test_handle_menu_postback_placeholder(self) -> None:
-        """Test menu PostBack placeholder."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.service.send_text_response") as mock_send:
-            handle_menu_postback(mock_event, {"type": "more"})
-
-            mock_send.assert_called_once_with("test_token", "📢 更多功能即將推出，敬請期待！")
 
     def test_handle_recent_queries_postback_no_history(self) -> None:
         """Test recent queries PostBack when user has no query history."""
@@ -584,3 +570,36 @@ class TestPostBackEventHandlers:
             send_error_response("test_token", "錯誤訊息")
 
             mock_send.assert_called_once_with("test_token", "錯誤訊息")
+
+    def test_handle_other_postback_menu(self) -> None:
+        """Test handling other PostBack with menu type."""
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_reply_token"
+
+        data = {"action": "other", "type": "menu"}
+
+        with patch("app.line.service.send_other_menu_quick_reply") as mock_send:
+            handle_other_postback(mock_event, data)
+            mock_send.assert_called_once_with("test_reply_token")
+
+    def test_handle_other_postback_announcements(self) -> None:
+        """Test handling other PostBack with announcements type."""
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_reply_token"
+
+        data = {"action": "other", "type": "announcements"}
+
+        with patch("app.line.service.handle_announcements") as mock_handle:
+            handle_other_postback(mock_event, data)
+            mock_handle.assert_called_once_with("test_reply_token")
+
+    def test_handle_other_postback_unknown_type(self) -> None:
+        """Test handling other PostBack with unknown type."""
+        mock_event = Mock(spec=PostbackEvent)
+        mock_event.reply_token = "test_reply_token"
+
+        data = {"action": "other", "type": "unknown"}
+
+        with patch("app.line.service.send_error_response") as mock_send:
+            handle_other_postback(mock_event, data)
+            mock_send.assert_called_once_with("test_reply_token", "未知的操作")
