@@ -6,6 +6,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 ## Architecture
 - **DDD Structure**: `app/core` (config, DB), `app/user`, `app/line` (LINE webhook), `app/weather`, `app/main.py`
 - **Database**: PostgreSQL with Alembic migrations
+- **Deployment**: Docker containerized app and database services (see `docker-compose.yml`, `Dockerfile`, and `Makefile` for deployment workflows)
 - **Dependencies**: FastAPI, Pydantic, SQLAlchemy 2.0, pytest, Ruff(lint, format), Pyright
 
 ## Coding Standards
