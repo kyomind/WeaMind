@@ -36,49 +36,49 @@
   <g id="office-weather">
     <rect x="833" y="0" width="834" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
     <!-- 辦公大樓圖示 - 放大版本，增加右邊部分使其對稱 -->
-    <rect x="1100" y="122" width="290" height="320" fill="#4A90E2" rx="15"/>
+    <rect x="1105" y="122" width="290" height="320" fill="#4A90E2" rx="15"/>
     <!-- 窗戶 - 調整為每層6個窗戶 -->
-    <rect x="1130" y="152" width="30" height="30" fill="white"/>
-    <rect x="1170" y="152" width="30" height="30" fill="white"/>
-    <rect x="1210" y="152" width="30" height="30" fill="white"/>
-    <rect x="1250" y="152" width="30" height="30" fill="white"/>
-    <rect x="1290" y="152" width="30" height="30" fill="white"/>
-    <rect x="1330" y="152" width="30" height="30" fill="white"/>
+    <rect x="1135" y="152" width="30" height="30" fill="white"/>
+    <rect x="1175" y="152" width="30" height="30" fill="white"/>
+    <rect x="1215" y="152" width="30" height="30" fill="white"/>
+    <rect x="1255" y="152" width="30" height="30" fill="white"/>
+    <rect x="1295" y="152" width="30" height="30" fill="white"/>
+    <rect x="1335" y="152" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="197" width="30" height="30" fill="white"/>
-    <rect x="1170" y="197" width="30" height="30" fill="white"/>
-    <rect x="1210" y="197" width="30" height="30" fill="white"/>
-    <rect x="1250" y="197" width="30" height="30" fill="white"/>
-    <rect x="1290" y="197" width="30" height="30" fill="white"/>
-    <rect x="1330" y="197" width="30" height="30" fill="white"/>
+    <rect x="1135" y="197" width="30" height="30" fill="white"/>
+    <rect x="1175" y="197" width="30" height="30" fill="white"/>
+    <rect x="1215" y="197" width="30" height="30" fill="white"/>
+    <rect x="1255" y="197" width="30" height="30" fill="white"/>
+    <rect x="1295" y="197" width="30" height="30" fill="white"/>
+    <rect x="1335" y="197" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="242" width="30" height="30" fill="white"/>
-    <rect x="1170" y="242" width="30" height="30" fill="white"/>
-    <rect x="1210" y="242" width="30" height="30" fill="white"/>
-    <rect x="1250" y="242" width="30" height="30" fill="white"/>
-    <rect x="1290" y="242" width="30" height="30" fill="white"/>
-    <rect x="1330" y="242" width="30" height="30" fill="white"/>
+    <rect x="1135" y="242" width="30" height="30" fill="white"/>
+    <rect x="1175" y="242" width="30" height="30" fill="white"/>
+    <rect x="1215" y="242" width="30" height="30" fill="white"/>
+    <rect x="1255" y="242" width="30" height="30" fill="white"/>
+    <rect x="1295" y="242" width="30" height="30" fill="white"/>
+    <rect x="1335" y="242" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="287" width="30" height="30" fill="white"/>
-    <rect x="1170" y="287" width="30" height="30" fill="white"/>
-    <rect x="1210" y="287" width="30" height="30" fill="white"/>
-    <rect x="1250" y="287" width="30" height="30" fill="white"/>
-    <rect x="1290" y="287" width="30" height="30" fill="white"/>
-    <rect x="1330" y="287" width="30" height="30" fill="white"/>
+    <rect x="1135" y="287" width="30" height="30" fill="white"/>
+    <rect x="1175" y="287" width="30" height="30" fill="white"/>
+    <rect x="1215" y="287" width="30" height="30" fill="white"/>
+    <rect x="1255" y="287" width="30" height="30" fill="white"/>
+    <rect x="1295" y="287" width="30" height="30" fill="white"/>
+    <rect x="1335" y="287" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="332" width="30" height="30" fill="white"/>
-    <rect x="1170" y="332" width="30" height="30" fill="white"/>
-    <rect x="1210" y="332" width="30" height="30" fill="white"/>
-    <rect x="1250" y="332" width="30" height="30" fill="white"/>
-    <rect x="1290" y="332" width="30" height="30" fill="white"/>
-    <rect x="1330" y="332" width="30" height="30" fill="white"/>
+    <rect x="1135" y="332" width="30" height="30" fill="white"/>
+    <rect x="1175" y="332" width="30" height="30" fill="white"/>
+    <rect x="1215" y="332" width="30" height="30" fill="white"/>
+    <rect x="1255" y="332" width="30" height="30" fill="white"/>
+    <rect x="1295" y="332" width="30" height="30" fill="white"/>
+    <rect x="1335" y="332" width="30" height="30" fill="white"/>
 
-    <rect x="1130" y="377" width="30" height="30" fill="white"/>
-    <rect x="1170" y="377" width="30" height="30" fill="white"/>
-    <rect x="1210" y="377" width="30" height="30" fill="white"/>
-    <rect x="1250" y="377" width="30" height="30" fill="white"/>
-    <rect x="1290" y="377" width="30" height="30" fill="white"/>
-    <rect x="1330" y="377" width="30" height="30" fill="white"/>
+    <rect x="1135" y="377" width="30" height="30" fill="white"/>
+    <rect x="1175" y="377" width="30" height="30" fill="white"/>
+    <rect x="1215" y="377" width="30" height="30" fill="white"/>
+    <rect x="1255" y="377" width="30" height="30" fill="white"/>
+    <rect x="1295" y="377" width="30" height="30" fill="white"/>
+    <rect x="1335" y="377" width="30" height="30" fill="white"/>
 
     <text x="1250" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">查公司</text>
   </g>
@@ -101,7 +101,7 @@
     <text x="2083" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">最近查過</text>
   </g>
 
-  <!-- 第二行：目前位置、設定地點、其它 -->
+  <!-- 第二行：目前位置、設定地點、更多資訊 -->
 
   <!-- 格子4：目前位置 -->
   <g id="current-location">
@@ -138,7 +138,7 @@
     <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">目前位置</text>
   </g>
 
-  <!-- 格子6：其它 -->
+  <!-- 格子6：更多資訊 -->
   <g id="more-options">
     <rect x="1667" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
     <!-- 更多選項圖示 - 三個點 -->
@@ -149,6 +149,6 @@
     <circle cx="2083" cy="1123" r="15" fill="#4A90E2"/>
     <circle cx="2133" cy="1123" r="15" fill="#4A90E2"/>
 
-    <text x="2083" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">其它</text>
+    <text x="2083" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">更多資訊</text>
   </g>
 </svg>
