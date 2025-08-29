@@ -5,60 +5,58 @@ description: 'Automatically collect all cSpell errors and batch add to dictionar
 
 # Automated Batch Processing of cSpell Errors
 
-Automatically detect all cSpell spelling check errors in the workspace and add all unknown words to the dictionary in `.vscode/settings.json` in a single operation.
+Automatically collect cSpell spelling check errors from VS Code and add all unknown words to the dictionary in `.vscode/settings.json` in a single operation.
+
+## Prerequisites
+
+**IMPORTANT**: This prompt requires the user to provide cSpell errors through VS Code's error attachment system using `<error>` tags.
+
+If no `<error>` tags are found in the request, **refuse execution** and instruct the user to:
+1. Open VS Code Problems panel
+2. Look for cSpell errors (marked as "Unknown word")
+3. Select and attach the errors when invoking this prompt
 
 ## Execution Workflow
 
-When requested by the user, execute the following steps in sequence:
+When cSpell errors are provided via `<error>` tags, execute the following steps:
 
-### 1. Scan for Spelling Errors
-Use cSpell CLI to scan files and extract unknown words:
-- Execute `npx cspell "**/*.md" --no-progress` command
-- Parse output format: `filename:line:column - Unknown word (word)`
-- Extract all unknown words from parentheses and remove duplicates
+### 1. Parse Error Information
+Extract unknown words from `<error>` tags with format:
+```xml
+<error path="filepath" line="number" code="undefined" severity="info">
+"word": Unknown word.
+</error>
+```
 
 ### 2. Read Existing Configuration
 Read the existing `cSpell.words` array from `.vscode/settings.json`.
 
 ### 3. Merge and Update Dictionary
-- Merge newly discovered words with existing dictionary
+- Extract unknown words from error messages
+- Merge with existing dictionary
 - Remove duplicates and sort alphabetically
 - Update the `settings.json` file
 
-## Technical Implementation Details
+## Error Attachment Format
 
-### cSpell CLI Usage
-**Command**: `npx cspell "**/*.md" --no-progress`
-
-**Output Format Example**:
-```
-ep-01.md:1:15 - Unknown word (Portaly)
-ep-06.md:77:4 - Unknown word (devv)
-ep-07.md:34:47 - Unknown word (felo)
+VS Code provides cSpell errors in this format:
+```xml
+<error path="/path/to/file.md" line="50" code="undefined" severity="info">
+"Substack": Unknown word.
+</error>
 ```
 
-**Advantages**: Accurate, detailed, automatable parsing
-**Limitations**: First-time use requires package installation and manual confirmation
-
-### File Scope Configuration
-- Default scan: `**/*.md` (suitable for this project)
-- Can adjust file patterns based on workspace content
-- Supports multiple file type combinations
+The unknown word is enclosed in quotes at the beginning of the error message.
 
 ## Important Notes
 
-- First-time use requires installing the cSpell package
-- Maintain JSON format integrity
-- Preserve alphabetical ordering
-- Avoid adding obvious spelling errors
+- **Validation Required**: Always check for `<error>` tags before proceeding
+- Maintain JSON format integrity in `settings.json`
+- Preserve alphabetical ordering of words
+- Avoid adding obvious spelling errors (validate word legitimacy)
 - Preserve existing `settings.json` formatting style
-
-## Fallback Options
-
-If cSpell CLI is unavailable:
-1. Request user to provide VS Code Problems panel screenshot
-2. Use `semantic_search` to analyze file content and manually identify potential spelling errors
+- Handle multiple occurrences of the same word correctly
 
 ## Expected Results
 
-Upon completion, all cSpell errors in the workspace should be resolved, as all unknown words will have been added to the exception dictionary.
+Upon completion, all provided cSpell errors should be resolved, as all unknown words will have been added to the exception dictionary in `.vscode/settings.json`.
