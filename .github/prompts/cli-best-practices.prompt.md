@@ -43,20 +43,13 @@ When dealing with commands that may prompt for user input:
 
 #### File Deletion
 ```bash
-# Recommended: Auto-confirm deletion
-yes | rm "filename with spaces.txt"
-yes | rm "file-with-special-chars@#$.md"
-
-# Avoid: May hang waiting for confirmation
-rm "filename with spaces.txt"
-```
+# Recommended: Force deletion without prompts
+rm -f "filename with spaces.txt"
+rm -f "file-with-special-chars@#$.md"
 
 #### Batch Operations
 ```bash
-# Multiple file deletion with auto-confirmation
-printf "y\ny\ny\n" | rm -i file1 file2 file3
-
-# Force deletion without prompts (use carefully)
+# Multiple file deletion with force flag (recommended)
 rm -f file1 file2 file3
 ```
 
