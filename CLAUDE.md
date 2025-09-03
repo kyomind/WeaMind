@@ -7,6 +7,7 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - **DDD Structure**: `app/core` (config, DB), `app/user`, `app/line` (LINE webhook), `app/weather`, `app/main.py`
 - **Database**: PostgreSQL with Alembic migrations
 - **Deployment**: Docker containerized app and database services (see `docker-compose.yml`, `Dockerfile`, and `Makefile` for deployment workflows)
+- **Package Management**: uv (Python package and virtual environment manager)
 - **Dependencies**: FastAPI, Pydantic, SQLAlchemy 2.0, pytest, Ruff(lint, format), Pyright
 
 ## Coding Standards
@@ -40,6 +41,8 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - CHANGELOG Guide: `.github/instructions/changelog.instructions.md` (comprehensive guide for maintaining version history with AI assistance)
 
 ## Core Development Commands
+**Important**: This project uses uv for package and virtual environment management. Always use `uv run` prefix for Python commands.
+
 - Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
 - Coverage: `uv run pytest --cov=app --cov-report=xml --cov-report=html` to generate reports
 - Lint: `uv run ruff check .`
