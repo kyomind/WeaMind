@@ -20,27 +20,39 @@ This file serves as an index for WeaMind testing guidelines. The guidelines have
 - **Content**: Test function structure, naming patterns, assertions, mocking, and parameterized testing
 - **Use cases**: When writing or modifying test functions
 
-## Quick Reference
+### 🏃 testing-execution.instructions.md
+- **Path**: `.github/instructions/testing-execution.instructions.md`
+- **Apply to**: `tests/**/*.py`
+- **Content**: Test execution tool usage guidelines, prioritize VS Code built-in tools over CLI
+- **Use cases**: When executing or debugging tests
 
-### Core Principles
+## File Location Guide
+If you need to locate these instruction files:
+- Use `file_search` tool with pattern: `.github/instructions/testing-*.instructions.md`
+- Use `semantic_search` tool with query: "testing guidelines instructions"
+
+## Core Testing Principles
 - Mirror `app/` directory structure in `tests/`
 - Fixtures: verb prefix for helpers, noun for objects
 - Variables: use descriptive names, avoid generic terms
 - Assertions: status code first, then content validation
 - Add `# noqa: S101` for assert statements
 
-### Priority Coverage Areas
+## Priority Coverage Areas
 1. **Service Layer**: Core business logic
 2. **API Endpoints**: All HTTP interfaces
 3. **Model Validation**: Data validation logic
 4. **Error Handling**: Exception scenarios
 
-## Coverage Analysis Best Practices
-- **IMPORTANT**: Always run tests with coverage first to generate fresh reports before analysis
-- Use `uv run pytest --cov=app --cov-report=xml --cov-report=html` to generate current reports
-- Then read coverage reports: `coverage.xml` or `coverage_html_report/index.html`
-- Read HTML report files for detailed coverage information
+## Coverage Analysis Guidelines
+**Preferred approach** (follows CLI best practices):
+1. **Check existing reports first**: Read `coverage.xml` or `coverage_html_report/index.html`
+2. **Verify report freshness**: Check file timestamps before trusting existing reports
+3. **If reports are missing/outdated**: Consider asking user to generate fresh reports
+4. **For non-VS Code environments**: Use CLI with caution: `uv run pytest --cov=app --cov-report=html --tb=short`
+
+**Note**: CLI coverage generation may produce verbose output that could be truncated.
 
 ---
 
-**Note**: These guidelines follow pytest best practices and WeaMind project coding standards.
+*Note: These guidelines follow pytest best practices and WeaMind project coding standards.*
