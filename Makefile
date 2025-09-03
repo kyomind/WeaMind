@@ -4,10 +4,7 @@ APP_SERVICE=app
 
 # === Container & Image Management ===
 dev-up:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
-
-dev-down:
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 dev-clean:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
