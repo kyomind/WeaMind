@@ -46,7 +46,5 @@
 - [x] 25.實作 LINE Bot LIFF 地點設定功能（文字觸發版）
   - [ ] 二級行政區的下拉選單出現閃爍式的重新載入問題、取消行為不當
   - [ ] LIFF SDK 的錯誤訊息問題，以及scope write是否真的必要(登入會比較讓人謹慎)
-  - [ ] 設定地址時使用者不存在與 follow 時的整合！
 - [ ] 單元測試的 db 應該由 SQLite 改為 PostgreSQL，因為兩者的方言可能會有差異，應以 PostgreSQL 為主，參考「最近查詢」的 TODO
-- [ ] 設定地點 icon 優化
 - [ ] 使用說明考慮用 MkDocs 生成靜態網站或 GitHub 倉庫首頁的 README.md
