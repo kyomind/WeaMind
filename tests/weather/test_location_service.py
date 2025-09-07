@@ -146,8 +146,7 @@ class TestLocationService:
 
         assert len(locations) == 0
         assert "找不到「不存在區」這個地點" in response
-
-        assert "檢查看看有沒有打錯字" in response
+        assert "建議輸入二級行政區名稱" in response
 
     def test_parse_location_input_too_many_matches(
         self, session: Session, create_location: Callable[..., Location]
