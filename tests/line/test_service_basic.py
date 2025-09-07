@@ -566,7 +566,7 @@ class TestLocationMessageHandler:
             handle_location_message_event(mock_event)
 
             # Should send error response
-            mock_send.assert_called_once_with("test_token", "😅 系統暫時有點忙，請稍後再試一次。")
+            mock_send.assert_called_once_with("test_token", "系統暫時有點忙，請稍後再試一次。")
 
 
 class TestCurrentLocationWeatherHandler:

@@ -108,7 +108,7 @@ def handle_message_event(event: MessageEvent) -> None:
     except Exception:
         # For unexpected errors, provide generic error message
         logger.exception(f"Unexpected error parsing location input: {message.text}")
-        response_message = "😅 系統暫時有點忙，請稍後再試一次。"
+        response_message = "系統暫時有點忙，請稍後再試一次。"
 
     finally:
         session.close()
@@ -207,7 +207,7 @@ def handle_location_message_event(event: MessageEvent) -> None:
 
     except Exception:
         logger.exception("Error handling location message from user")
-        response_message = "😅 系統暫時有點忙，請稍後再試一次。"
+        response_message = "系統暫時有點忙，請稍後再試一次。"
 
     finally:
         session.close()
@@ -319,7 +319,7 @@ def send_liff_location_setting_response(reply_token: str | None) -> None:
 
     liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
     response_message = (
-        "🏠 地點設定\n\n"
+        "地點設定\n\n"
         "請點擊下方連結設定您的常用地點：\n"
         f"{liff_url}\n\n"
         "設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
@@ -408,7 +408,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
     except Exception:
         logger.exception("Error handling PostBack event")
         if event.reply_token:
-            send_error_response(event.reply_token, "😅 系統暫時有點忙，請稍後再試一次。")
+            send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
 
 
 def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, str]) -> None:
@@ -472,7 +472,7 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
 
     except Exception:
         logger.exception(f"Error handling {location_type} weather query")
-        send_error_response(event.reply_token, "😅 查詢時發生錯誤，請稍後再試。")
+        send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
     finally:
         session.close()
 
@@ -523,7 +523,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
             if not recent_locations:
                 send_text_response(
                     event.reply_token,
-                    "📜 您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
+                    "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
                 )
                 return
 
@@ -544,7 +544,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
             quick_reply = QuickReply(items=quick_reply_items)
 
             # Send response with Quick Reply
-            response_message = "📜 最近查過的地點："
+            response_message = "最近查過的地點："
 
             with ApiClient(configuration) as api_client:
                 messaging_api_client = MessagingApi(api_client)
@@ -566,13 +566,13 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
                     )
                 except Exception:
                     logger.exception("Error sending recent queries response")
-                    send_error_response(event.reply_token, "😅 查詢時發生錯誤，請稍後再試。")
+                    send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
         finally:
             session.close()
 
     except Exception:
         logger.exception("Error handling recent queries PostBack")
-        send_error_response(event.reply_token, "😅 系統暫時有點忙，請稍後再試一次。")
+        send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
 
 
 def handle_current_location_weather(event: PostbackEvent) -> None:
@@ -582,7 +582,7 @@ def handle_current_location_weather(event: PostbackEvent) -> None:
         return
 
     # Create location request message with Quick Reply
-    message_text = "請分享您的位置，我將為您查詢當地天氣 🌤️"
+    message_text = "請分享您的位置，我將為您查詢當地天氣"
 
     # Create Quick Reply with location sharing button
     quick_reply_items = [
@@ -750,7 +750,7 @@ def handle_announcements(reply_token: str | None) -> None:
         latest_announcements = visible_announcements[:3]
 
         if not latest_announcements:
-            send_text_response(reply_token, "📢 目前沒有新公告")
+            send_text_response(reply_token, "目前沒有新公告")
             return
 
         # Create Flex Message Carousel
@@ -851,7 +851,7 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
     carousel_container = {"type": "carousel", "contents": bubbles}
 
     return FlexMessage(
-        altText="📢 系統公告",
+        altText="系統公告",
         contents=FlexContainer.from_dict(carousel_container),  # type: ignore
     )
 

@@ -111,7 +111,7 @@ class LocationService:
 
         if result_count == 0:
             # No matches found
-            response = f"😕 找不到「{cleaned_input}」這個地點耶，要不要檢查看看有沒有打錯字？"
+            response = f"找不到「{cleaned_input}」這個地點耶，要不要檢查看看有沒有打錯字？"
             # Return empty list with error message
             return locations, response
 

@@ -106,7 +106,7 @@ class TestAnnouncementFeatures:
             with patch("app.line.service.json.load", return_value=announcements_data):
                 with patch("app.line.service.send_text_response") as mock_send_text:
                     handle_announcements("test_reply_token")
-                    mock_send_text.assert_called_once_with("test_reply_token", "📢 目前沒有新公告")
+                    mock_send_text.assert_called_once_with("test_reply_token", "目前沒有新公告")
 
     def test_handle_announcements_json_error(self) -> None:
         """Test handling JSON parsing errors."""

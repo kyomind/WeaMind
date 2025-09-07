@@ -105,9 +105,7 @@ class TestPostBackEventHandlers:
             with patch("app.line.service.send_error_response") as mock_send:
                 handle_postback_event(mock_event)
 
-                mock_send.assert_called_once_with(
-                    "test_token", "😅 系統暫時有點忙，請稍後再試一次。"
-                )
+                mock_send.assert_called_once_with("test_token", "系統暫時有點忙，請稍後再試一次。")
 
     def test_handle_postback_event_exception_no_reply_token(self) -> None:
         """Test PostBack event exception when reply_token is None."""
@@ -321,9 +319,7 @@ class TestPostBackEventHandlers:
                 with patch("app.line.service.send_error_response") as mock_send:
                     handle_user_location_weather(mock_event, "test_user_id", "home")
 
-                    mock_send.assert_called_once_with(
-                        "test_token", "😅 查詢時發生錯誤，請稍後再試。"
-                    )
+                    mock_send.assert_called_once_with("test_token", "查詢時發生錯誤，請稍後再試。")
 
     def test_handle_current_location_weather_request(self) -> None:
         """Test current location weather sends location request."""
@@ -344,7 +340,7 @@ class TestPostBackEventHandlers:
 
                 # Check message content
                 message = request.messages[0]
-                assert message.text == "請分享您的位置，我將為您查詢當地天氣 🌤️"
+                assert message.text == "請分享您的位置，我將為您查詢當地天氣"
 
                 # Check Quick Reply contains location action
                 assert message.quick_reply is not None
@@ -395,7 +391,7 @@ class TestPostBackEventHandlers:
             handle_recent_queries_postback(mock_event)
 
             mock_send.assert_called_once_with(
-                "test_token", "📜 您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
+                "test_token", "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
             )
 
     def test_handle_recent_queries_postback_user_not_found(self) -> None:
@@ -430,7 +426,7 @@ class TestPostBackEventHandlers:
             )
             # Verify appropriate message was sent for new user with no history
             mock_send.assert_called_once_with(
-                "test_token", "📜 您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
+                "test_token", "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
             )
 
     def test_handle_recent_queries_postback_with_history(self) -> None:
@@ -514,7 +510,7 @@ class TestPostBackEventHandlers:
             handle_recent_queries_postback(mock_event)
 
             # Should send fallback error message
-            mock_send.assert_called_once_with("test_token", "😅 查詢時發生錯誤，請稍後再試。")
+            mock_send.assert_called_once_with("test_token", "查詢時發生錯誤，請稍後再試。")
 
     def test_handle_recent_queries_postback_general_exception(self) -> None:
         """Test recent queries PostBack with general exception."""
@@ -530,7 +526,7 @@ class TestPostBackEventHandlers:
             handle_recent_queries_postback(mock_event)
 
             # Should send general error message
-            mock_send.assert_called_once_with("test_token", "😅 系統暫時有點忙，請稍後再試一次。")
+            mock_send.assert_called_once_with("test_token", "系統暫時有點忙，請稍後再試一次。")
 
     def test_send_text_response_success(self) -> None:
         """Test successful text response sending."""
