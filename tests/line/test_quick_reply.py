@@ -35,7 +35,7 @@ class TestQuickReplyFeature:
                 # Mock returning 2 locations (triggers Quick Reply)
                 mock_parse_location.return_value = (
                     [mock_location1, mock_location2],
-                    "😕 找到多個符合的地點，請選擇：",
+                    "找到多個符合的地點，請選擇：",
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:
@@ -129,7 +129,7 @@ class TestQuickReplyFeature:
                 # Mock returning 3 locations (triggers Quick Reply)
                 mock_parse_location.return_value = (
                     [mock_location1, mock_location2, mock_location3],
-                    "😕 找到多個符合的地點，請選擇：",
+                    "找到多個符合的地點，請選擇：",
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:

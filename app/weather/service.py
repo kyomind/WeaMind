@@ -124,7 +124,7 @@ class LocationService:
 
         elif 2 <= result_count <= 3:
             # Multiple matches - provide options with Quick Reply
-            response = "😕 找到多個符合的地點，請選擇："
+            response = "找到多個符合的地點，請選擇："
             # Return locations for Quick Reply selection
             return locations, response
 
