@@ -9,10 +9,9 @@
     <meta http-equiv="Expires" content="0">
     <title>地點設定 - WeaMind</title>
     <!-- AUTO_UPDATE_VERSION: Cache busting version for CSS -->
-    <link rel="stylesheet" href="style.css?v=20250817-1330">
-    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"
-        integrity="sha384-qhUi6QIy4QqPhWxflVG5hItdBJU3apYXHW2LORl+S8YR4Cb+453TT8OA7YU9pdHS"
-        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="style.css?v=20250910-0021">
+    <!-- LIFF SDK: integrity removed to prevent breakage when LINE updates SDK -->
+    <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -53,8 +52,10 @@
                 </select>
             </div>
 
+            <div id="message" class="message hidden"></div>
+
             <div class="button-group">
-                <button type="button" id="cancelBtn" class="btn btn-secondary">取消</button>
+                <button type="button" id="cancelBtn" class="btn btn-secondary">重置</button>
                 <button type="submit" id="submitBtn" class="btn btn-primary" disabled>確認</button>
             </div>
         </form>
@@ -63,12 +64,10 @@
             <div class="loading-spinner"></div>
             <p>設定中...</p>
         </div>
-
-        <div id="message" class="message hidden"></div>
     </div>
 
     <!-- AUTO_UPDATE_VERSION: Cache busting version for JavaScript -->
-    <script src="app.js?v=20250817-1330"></script>
+    <script src="app.js?v=20250910-0021"></script>
 </body>
 
 </html>
