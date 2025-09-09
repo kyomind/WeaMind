@@ -44,6 +44,7 @@
 ## Future Todo
 
 - [ ] 實作完整的 LINE ID Token JWT 簽名驗證
+- [ ] 實作 LIFF SDK integrity 自動化檢查與更新機制，在 CI 中定期檢查 LINE SDK 版本並自動更新 integrity hash
 - [x] 25.實作 LINE Bot LIFF 地點設定功能（文字觸發版）
   - [x] 二級行政區的下拉選單出現閃爍式的重新載入問題、取消行為不當
   - [x] LIFF SDK 的錯誤訊息問題，以及scope write是否真的必要(登入會比較讓人謹慎) 2025-09-10
