@@ -1,5 +1,5 @@
 // LIFF Location Setting App
-// AUTO_UPDATE_VERSION: 20250909-2334 (AI can update this timestamp when making changes)
+// AUTO_UPDATE_VERSION: 20250909-2340 (AI can update this timestamp when making changes)
 class LocationApp {
     constructor() {
         this.adminData = {};
@@ -111,9 +111,9 @@ class LocationApp {
             this.submitForm();
         });
 
-        // Cancel button
+        // Cancel button - reset form instead of closing
         cancelBtn.addEventListener('click', () => {
-            this.closeApp();
+            this.resetForm();
         });
     }
 
@@ -141,6 +141,25 @@ class LocationApp {
             // Disable district select
             districtSelect.disabled = true;
         }
+    }
+
+    resetForm() {
+        // Reset location type to home
+        document.querySelector('input[name="locationType"][value="home"]').checked = true;
+
+        // Reset county selection
+        document.getElementById('county').value = '';
+
+        // Reset and disable district selection
+        const districtSelect = document.getElementById('district');
+        districtSelect.innerHTML = '<option value="">請先選擇縣市</option>';
+        districtSelect.disabled = true;
+
+        // Disable submit button
+        document.getElementById('submitBtn').disabled = true;
+
+        // Hide any messages
+        document.getElementById('message').classList.add('hidden');
     }
 
     validateForm() {
@@ -216,11 +235,6 @@ class LocationApp {
             // Show success message
             this.showMessage(`${locationType === 'home' ? '住家' : '公司'}地點設定成功！`, 'success');
 
-            // Close LIFF after delay
-            setTimeout(() => {
-                this.closeApp();
-            }, 2000);
-
         } catch (error) {
             this.showMessage(error.message || '設定失敗，請重試', 'error');
         } finally {
@@ -252,10 +266,6 @@ class LocationApp {
         setTimeout(() => {
             messageEl.classList.add('hidden');
         }, hideDelay);
-    }
-
-    closeApp() {
-        liff.closeWindow();
     }
 }
 
