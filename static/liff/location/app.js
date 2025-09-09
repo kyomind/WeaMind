@@ -93,7 +93,21 @@ class LocationApp {
             if (!response.ok) {
                 throw new Error('Failed to load admin data');
             }
-            this.adminData = await response.json();
+            const data = await response.json();
+
+            // Basic validation of loaded data
+            if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+                throw new Error('Invalid admin data format');
+            }
+
+            // Validate data structure
+            for (const [county, districts] of Object.entries(data)) {
+                if (!Array.isArray(districts) || districts.length === 0) {
+                    throw new Error('Invalid admin data structure');
+                }
+            }
+
+            this.adminData = data;
         } catch (error) {
             console.error('Failed to load administrative data:', error);
             this.showMessage('載入地區資料失敗', 'error');
@@ -222,6 +236,19 @@ class LocationApp {
             const county = document.getElementById('county').value;
             const district = document.getElementById('district').value;
 
+            // Validate input data against known valid values
+            if (!['home', 'work'].includes(locationType)) {
+                throw new Error('無效的地點類型');
+            }
+
+            if (!this.adminData[county]) {
+                throw new Error('無效的縣市選擇');
+            }
+
+            if (!this.adminData[county].includes(district)) {
+                throw new Error('無效的行政區選擇');
+            }
+
             // Get Access Token (recommended for server API calls)
             let accessToken;
             try {
@@ -254,20 +281,21 @@ class LocationApp {
             if (!response.ok) {
                 // Handle token expiration specifically
                 if (response.status === 401) {
-                    try {
-                        const errorData = await response.json();
-                        this.showMessage(`登入狀態已過期：${errorData.detail}`, 'error');
-                    } catch (e) {
-                        this.showMessage('登入狀態已過期，請重新登入', 'error');
-                    }
+                    this.showMessage('登入狀態已過期，請重新登入', 'error');
                     setTimeout(() => {
                         liff.login();
                     }, 2000);
                     return;
                 }
 
-                const errorData = await response.json();
-                throw new Error(errorData.detail || '設定失敗');
+                // Don't expose detailed backend error messages to users
+                if (response.status === 400) {
+                    throw new Error('資料格式錯誤，請重新填寫');
+                } else if (response.status === 500) {
+                    throw new Error('伺服器暫時無法服務，請稍後再試');
+                } else {
+                    throw new Error('設定失敗，請重試');
+                }
             }
 
             const result = await response.json();
