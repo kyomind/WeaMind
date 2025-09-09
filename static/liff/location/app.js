@@ -216,9 +216,6 @@ class LocationApp {
             // Show success message
             this.showMessage(`${locationType === 'home' ? '住家' : '公司'}地點設定成功！`, 'success');
 
-            // Send confirmation message to LINE chat
-            await this.sendConfirmationMessage(locationType, county, district);
-
             // Close LIFF after delay
             setTimeout(() => {
                 this.closeApp();
@@ -229,16 +226,6 @@ class LocationApp {
         } finally {
             this.showLoading(false);
         }
-    }
-
-    async sendConfirmationMessage(locationType, county, district) {
-        const locationTypeText = locationType === 'home' ? '住家' : '公司';
-        const message = `✅ ${locationTypeText}地點設定完成\n📍 ${county}${district}`;
-
-        await liff.sendMessages([{
-            type: 'text',
-            text: message
-        }]);
     }
 
     showLoading(show) {
