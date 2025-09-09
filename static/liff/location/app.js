@@ -8,6 +8,11 @@ class LocationApp {
 
     async init() {
         try {
+            // Check if LIFF SDK is loaded
+            if (typeof liff === 'undefined') {
+                throw new Error('LIFF SDK not loaded');
+            }
+
             // Initialize LIFF with real LIFF ID
             const liffId = '2007938807-GQzRrDoy';
             await liff.init({ liffId: liffId });
@@ -39,7 +44,9 @@ class LocationApp {
 
             // Provide more specific error messages based on error type
             let errorMessage = '初始化失敗，請重新整理頁面';
-            if (error.message && error.message.includes('permission')) {
+            if (error.message && error.message.includes('LIFF SDK not loaded')) {
+                errorMessage = 'LIFF SDK 載入失敗，請檢查網路連線或重新整理頁面';
+            } else if (error.message && error.message.includes('permission')) {
                 errorMessage = '權限設定有誤，請聯繫客服';
             } else if (error.message && error.message.includes('network')) {
                 errorMessage = '網路連線異常，請檢查網路後重試';
@@ -265,7 +272,40 @@ class LocationApp {
     }
 }
 
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new LocationApp();
+// Wait for LIFF SDK to load before initializing app
+function waitForLIFF() {
+    return new Promise((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 50; // 5 seconds max wait
+
+        const checkLIFF = () => {
+            attempts++;
+            if (typeof liff !== 'undefined') {
+                resolve();
+            } else if (attempts >= maxAttempts) {
+                reject(new Error('LIFF SDK loading timeout'));
+            } else {
+                setTimeout(checkLIFF, 100);
+            }
+        };
+
+        checkLIFF();
+    });
+}
+
+// Initialize app when DOM and LIFF SDK are ready
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        await waitForLIFF();
+        const app = new LocationApp();
+    } catch (error) {
+        console.error('Failed to load LIFF SDK:', error);
+        // Show error message directly
+        const messageEl = document.getElementById('message');
+        if (messageEl) {
+            messageEl.textContent = 'LIFF SDK 載入失敗，請重新整理頁面';
+            messageEl.className = 'message error';
+            messageEl.classList.remove('hidden');
+        }
+    }
 });
