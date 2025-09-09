@@ -3,6 +3,7 @@
 class LocationApp {
     constructor() {
         this.adminData = {};
+        this.isInitialized = false;
         this.init();
     }
 
@@ -37,7 +38,10 @@ class LocationApp {
 
             // 載入並初始化頁面
             await this.loadAdminData();
-            this.setupEventListeners();
+            if (!this.isInitialized) {
+                this.setupEventListeners();
+                this.isInitialized = true;
+            }
             this.populateCounties();
         } catch (error) {
             console.error('LIFF initialization failed:', error);
@@ -56,6 +60,33 @@ class LocationApp {
         }
     }
 
+    async ensureDataLoaded() {
+        // 檢查資料是否已載入，如果沒有則重新載入
+        if (Object.keys(this.adminData).length === 0) {
+            console.log('Admin data missing, reloading...');
+
+            // 顯示載入提示
+            this.showMessage('正在載入地區資料...', 'info');
+
+            try {
+                await this.loadAdminData();
+                this.populateCounties();
+
+                // 短暫顯示成功訊息後隱藏
+                this.showMessage('地區資料載入完成', 'success');
+                setTimeout(() => {
+                    const messageEl = document.getElementById('message');
+                    if (messageEl) {
+                        messageEl.classList.add('hidden');
+                    }
+                }, 1000);
+
+            } catch (error) {
+                this.showMessage('載入地區資料失敗，請重新整理頁面', 'error');
+            }
+        }
+    }
+
     async loadAdminData() {
         try {
             const response = await fetch('https://api.kyomind.tw/static/data/tw_admin_divisions.json');
@@ -71,6 +102,10 @@ class LocationApp {
 
     populateCounties() {
         const countySelect = document.getElementById('county');
+
+        // 清空現有選項（除了第一個預設選項）
+        countySelect.innerHTML = '<option value="">請選擇縣市</option>';
+
         const counties = Object.keys(this.adminData).sort((a, b) => a.localeCompare(b));
 
         counties.forEach(county => {
@@ -87,7 +122,12 @@ class LocationApp {
         const form = document.getElementById('locationForm');
         const cancelBtn = document.getElementById('cancelBtn');
 
-        // County selection change
+        // County selection events
+        countySelect.addEventListener('focus', async () => {
+            // 當用戶點擊縣市下拉選單時，確保資料已載入
+            await this.ensureDataLoaded();
+        });
+
         countySelect.addEventListener('change', () => {
             this.updateDistricts();
             this.validateForm();
