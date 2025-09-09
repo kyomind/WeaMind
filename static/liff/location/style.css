@@ -61,7 +61,7 @@ header h1 {
 }
 
 header p {
-    font-size: 16px;
+    font-size: 18px;
     opacity: 0.9;
 }
 
@@ -101,7 +101,7 @@ form {
     flex: 1;
     justify-content: center;
     font-weight: 500;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 .radio-label:hover {
@@ -302,7 +302,7 @@ select:disabled {
     }
 
     .btn {
-        font-size: 16px;
+        font-size: 18px;
         padding: 12px 16px;
     }
 }
