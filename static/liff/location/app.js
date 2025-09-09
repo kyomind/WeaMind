@@ -36,7 +36,16 @@ class LocationApp {
             this.populateCounties();
         } catch (error) {
             console.error('LIFF initialization failed:', error);
-            this.showMessage('初始化失敗，請重新整理頁面', 'error');
+
+            // Provide more specific error messages based on error type
+            let errorMessage = '初始化失敗，請重新整理頁面';
+            if (error.message && error.message.includes('permission')) {
+                errorMessage = '權限設定有誤，請聯繫客服';
+            } else if (error.message && error.message.includes('network')) {
+                errorMessage = '網路連線異常，請檢查網路後重試';
+            }
+
+            this.showMessage(errorMessage, 'error');
         }
     }
 
@@ -244,12 +253,11 @@ class LocationApp {
         messageEl.className = `message ${type}`;
         messageEl.classList.remove('hidden');
 
-        // Auto hide after 3 seconds for non-error messages
-        if (type !== 'error') {
-            setTimeout(() => {
-                messageEl.classList.add('hidden');
-            }, 3000);
-        }
+        // Auto hide after 5 seconds for error messages, 3 seconds for others
+        const hideDelay = type === 'error' ? 5000 : 3000;
+        setTimeout(() => {
+            messageEl.classList.add('hidden');
+        }, hideDelay);
     }
 
     closeApp() {
