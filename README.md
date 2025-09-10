@@ -1,5 +1,3 @@
-# WeaMind
-
 [![WeaMind CI](https://github.com/kyomind/WeaMind/actions/workflows/ci.yml/badge.svg)](https://github.com/kyomind/WeaMind/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/kyomind/WeaMind/actions/workflows/codeql.yml/badge.svg)](https://github.com/kyomind/WeaMind/security/code-scanning)
 [![codecov](https://codecov.io/gh/kyomind/WeaMind/branch/main/graph/badge.svg)](https://codecov.io/gh/kyomind/WeaMind)
@@ -8,11 +6,7 @@
 [![Checked with pyright](https://microsoft.github.io/pyright/img/pyright_badge.svg)](https://microsoft.github.io/pyright/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-> Your smart LINE assistant for instant weather updates.
-
-## About
-
-WeaMind is a smart LINE assistant that provides instant weather updates through conversational interface.
+A smart LINE bot that provides instant weather updates through conversational interface.
 
 For detailed information, see [DeepWiki](https://deepwiki.com/kyomind/WeaMind) of this project.
 
