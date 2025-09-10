@@ -1,5 +1,5 @@
 // LIFF Location Setting App
-// AUTO_UPDATE_VERSION: 20250910-2307 (AI can update this timestamp when making changes)
+// AUTO_UPDATE_VERSION: 20250910-2330 (AI can update this timestamp when making changes)
 class LocationApp {
     constructor() {
         this.adminData = {};
@@ -80,7 +80,12 @@ class LocationApp {
             return;
         }
 
-        await this.loadAdminData();
+        try {
+            await this.loadAdminData();
+        } catch (error) {
+            // 重新拋出異常讓更上層的調用者處理UI提示
+            throw new Error('無法載入行政區資料: ' + error.message);
+        }
     }
 
     async ensureDataLoaded() {
@@ -136,9 +141,8 @@ class LocationApp {
 
         if (clickable) {
             placeholderOption.style.cursor = 'pointer';
-            placeholderOption.addEventListener('click', () => {
-                this.forceRecover();
-            });
+            // 注意：option 元素的 click 事件在某些瀏覽器中不可靠
+            // 這裡只是設定樣式，實際的重試邏輯在 county change 事件中處理
         }
 
         // 插入為第一個選項
@@ -225,7 +229,8 @@ class LocationApp {
             this.adminData = data;
         } catch (error) {
             console.error('Failed to load administrative data:', error);
-            this.showMessage('載入地區資料失敗', 'error');
+            // 拋出異常讓調用者決定如何處理UI
+            throw error;
         }
     }
 
@@ -264,6 +269,12 @@ class LocationApp {
         });
 
         countySelect.addEventListener('change', () => {
+            // 檢查是否選到重試選項
+            if (countySelect.value === '' && countySelect.selectedOptions[0]?.textContent?.includes('重試')) {
+                this.forceRecover();
+                return;
+            }
+
             this.updateDistricts();
             this.validateForm();
         });
