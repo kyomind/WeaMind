@@ -8,10 +8,14 @@
 [![Checked with pyright](https://microsoft.github.io/pyright/img/pyright_badge.svg)](https://microsoft.github.io/pyright/)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-Your smart LINE assistant for instant weather updates.
+> Your smart LINE assistant for instant weather updates.
 
-## 📚 技術文章索引
+## About
 
-整個專案的開發過程將持續撰寫技術文章，記錄實作的關鍵步驟和技術決策。
+WeaMind is a smart LINE assistant that provides instant weather updates through conversational interface.
 
-👉 [查看技術文章](blogs/README.md)，了解完整的開發經驗分享。
+For detailed information, see [DeepWiki](https://deepwiki.com/kyomind/WeaMind) of this project.
+
+## 使用說明
+
+待補充
