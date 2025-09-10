@@ -1,5 +1,5 @@
 // LIFF Location Setting App
-// AUTO_UPDATE_VERSION: 20250910-0812 (AI can update this timestamp when making changes)
+// AUTO_UPDATE_VERSION: 20250910-2233 (AI can update this timestamp when making changes)
 class LocationApp {
     constructor() {
         this.adminData = {};
@@ -301,7 +301,7 @@ class LocationApp {
             const result = await response.json();
 
             // Show success message
-            this.showMessage(`${locationType === 'home' ? '住家' : '公司'}地點設定成功！`, 'success');
+            this.showMessage(`✅ ${locationType === 'home' ? '住家' : '公司'}地點設定成功！\n你可以關閉本視窗或繼續設定其他地點`, 'success');
 
         } catch (error) {
             this.showMessage(error.message || '設定失敗，請重試', 'error');
@@ -329,8 +329,8 @@ class LocationApp {
         messageEl.className = `message ${type}`;
         messageEl.classList.remove('hidden');
 
-        // Auto hide after 5 seconds for error messages, 3 seconds for others
-        const hideDelay = type === 'error' ? 5000 : 3000;
+        // Auto hide after 5 seconds for success and error messages, 3 seconds for info
+        const hideDelay = type === 'success' || type === 'error' ? 5000 : 3000;
         setTimeout(() => {
             messageEl.classList.add('hidden');
         }, hideDelay);
