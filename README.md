@@ -10,6 +10,8 @@ A smart LINE bot that provides instant weather updates through conversational in
 
 For detailed information, see [DeepWiki](https://deepwiki.com/kyomind/WeaMind) of this project.
 
+WeaMind 是一個智慧天氣查詢 LINE Bot，透過對話介面提供即時天氣資訊。
+
 ## 使用說明
 
 待補充
