@@ -1,9 +1,15 @@
 // LIFF Location Setting App
-// AUTO_UPDATE_VERSION: 20250910-2244 (AI can update this timestamp when making changes)
+// AUTO_UPDATE_VERSION: 20250910-2300 (AI can update this timestamp when making changes)
 class LocationApp {
     constructor() {
         this.adminData = {};
         this.isInitialized = false;
+        this.isLoadingAdminData = false;
+        this.retryCount = 0;
+        this.maxRetries = 2;
+
+        // 事件綁定前移：無論登入狀態如何都先綁定事件
+        this.setupEventListeners();
         this.init();
     }
 
@@ -18,31 +24,19 @@ class LocationApp {
             const liffId = '2007938807-GQzRrDoy';
             await liff.init({ liffId: liffId });
 
-            if (!liff.isLoggedIn()) {
-                liff.login();
-                return;
-            }
-
-            // Check if tokens are available
-            try {
-                const accessToken = liff.getAccessToken();
-
-                if (!accessToken) {
-                    liff.login();
-                    return;
-                }
-            } catch (error) {
-                liff.login();
-                return;
-            }
-
-            // 載入並初始化頁面
-            await this.loadAdminData();
-            if (!this.isInitialized) {
-                this.setupEventListeners();
-                this.isInitialized = true;
-            }
+            // 使用新的分離式登入檢查和資料載入
+            await this.ensureAuth();
+            await this.ensureData();
             this.populateCounties();
+
+            // 啟動自動續接機制（如果是 overlay 登入後可能需要）
+            setTimeout(() => {
+                if (Object.keys(this.adminData).length === 0) {
+                    console.log('Data still empty after init, starting polling...');
+                    this.tryResumeFlowWithPolling();
+                }
+            }, 500);
+
         } catch (error) {
             console.error('LIFF initialization failed:', error);
 
@@ -60,31 +54,152 @@ class LocationApp {
         }
     }
 
+    async ensureAuth() {
+        if (!liff.isLoggedIn()) {
+            // 強制使用 redirectUri 確保完整刷新
+            liff.login({ redirectUri: window.location.href });
+            return;
+        }
+
+        // Check if tokens are available
+        try {
+            const accessToken = liff.getAccessToken();
+            if (!accessToken) {
+                liff.login({ redirectUri: window.location.href });
+                return;
+            }
+        } catch (error) {
+            liff.login({ redirectUri: window.location.href });
+            return;
+        }
+    }
+
+    async ensureData() {
+        // 冪等設計：如果已有資料則快速返回
+        if (Object.keys(this.adminData).length > 0) {
+            return;
+        }
+
+        await this.loadAdminData();
+    }
+
     async ensureDataLoaded() {
+        // 防止重複載入
+        if (this.isLoadingAdminData) {
+            return;
+        }
+
         // 檢查資料是否已載入，如果沒有則重新載入
         if (Object.keys(this.adminData).length === 0) {
             console.log('Admin data missing, reloading...');
 
-            // 顯示載入提示
-            this.showMessage('正在載入地區資料...', 'info');
-
             try {
-                await this.loadAdminData();
+                this.isLoadingAdminData = true;
+                this.showCountyPlaceholder('(載入中...)');
+
+                // 先確保登入狀態
+                await this.ensureAuth();
+                await this.ensureData();
                 this.populateCounties();
 
-                // 短暫顯示成功訊息後隱藏
-                this.showMessage('地區資料載入完成', 'success');
-                setTimeout(() => {
-                    const messageEl = document.getElementById('message');
-                    if (messageEl) {
-                        messageEl.classList.add('hidden');
-                    }
-                }, 1000);
-
+                this.retryCount = 0; // 重設重試計數
             } catch (error) {
-                this.showMessage('載入地區資料失敗，請重新整理頁面', 'error');
+                console.error('Failed to reload data:', error);
+                this.retryCount++;
+
+                if (this.retryCount >= this.maxRetries) {
+                    this.showCountyPlaceholder('(請關閉後重新開啟或稍後再試)', false);
+                } else {
+                    this.showCountyPlaceholder('(載入失敗，點擊重試)', true);
+                }
+            } finally {
+                this.isLoadingAdminData = false;
             }
         }
+    }
+
+    showCountyPlaceholder(text, clickable = false) {
+        const countySelect = document.getElementById('county');
+
+        // 移除之前的 placeholder
+        const existingPlaceholder = countySelect.querySelector('.placeholder-option');
+        if (existingPlaceholder) {
+            existingPlaceholder.remove();
+        }
+
+        // 加入新的 placeholder
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = text;
+        placeholderOption.disabled = !clickable;
+        placeholderOption.className = 'placeholder-option';
+
+        if (clickable) {
+            placeholderOption.style.cursor = 'pointer';
+            placeholderOption.addEventListener('click', () => {
+                this.forceRecover();
+            });
+        }
+
+        // 插入為第一個選項
+        countySelect.insertBefore(placeholderOption, countySelect.firstChild);
+        countySelect.value = '';
+    }
+
+    async forceRecover() {
+        if (this.isLoadingAdminData) {
+            return; // 防止重複執行
+        }
+
+        try {
+            this.isLoadingAdminData = true;
+            this.showCountyPlaceholder('(重新載入中...)');
+
+            await this.ensureAuth();
+            await this.ensureData();
+            this.populateCounties();
+
+            this.retryCount = 0;
+        } catch (error) {
+            console.error('Force recover failed:', error);
+            this.retryCount++;
+
+            if (this.retryCount >= this.maxRetries) {
+                this.showCountyPlaceholder('(請關閉後重新開啟或稍後再試)', false);
+            } else {
+                this.showCountyPlaceholder('(載入失敗，點擊重試)', true);
+            }
+        } finally {
+            this.isLoadingAdminData = false;
+        }
+    }
+
+    async tryResumeFlowWithPolling(maxMs = 5000, stepMs = 300) {
+        const startTime = Date.now();
+
+        console.log('Starting overlay resume polling...');
+        this.showCountyPlaceholder('(載入中...)');
+
+        while (Date.now() - startTime < maxMs) {
+            try {
+                if (liff.isLoggedIn() && liff.getAccessToken()) {
+                    console.log('Login state recovered, loading data...');
+                    await this.ensureData();
+                    this.populateCounties();
+                    console.log('Overlay resume successful');
+                    return true;
+                }
+            } catch (error) {
+                // 忽略錯誤，繼續輪詢或超時處理
+                console.log('Polling step failed, continuing...', error);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, stepMs));
+        }
+
+        console.log('Overlay resume timeout');
+        this.showCountyPlaceholder('(載入逾時，點擊重試)', true);
+        return false;
     }
 
     async loadAdminData() {
@@ -117,7 +232,7 @@ class LocationApp {
     populateCounties() {
         const countySelect = document.getElementById('county');
 
-        // 清空現有選項（除了第一個預設選項）
+        // 清空現有選項（包括 placeholder）
         countySelect.innerHTML = '<option value="">請選擇縣市</option>';
 
         const counties = Object.keys(this.adminData).sort((a, b) => a.localeCompare(b));
@@ -131,6 +246,12 @@ class LocationApp {
     }
 
     setupEventListeners() {
+        // 防止重複綁定
+        if (this.isInitialized) {
+            return;
+        }
+        this.isInitialized = true;
+
         const countySelect = document.getElementById('county');
         const districtSelect = document.getElementById('district');
         const form = document.getElementById('locationForm');
