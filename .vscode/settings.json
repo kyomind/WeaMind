@@ -30,6 +30,7 @@
         "GDXCTA",
         "Geolocation",
         "getattr",
+        "GIVEUP",
         "hashlib",
         "hexdigest",
         "HMAC",
