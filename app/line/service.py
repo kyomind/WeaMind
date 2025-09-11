@@ -582,7 +582,7 @@ def handle_current_location_weather(event: PostbackEvent) -> None:
         return
 
     # Create location request message with Quick Reply
-    message_text = "請分享您的位置，我將為您查詢當地天氣"
+    message_text = "請點擊地圖上任意位置，將為您查詢該地天氣"
 
     # Create Quick Reply with location sharing button
     quick_reply_items = [
@@ -591,7 +591,7 @@ def handle_current_location_weather(event: PostbackEvent) -> None:
             imageUrl=None,
             action=LocationAction(
                 type="location",
-                label="分享我的位置",
+                label="開啟地圖選擇",
             ),
         )
     ]
@@ -746,8 +746,8 @@ def handle_announcements(reply_token: str | None) -> None:
         ]
         visible_announcements.sort(key=lambda x: x.get("start_at", ""), reverse=True)
 
-        # Take only the latest 3 announcements for Flex Message
-        latest_announcements = visible_announcements[:3]
+        # Take only the latest 1 announcement for Flex Message
+        latest_announcements = visible_announcements[:1]
 
         if not latest_announcements:
             send_text_response(reply_token, "目前沒有新公告")
@@ -837,7 +837,7 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
                         "type": "button",
                         "action": {
                             "type": "uri",
-                            "label": "查看完整內容",
+                            "label": "前往公告頁面",
                             "uri": "https://api.kyomind.tw/static/announcements/index.html",
                         },
                         "style": "primary",

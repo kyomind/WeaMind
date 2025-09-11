@@ -101,9 +101,9 @@
     <text x="2083" y="650" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">最近查過</text>
   </g>
 
-  <!-- 第二行：目前位置、設定地點、更多資訊 -->
+  <!-- 第二行：地圖查詢、設定地點、更多資訊 -->
 
-  <!-- 格子4：目前位置 -->
+  <!-- 格子4：地圖查詢 -->
   <g id="current-location">
     <rect x="0" y="843" width="833" height="843" fill="rgba(76,144,226,0.05)" stroke="#4A90E2" stroke-width="1"/>
     <!-- 設定齒輪圖示 - 放大版本 -->
@@ -135,7 +135,7 @@
     <!-- 外圍定位圈 -->
     <circle cx="1250" cy="1123" r="150" fill="none" stroke="#4A90E2" stroke-width="10" stroke-dasharray="25,12"/>
 
-    <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">目前位置</text>
+    <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">地圖查詢</text>
   </g>
 
   <!-- 格子6：更多資訊 -->

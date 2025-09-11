@@ -340,13 +340,13 @@ class TestPostBackEventHandlers:
 
                 # Check message content
                 message = request.messages[0]
-                assert message.text == "請分享您的位置，我將為您查詢當地天氣"
+                assert message.text == "請點擊地圖上任意位置，將為您查詢該地天氣"
 
                 # Check Quick Reply contains location action
                 assert message.quick_reply is not None
                 assert len(message.quick_reply.items) == 1
                 assert message.quick_reply.items[0].action.type == "location"
-                assert message.quick_reply.items[0].action.label == "分享我的位置"
+                assert message.quick_reply.items[0].action.label == "開啟地圖選擇"
 
     def test_handle_settings_postback_location_type(self) -> None:
         """Test settings PostBack with location type."""

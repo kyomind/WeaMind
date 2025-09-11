@@ -112,8 +112,8 @@ class LocationService:
         if result_count == 0:
             # No matches found
             response = (
-                f"找不到「{cleaned_input}」這個地點耶，建議輸入二級行政區名稱，"
-                f"比如「中壢、新店、水上」或「信義區、魚池鄉」"
+                f"找不到「{cleaned_input}」這個地點耶🙈，建議輸入二級行政區名稱，"
+                f"比如「中壢」、「水上」或「信義區、魚池鄉」"
             )
             # Return empty list with error message
             return locations, response
