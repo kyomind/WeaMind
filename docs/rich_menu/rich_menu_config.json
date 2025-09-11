@@ -68,7 +68,7 @@
             "action": {
                 "type": "postback",
                 "data": "action=weather&type=current",
-                "displayText": "查目前位置天氣"
+                "displayText": "依地圖查詢天氣"
             }
         },
         {
