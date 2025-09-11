@@ -545,7 +545,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
             quick_reply = QuickReply(items=quick_reply_items)
 
             # Send response with Quick Reply
-            response_message = "最近查過的地點："
+            response_message = "最近查過的 5 個地點："
 
             with ApiClient(configuration) as api_client:
                 messaging_api_client = MessagingApi(api_client)
