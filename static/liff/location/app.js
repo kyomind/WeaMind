@@ -1,5 +1,5 @@
 // LIFF Location Setting App
-// AUTO_UPDATE_VERSION: 20250911-0930 (AI can update this timestamp when making changes)
+// AUTO_UPDATE_VERSION: 20250911-1445 (AI can update this timestamp when making changes - Converted comments to English with // format)
 class LocationApp {
     constructor() {
         this.adminData = {};
@@ -8,7 +8,7 @@ class LocationApp {
         this.retryCount = 0;
         this.maxRetries = 2;
 
-        // 事件綁定前移：無論登入狀態如何都先綁定事件
+        // Move event binding forward: bind events regardless of login status
         this.setupEventListeners();
         this.init();
     }
@@ -24,14 +24,14 @@ class LocationApp {
             const liffId = '2007938807-GQzRrDoy';
             await liff.init({ liffId: liffId });
 
-            // 使用新的分離式登入檢查和資料載入
+            // Use new separated login check and data loading
             await this.ensureAuth();
             await this.ensureData();
             this.populateCounties();
 
-            // 啟動自動續接機制（如果是 overlay 登入後可能需要）
+            // Start auto-resume mechanism (might be needed after overlay login)
             setTimeout(() => {
-                if (Object.keys(this.adminData).length === 0) {
+                if (!this.hasAdminData()) {
                     console.log('Data still empty after init, starting polling...');
                     this.tryResumeFlowWithPolling();
                 }
@@ -54,10 +54,71 @@ class LocationApp {
         }
     }
 
+    // Unified error handling function
+    // @param {Error} error - Error object
+    // @param {string} defaultMessage - Default error message
+    // @param {boolean} shouldRedirectLogin - Whether to redirect to login
+    handleError(error, defaultMessage = '操作失敗，請重試', shouldRedirectLogin = false) {
+        console.error('Error occurred:', error);
+
+        if (shouldRedirectLogin) {
+            this.showMessage('登入狀態已過期，請重新登入', 'error');
+            setTimeout(() => {
+                this.redirectToLogin();
+            }, 2000);
+            return;
+        }
+
+        const message = error.message || defaultMessage;
+        this.showMessage(message, 'error');
+    }
+
+    // Check and get access token safely
+    // @returns {string} accessToken
+    // @throws {Error} When unable to get token
+    getAccessTokenSafely() {
+        try {
+            const accessToken = liff.getAccessToken();
+            if (!accessToken) {
+                throw new Error('No Access Token available');
+            }
+            return accessToken;
+        } catch (error) {
+            throw new Error('登入狀態過期');
+        }
+    }
+
+    // Redirect to login page using current page as return target
+    redirectToLogin() {
+        liff.login({ redirectUri: window.location.href });
+    }
+
+    // Helper function to create option elements
+    // @param {string} value - option value
+    // @param {string} text - option display text
+    // @param {boolean} disabled - whether to disable
+    // @param {string} className - CSS class name
+    // @returns {HTMLOptionElement}
+    createOption(value, text, disabled = false, className = '') {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = text;
+        option.disabled = disabled;
+        if (className) {
+            option.className = className;
+        }
+        return option;
+    }
+
+    // Check if admin data exists
+    hasAdminData() {
+        return Object.keys(this.adminData).length > 0;
+    }
+
     async ensureAuth() {
         if (!liff.isLoggedIn()) {
-            // 強制使用 redirectUri 確保完整刷新
-            liff.login({ redirectUri: window.location.href });
+            // Force use redirectUri to ensure complete refresh
+            this.redirectToLogin();
             return;
         }
 
@@ -65,49 +126,49 @@ class LocationApp {
         try {
             const accessToken = liff.getAccessToken();
             if (!accessToken) {
-                liff.login({ redirectUri: window.location.href });
+                this.redirectToLogin();
                 return;
             }
         } catch (error) {
-            liff.login({ redirectUri: window.location.href });
+            this.redirectToLogin();
             return;
         }
     }
 
     async ensureData() {
-        // 冪等設計：如果已有資料則快速返回
-        if (Object.keys(this.adminData).length > 0) {
+        // Idempotent design: return quickly if data already exists
+        if (this.hasAdminData()) {
             return;
         }
 
         try {
             await this.loadAdminData();
         } catch (error) {
-            // 重新拋出異常讓更上層的調用者處理UI提示
+            // Re-throw exception for upper-level callers to handle UI prompts
             throw new Error('無法載入行政區資料: ' + error.message);
         }
     }
 
     async ensureDataLoaded() {
-        // 防止重複載入
+        // Prevent duplicate loading
         if (this.isLoadingAdminData) {
             return;
         }
 
-        // 檢查資料是否已載入，如果沒有則重新載入
-        if (Object.keys(this.adminData).length === 0) {
+        // Check if data is loaded, reload if not
+        if (!this.hasAdminData()) {
             console.log('Admin data missing, reloading...');
 
             try {
                 this.isLoadingAdminData = true;
                 this.showCountyPlaceholder('(載入中...)');
 
-                // 先確保登入狀態
+                // Ensure login status first
                 await this.ensureAuth();
                 await this.ensureData();
                 this.populateCounties();
 
-                this.retryCount = 0; // 重設重試計數
+                this.retryCount = 0; // Reset retry count
             } catch (error) {
                 console.error('Failed to reload data:', error);
                 this.retryCount++;
@@ -126,33 +187,29 @@ class LocationApp {
     showCountyPlaceholder(text, clickable = false) {
         const countySelect = document.getElementById('county');
 
-        // 移除之前的 placeholder
+        // Remove previous placeholder
         const existingPlaceholder = countySelect.querySelector('.placeholder-option');
         if (existingPlaceholder) {
             existingPlaceholder.remove();
         }
 
-        // 加入新的 placeholder
-        const placeholderOption = document.createElement('option');
-        placeholderOption.value = '';
-        placeholderOption.textContent = text;
-        placeholderOption.disabled = !clickable;
-        placeholderOption.className = 'placeholder-option';
+        // Add new placeholder
+        const placeholderOption = this.createOption('', text, !clickable, 'placeholder-option');
 
         if (clickable) {
             placeholderOption.style.cursor = 'pointer';
-            // 注意：option 元素的 click 事件在某些瀏覽器中不可靠
-            // 這裡只是設定樣式，實際的重試邏輯在 county change 事件中處理
+            // Note: option element click events are unreliable in some browsers
+            // This is just styling, actual retry logic is handled in county change event
         }
 
-        // 插入為第一個選項
+        // Insert as first option
         countySelect.insertBefore(placeholderOption, countySelect.firstChild);
         countySelect.value = '';
     }
 
     async forceRecover() {
         if (this.isLoadingAdminData) {
-            return; // 防止重複執行
+            return; // Prevent duplicate execution
         }
 
         try {
@@ -194,7 +251,7 @@ class LocationApp {
                     return true;
                 }
             } catch (error) {
-                // 忽略錯誤，繼續輪詢或超時處理
+                // Ignore errors, continue polling or timeout handling
                 console.log('Polling step failed, continuing...', error);
             }
 
@@ -229,7 +286,7 @@ class LocationApp {
             this.adminData = data;
         } catch (error) {
             console.error('Failed to load administrative data:', error);
-            // 拋出異常讓調用者決定如何處理UI
+            // Throw exception for caller to decide how to handle UI
             throw error;
         }
     }
@@ -237,21 +294,19 @@ class LocationApp {
     populateCounties() {
         const countySelect = document.getElementById('county');
 
-        // 清空現有選項（包括 placeholder）
+        // Clear existing options (including placeholder)
         countySelect.innerHTML = '<option value="">請選擇縣市</option>';
 
         const counties = Object.keys(this.adminData).sort((a, b) => a.localeCompare(b));
 
         counties.forEach(county => {
-            const option = document.createElement('option');
-            option.value = county;
-            option.textContent = county;
+            const option = this.createOption(county, county);
             countySelect.appendChild(option);
         });
     }
 
     setupEventListeners() {
-        // 防止重複綁定
+        // Prevent duplicate binding
         if (this.isInitialized) {
             return;
         }
@@ -264,12 +319,12 @@ class LocationApp {
 
         // County selection events
         countySelect.addEventListener('focus', async () => {
-            // 當用戶點擊縣市下拉選單時，確保資料已載入
+            // Ensure data is loaded when user clicks county dropdown
             await this.ensureDataLoaded();
         });
 
         countySelect.addEventListener('change', () => {
-            // 檢查是否選到重試選項
+            // Check if retry option is selected
             if (countySelect.value === '' && countySelect.selectedOptions[0]?.textContent?.includes('重試')) {
                 this.forceRecover();
                 return;
@@ -318,9 +373,7 @@ class LocationApp {
             // Populate districts
             const districts = this.adminData[selectedCounty].sort((a, b) => a.localeCompare(b));
             districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district;
-                option.textContent = district;
+                const option = this.createOption(district, district);
                 districtSelect.appendChild(option);
             });
         } else {
@@ -384,16 +437,15 @@ class LocationApp {
             // Get Access Token (recommended for server API calls)
             let accessToken;
             try {
-                accessToken = liff.getAccessToken();
-                if (!accessToken) {
-                    throw new Error('No Access Token available');
-                }
+                accessToken = this.getAccessTokenSafely();
             } catch (error) {
                 // Token might be expired, try to refresh by re-login
                 this.showMessage('登入狀態過期，請重新登入...', 'info');
-                liff.login();
+                this.redirectToLogin();
                 return;
-            }            // Prepare payload
+            }
+
+            // Prepare payload
             const payload = {
                 location_type: locationType,
                 county: county,
@@ -413,10 +465,7 @@ class LocationApp {
             if (!response.ok) {
                 // Handle token expiration specifically
                 if (response.status === 401) {
-                    this.showMessage('登入狀態已過期，請重新登入', 'error');
-                    setTimeout(() => {
-                        liff.login();
-                    }, 2000);
+                    this.handleError(new Error('登入狀態已過期'), '', true);
                     return;
                 }
 
@@ -436,7 +485,7 @@ class LocationApp {
             this.showMessage(`✅ ${locationType === 'home' ? '住家' : '公司'}地點設定成功！\n你可以關閉本視窗，或繼續設定其他地點`, 'success');
 
         } catch (error) {
-            this.showMessage(error.message || '設定失敗，請重試', 'error');
+            this.handleError(error, '設定失敗，請重試');
         } finally {
             this.showLoading(false);
         }
