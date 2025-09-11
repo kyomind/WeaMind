@@ -81,9 +81,10 @@ fake_token = create_fake_jwt_with_any_user_id("target_user_id")
 3. **OAuth/OpenID Connect 標準** - 現代應用的標準做法
 
 ### 2. Audience 未驗證 (中風險)
-**問題**: 沒有驗證 `aud` 欄位是否為正確的 LIFF App ID
-**風險**: 其他 LIFF app 的 token 可能被誤用
+**問題**: 沒有驗證 `aud` 欄位是否為正確的 LINE Login Channel ID（非 LIFF ID）
+**風險**: 其他 Channel 的 token 可能被誤用
 **狀態**: ⚠️ 需要實作
+> 提醒：`aud` 是 OIDC 的 client_id，在 LINE 等同「Channel ID」（純數字）；LIFF ID（例如 `2007938807-GQzRrDoy`）只用於前端初始化，兩者不同。
 
 ## 🛠️ 完整安全解決方案
 
@@ -110,7 +111,7 @@ def verify_line_id_token_complete(token: str) -> str:
             token,
             key=jwks,  # LINE 提供的公鑰（需要格式轉換）
             algorithms=["RS256", "ES256"],  # LINE 支援的演算法
-            audience="YOUR_LIFF_APP_ID",    # 驗證 token 是給我們的 app 用的
+            audience="YOUR_LINE_CHANNEL_ID",    # 驗證 token 是給我們的 LINE Login Channel 用的（純數字）
             issuer="https://access.line.me"  # 驗證確實是 LINE 簽發的
         )
         return payload["sub"]  # LINE user ID
@@ -143,7 +144,7 @@ def secure_verification():
 # - 發行者驗證
 
 # 第二階段：加入 audience 驗證 ⚠️ 開發中
-# - 確保 token 是為我們的 LIFF app 簽發的
+# - 確保 token 是為我們的 LINE Login Channel 簽發的（audience = Channel ID）
 
 # 第三階段：完整簽名驗證 📅 後續實作
 # - 使用 LINE 公鑰驗證數位簽名
@@ -161,8 +162,9 @@ def secure_verification():
 
 2. **環境變數確認**
    ```bash
-   # 確保生產環境設定
-   ENVIRONMENT=production
+    # 確保生產環境設定
+    ENV=production
+    LINE_CHANNEL_ID=2007938807  # 你的 LINE Login Channel ID（純數字）
    ```
 
 3. **資料庫連線**
