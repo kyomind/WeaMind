@@ -255,7 +255,10 @@ select:disabled {
     margin: 20px 0 10px 0;
     border-radius: 12px;
     font-weight: 500;
+    font-size: 18px;
     text-align: center;
+    white-space: pre-line;
+    line-height: 1.4;
 }
 
 .message.success {

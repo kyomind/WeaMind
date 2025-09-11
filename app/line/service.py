@@ -705,7 +705,7 @@ def send_other_menu_quick_reply(reply_token: str | None) -> None:
                     replyToken=reply_token,
                     messages=[
                         TextMessage(
-                            text="🌟 請選擇您想了解的資訊：",
+                            text="請選擇想了解的資訊：",
                             quoteToken=None,
                             quickReply=quick_reply,
                         )
