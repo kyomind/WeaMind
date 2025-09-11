@@ -497,6 +497,60 @@ class TestLocationMessageHandler:
             # Should send response
             mock_send.assert_called_once_with("test_token", "找到了 臺北市中正區，正在查詢天氣...")
 
+    def test_handle_location_message_event_with_address(self) -> None:
+        """Test location message handling with address information."""
+        mock_event = Mock(spec=MessageEvent)
+        mock_event.reply_token = "test_token"
+        mock_message = Mock(spec=LocationMessageContent)
+        mock_message.latitude = 25.0330
+        mock_message.longitude = 121.5654
+        mock_message.address = "台北市信義區信義路五段7號"
+        mock_event.message = mock_message
+        mock_source = Mock()
+        mock_source.user_id = "test_user_id"
+        mock_event.source = mock_source
+
+        with (
+            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
+            patch("app.line.service.LocationService.find_nearest_location") as mock_find,
+            patch("app.line.service.get_user_by_line_id") as mock_get_user,
+            patch("app.line.service.record_user_query") as mock_record,
+            patch("app.line.service.send_text_response") as mock_send,
+            patch("app.line.service.logger") as mock_logger,
+        ):
+            mock_session = Mock()
+            mock_get_session.return_value = iter([mock_session])
+
+            # Mock successful location query
+            mock_weather.return_value = "找到了 臺北市信義區，正在查詢天氣..."
+
+            # Mock location found for recording
+            mock_location = Mock()
+            mock_location.id = 123
+            mock_find.return_value = mock_location
+
+            # Mock user for recording
+            mock_user = Mock()
+            mock_user.id = 456
+            mock_get_user.return_value = mock_user
+
+            handle_location_message_event(mock_event)
+
+            # Should log that location message includes address
+            mock_logger.info.assert_any_call("Location message includes address information")
+
+            # Should query weather with coordinates and address
+            mock_weather.assert_called_once_with(
+                mock_session, 25.0330, 121.5654, "台北市信義區信義路五段7號"
+            )
+
+            # Should record query for user history
+            mock_record.assert_called_once_with(mock_session, 456, 123)
+
+            # Should send response
+            mock_send.assert_called_once_with("test_token", "找到了 臺北市信義區，正在查詢天氣...")
+
     def test_handle_location_message_event_empty_reply_token(self) -> None:
         """Test location message handling with empty reply token."""
         mock_event = Mock(spec=MessageEvent)

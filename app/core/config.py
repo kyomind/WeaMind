@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # LINE Bot settings
     LINE_CHANNEL_SECRET: str
     LINE_CHANNEL_ACCESS_TOKEN: str
+    # LINE Login settings
+    LINE_CHANNEL_ID: str | None = None
+    ENABLE_ID_TOKEN_SIGNATURE_VERIFICATION: bool = True
 
     # Application URL settings
     BASE_URL: str = "https://api.kyomind.tw"

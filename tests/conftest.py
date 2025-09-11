@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["LINE_CHANNEL_SECRET"] = "TEST_SECRET"
 os.environ["LINE_CHANNEL_ACCESS_TOKEN"] = "TEST_ACCESS_TOKEN"
+os.environ["ENABLE_ID_TOKEN_SIGNATURE_VERIFICATION"] = "false"
 os.environ["POSTGRES_USER"] = "test_user"
 os.environ["POSTGRES_PASSWORD"] = "test_password"
 os.environ["POSTGRES_HOST"] = "localhost"

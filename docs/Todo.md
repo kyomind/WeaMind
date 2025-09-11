@@ -32,7 +32,8 @@
 - [x] 29.實作 LINE Bot 公告系統與 Rich Menu 其它功能基礎架構 2025-08-27
 - [x] 30.完善 Rich Menu 其它功能選項（Changelog 與產品說明） 2025-08-27
 - [x] 31.Rich Menu 變動：將「其它」改為「更多資訊」 2025-08-28
-- [x] 32.🍎LIFF 地點設定頁面錯誤處理與穩定性改善，包含 SDK 載入失敗、權限 scope、自動重新登入資料遺失、UI/UX 優化 2025-09-10
+- [x] 32.LIFF 地點設定頁面錯誤處理與穩定性改善，包含 SDK 載入失敗、權限 scope、自動重新登入資料遺失、UI/UX 優化 2025-09-10
+- [x] 33.LINE ID Token 簽名與 audience 驗證（RS256/ES256、JWKS 快取、prod 護欄、測試覆蓋）2025-09-11
 
 ## 說明
 
@@ -45,8 +46,4 @@
 
 - [ ] 實作完整的 LINE ID Token JWT 簽名驗證
 - [ ] 實作 LIFF SDK integrity 自動化檢查與更新機制，在 CI 中定期檢查 LINE SDK 版本並自動更新 integrity hash
-- [x] 25.實作 LINE Bot LIFF 地點設定功能（文字觸發版）
-  - [x] 二級行政區的下拉選單出現閃爍式的重新載入問題、取消行為不當
-  - [x] LIFF SDK 的錯誤訊息問題，以及scope write是否真的必要(登入會比較讓人謹慎) 2025-09-10
-- [ ] 單元測試的 db 應該由 SQLite 改為 PostgreSQL，因為兩者的方言可能會有差異，應以 PostgreSQL 為主，參考「最近查詢」的 TODO
 - [ ] 使用說明考慮用 MkDocs 生成靜態網站或 GitHub 倉庫首頁的 README.md

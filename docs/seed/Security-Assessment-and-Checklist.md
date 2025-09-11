@@ -18,13 +18,15 @@
 - [x] 移除開發環境的寬鬆設定
 - [x] 生產環境安全配置
 
-### 3. JWT 基本驗證強化 ✅ 已改善
+### 3. JWT 驗證強化 ✅ 已完成（含簽名與 audience）
 **新增驗證項目**:
 - ✅ Token 格式檢查
 - ✅ 演算法驗證 (只接受 RS256, ES256)
 - ✅ 過期時間檢查 (`exp`)
 - ✅ 發行者驗證 (`iss` = `https://access.line.me`)
 - ✅ 用戶 ID 存在檢查
+ - ✅ 簽名驗證（使用 LINE JWKS，支援 `RS256/ES256`，含 `kid` 輪替）
+ - ✅ audience 驗證（`aud` 必須等於 LINE Login Channel ID；支援字串或陣列）
 
 ### 4. 用戶創建問題修正 ✅ 已修正
 **問題**: 如果 LINE 用戶第一次使用 LIFF，會因為資料庫中沒有用戶記錄而失敗
@@ -46,10 +48,8 @@ if not user:
 
 ## 🚨 仍存在的安全風險
 
-### 1. JWT 簽名未驗證 (高風險)
-**問題**: 目前沒有驗證 JWT 的數位簽名
-**風險**: 攻擊者可以偽造有效的 JWT token
-**狀態**: ⚠️ 需要實作
+### 1. JWT 簽名驗證 (已完成)
+**狀態**: ✅ 已實作（預設啟用，生產環境強制）
 
 #### 💡 為什麼需要第三方驗證工具？
 
@@ -80,14 +80,13 @@ fake_token = create_fake_jwt_with_any_user_id("target_user_id")
 2. **信任 LINE 的身份驗證** - 讓我們專注業務邏輯，不需管理用戶密碼
 3. **OAuth/OpenID Connect 標準** - 現代應用的標準做法
 
-### 2. Audience 未驗證 (中風險)
-**問題**: 沒有驗證 `aud` 欄位是否為正確的 LIFF App ID
-**風險**: 其他 LIFF app 的 token 可能被誤用
-**狀態**: ⚠️ 需要實作
+### 2. Audience 驗證 (已完成)
+**狀態**: ✅ 已實作（驗證為 LINE Login Channel ID，非 LIFF ID）
+> 提醒：`aud` 是 OIDC 的 client_id，在 LINE 等同「Channel ID」（純數字）；LIFF ID（例如 `2007938807-GQzRrDoy`）只用於前端初始化，兩者不同。
 
 ## 🛠️ 完整安全解決方案
 
-### 選項 1: 完整 JWT 驗證 (推薦)
+### 選項 1: 完整 JWT 驗證 (已採用)
 
 **實作原理**: 使用 LINE 提供的公鑰驗證 token 的數位簽名
 
@@ -110,7 +109,7 @@ def verify_line_id_token_complete(token: str) -> str:
             token,
             key=jwks,  # LINE 提供的公鑰（需要格式轉換）
             algorithms=["RS256", "ES256"],  # LINE 支援的演算法
-            audience="YOUR_LIFF_APP_ID",    # 驗證 token 是給我們的 app 用的
+            audience="YOUR_LINE_CHANNEL_ID",    # 驗證 token 是給我們的 LINE Login Channel 用的（純數字）
             issuer="https://access.line.me"  # 驗證確實是 LINE 簽發的
         )
         return payload["sub"]  # LINE user ID
@@ -133,7 +132,7 @@ def secure_verification():
     return payload["sub"]  # 幾乎無法偽造
 ```
 
-### 選項 2: 分階段改善 (務實)
+### 選項 2: 分階段改善（已完成至完整簽名驗證）
 
 **開發階段優先順序**:
 ```python
@@ -143,7 +142,7 @@ def secure_verification():
 # - 發行者驗證
 
 # 第二階段：加入 audience 驗證 ⚠️ 開發中
-# - 確保 token 是為我們的 LIFF app 簽發的
+# - 確保 token 是為我們的 LINE Login Channel 簽發的（audience = Channel ID）
 
 # 第三階段：完整簽名驗證 📅 後續實作
 # - 使用 LINE 公鑰驗證數位簽名
@@ -161,8 +160,10 @@ def secure_verification():
 
 2. **環境變數確認**
    ```bash
-   # 確保生產環境設定
-   ENVIRONMENT=production
+    # 確保生產環境設定
+    ENV=production
+    LINE_CHANNEL_ID=2007938807  # 你的 LINE Login Channel ID（純數字）
+    ENABLE_ID_TOKEN_SIGNATURE_VERIFICATION=true  # 生產必須為 true
    ```
 
 3. **資料庫連線**

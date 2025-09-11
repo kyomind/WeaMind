@@ -6,6 +6,8 @@ dependencies = [
   "line-bot-sdk>=3.17.1",
   "psycopg[binary]>=3.2.9",
   "pydantic-settings>=2.9.1",
+  "pyjwt>=2.10.1",
+  "cryptography>=45.0.7",
   "sqlalchemy>=2.0.40",
   "uvicorn[standard]>=0.34.2",
 ]
