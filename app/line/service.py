@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -772,6 +773,23 @@ def handle_announcements(reply_token: str | None) -> None:
         send_error_response(reply_token, "載入公告時發生錯誤")
 
 
+def format_announcement_date(date_string: str) -> str:
+    """
+    Format announcement date for display in Flex Message.
+
+    Args:
+        date_string: ISO format date string (e.g., "2025-08-27T00:00:00+08:00")
+
+    Returns:
+        str: Formatted date string (e.g., "2025/08/27 00:00")
+    """
+    try:
+        dt = datetime.fromisoformat(date_string.replace("Z", "+00:00"))
+        return dt.strftime("%Y/%m/%d %H:%M")
+    except (ValueError, TypeError):
+        return "日期未知"
+
+
 def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
     """
     Create Flex Message Carousel for announcements.
@@ -789,6 +807,10 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
         title = announcement.get("title", "")[:20]
         body = announcement.get("body", "")[:50]
         level = announcement.get("level", "info")
+        start_at = announcement.get("start_at", "")
+
+        # Format date for display
+        formatted_date = format_announcement_date(start_at)
 
         # Choose color based on level
         level_colors = {"info": "#2196F3", "warning": "#FF9800", "maintenance": "#F44336"}
@@ -808,16 +830,23 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
                         "type": "text",
                         "text": title,
                         "weight": "bold",
-                        "size": "lg",
+                        "size": "xl",
                         "wrap": True,
                         "color": "#333333",
                     },
                     {
                         "type": "text",
                         "text": level_text,
-                        "size": "md",
+                        "size": "lg",
                         "color": level_color,
                         "margin": "sm",
+                    },
+                    {
+                        "type": "text",
+                        "text": formatted_date,
+                        "size": "lg",
+                        "color": "#888888",
+                        "margin": "xs",
                     },
                 ],
                 "backgroundColor": "#F8F9FA",
@@ -826,7 +855,7 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
                 "type": "box",
                 "layout": "vertical",
                 "contents": [
-                    {"type": "text", "text": body, "wrap": True, "size": "md", "color": "#666666"}
+                    {"type": "text", "text": body, "wrap": True, "size": "lg", "color": "#666666"}
                 ],
             },
             "footer": {
