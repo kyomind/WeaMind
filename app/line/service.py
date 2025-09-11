@@ -790,6 +790,27 @@ def format_announcement_date(date_string: str) -> str:
         return "日期未知"
 
 
+def smart_truncate_body(text: str) -> str:
+    """
+    Smart truncate body text with ellipsis handling.
+
+    Args:
+        text: Original text to truncate
+
+    Returns:
+        str: Truncated text with appropriate ellipsis
+    """
+    if len(text) <= 50:
+        return text
+
+    truncated = text[:50]
+    # Replace last character with ellipsis if it's punctuation
+    if truncated[-1] in ["，", "、", "：", "；", "。", "！", "？", "（", "）", "(", ")"]:
+        return truncated[:-1] + "..."
+    else:
+        return truncated + "..."
+
+
 def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
     """
     Create Flex Message Carousel for announcements.
@@ -803,9 +824,9 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
     bubbles = []
 
     for announcement in announcements:
-        # Truncate title and body for Flex Message limits
-        title = announcement.get("title", "")[:20]
-        body = announcement.get("body", "")[:50]
+        # Keep title intact, smart truncate body only
+        title = announcement.get("title", "")
+        body = smart_truncate_body(announcement.get("body", ""))
         level = announcement.get("level", "info")
         start_at = announcement.get("start_at", "")
 
