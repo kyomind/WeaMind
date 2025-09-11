@@ -89,7 +89,7 @@ action=LocationAction(
 
 **修改後**:
 ```python
-message_text = "請點擊地圖上的任意位置，我將為您查詢該地天氣"
+message_text = "請點點地圖上任意位置，我將為您查詢該地天氣"
 action=LocationAction(
     type="location",
     label="開啟地圖選擇"
@@ -150,7 +150,7 @@ make upload IMAGE=docs/rich_menu/rich_menu.png
 ### 自動化測試更新
 ```python
 # 更新測試斷言
-assert message.text == "請點擊地圖上的任意位置，我將為您查詢該地天氣"
+assert message.text == "請點點地圖上任意位置，我將為您查詢該地天氣"
 assert message.quick_reply.items[0].action.label == "開啟地圖選擇"
 ```
 
@@ -194,7 +194,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
 ```python
 def handle_current_location_weather(event: PostbackEvent) -> None:
     """處理地圖查詢PostBack - 請求用戶選擇位置"""
-    message_text = "請點擊地圖上的任意位置，我將為您查詢該地天氣"
+    message_text = "請點點地圖上任意位置，我將為您查詢該地天氣"
 
     quick_reply_items = [
         QuickReplyItem(
