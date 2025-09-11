@@ -135,7 +135,7 @@
     <!-- 外圍定位圈 -->
     <circle cx="1250" cy="1123" r="150" fill="none" stroke="#4A90E2" stroke-width="10" stroke-dasharray="25,12"/>
 
-    <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">目前位置</text>
+    <text x="1250" y="1490" text-anchor="middle" font-family="Arial, sans-serif" font-size="120" font-weight="bold" fill="#2C3E50">地圖查詢</text>
   </g>
 
   <!-- 格子6：更多資訊 -->
