@@ -15,7 +15,7 @@
 │ (1st grid)  │ (2nd grid)  │ (3rd grid)  │
 │  🏠 住家    │  🏢 公司    │  📜 最近    │
 ├─────────────┼─────────────┼─────────────┤
-│  目前位置   │  設定地點   │    其它     │
+│  地圖查詢   │  設定地點   │    其它     │
 │ (4th grid)  │ (5th grid)  │ (6th grid)  │
 │  📍 現在    │  ⚙️ 設定     │  📢 更多    │
 └─────────────┴─────────────┴─────────────┘
@@ -33,7 +33,7 @@
 - 🏠 住家：房屋圖示
 - 🏢 公司：辦公大樓圖示
 - 📜 最近查過：時鐘或歷史圖示
-- 📍 目前位置：定位圖示
+- 📍 地圖查詢：定位圖示
 - ⚙️ 設定地點：齒輪或設定圖示
 - 📢 其它：資訊或更多選項圖示
 
@@ -49,7 +49,7 @@
 - 查住家：`action=weather&type=home`
 - 查公司：`action=weather&type=office`
 - 最近查過：`action=recent_queries`
-- 目前位置：`action=weather&type=current`
+- 地圖查詢：`action=weather&type=current`
 - 設定地點：`action=settings&type=location`
 - 其它：`action=other&type=menu`
 
