@@ -45,8 +45,4 @@
 
 - [ ] 實作完整的 LINE ID Token JWT 簽名驗證
 - [ ] 實作 LIFF SDK integrity 自動化檢查與更新機制，在 CI 中定期檢查 LINE SDK 版本並自動更新 integrity hash
-- [x] 25.實作 LINE Bot LIFF 地點設定功能（文字觸發版）
-  - [x] 二級行政區的下拉選單出現閃爍式的重新載入問題、取消行為不當
-  - [x] LIFF SDK 的錯誤訊息問題，以及scope write是否真的必要(登入會比較讓人謹慎) 2025-09-10
-- [ ] 單元測試的 db 應該由 SQLite 改為 PostgreSQL，因為兩者的方言可能會有差異，應以 PostgreSQL 為主，參考「最近查詢」的 TODO
 - [ ] 使用說明考慮用 MkDocs 生成靜態網站或 GitHub 倉庫首頁的 README.md
