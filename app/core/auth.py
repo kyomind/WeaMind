@@ -13,6 +13,7 @@ Notes:
 import base64
 import json
 import logging
+import threading
 import time
 from typing import Annotated, Any
 
@@ -33,6 +34,7 @@ SUPPORTED_ALGS = ["RS256", "ES256"]
 
 # In-memory cache: (jwks_dict, fetched_at)
 _JWKS_CACHE: tuple[dict[str, dict], float] | None = None
+_JWKS_LOCK = threading.Lock()
 
 
 def _base64url_decode_nopad(data: str) -> bytes:
@@ -107,7 +109,9 @@ def _get_cached_jwks(
     if need_refresh:
         try:
             by_kid = _load_jwks_from_network()
-            _JWKS_CACHE = (by_kid, now)
+            # Update cache under lock to avoid race conditions in multi-thread contexts
+            with _JWKS_LOCK:
+                _JWKS_CACHE = (by_kid, now)
         except httpx.RequestError as e:
             # Network problem: fallback to stale cache if allowed
             if _JWKS_CACHE and allow_stale_on_error:
@@ -139,7 +143,8 @@ def _get_cached_jwks(
                 detail="Unable to fetch JWKS from LINE",
             ) from e
         else:
-            _JWKS_CACHE = (by_kid, now)
+            with _JWKS_LOCK:
+                _JWKS_CACHE = (by_kid, now)
     return _JWKS_CACHE[0]
 
 
@@ -157,11 +162,11 @@ def _public_key_from_jwk(jwk: dict) -> Any:  # noqa: ANN401 - PyJWT returns cryp
     kty = jwk.get("kty")
     if kty == "RSA":
         # Import locally to avoid hard dependency at module import time
-        from jwt import algorithms as jwt_algorithms  # noqa: WPS433 (allow local import)
+        from jwt import algorithms as jwt_algorithms
 
         return jwt_algorithms.RSAAlgorithm.from_jwk(json.dumps(jwk))
     if kty == "EC":
-        from jwt import algorithms as jwt_algorithms  # noqa: WPS433
+        from jwt import algorithms as jwt_algorithms
 
         return jwt_algorithms.ECAlgorithm.from_jwk(json.dumps(jwk))
     raise ValueError("Unsupported key type")
