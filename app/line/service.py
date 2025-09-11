@@ -746,8 +746,8 @@ def handle_announcements(reply_token: str | None) -> None:
         ]
         visible_announcements.sort(key=lambda x: x.get("start_at", ""), reverse=True)
 
-        # Take only the latest 3 announcements for Flex Message
-        latest_announcements = visible_announcements[:3]
+        # Take only the latest 1 announcement for Flex Message
+        latest_announcements = visible_announcements[:1]
 
         if not latest_announcements:
             send_text_response(reply_token, "目前沒有新公告")
@@ -837,7 +837,7 @@ def create_announcements_flex_message(announcements: list[dict]) -> FlexMessage:
                         "type": "button",
                         "action": {
                             "type": "uri",
-                            "label": "查看完整內容",
+                            "label": "前往公告頁面",
                             "uri": "https://api.kyomind.tw/static/announcements/index.html",
                         },
                         "style": "primary",
