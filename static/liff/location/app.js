@@ -1,5 +1,5 @@
 // LIFF Location Setting App
-// AUTO_UPDATE_VERSION: 20250910-2330 (AI can update this timestamp when making changes)
+// AUTO_UPDATE_VERSION: 20250911-0930 (AI can update this timestamp when making changes)
 class LocationApp {
     constructor() {
         this.adminData = {};
@@ -433,7 +433,7 @@ class LocationApp {
             const result = await response.json();
 
             // Show success message
-            this.showMessage(`✅ ${locationType === 'home' ? '住家' : '公司'}地點設定成功！\n你可以關閉本視窗或繼續設定其他地點`, 'success');
+            this.showMessage(`✅ ${locationType === 'home' ? '住家' : '公司'}地點設定成功！\n你可以關閉本視窗，或繼續設定其他地點`, 'success');
 
         } catch (error) {
             this.showMessage(error.message || '設定失敗，請重試', 'error');
