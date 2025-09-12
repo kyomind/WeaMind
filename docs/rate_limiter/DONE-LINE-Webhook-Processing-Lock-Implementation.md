@@ -52,7 +52,7 @@
 2. **用戶體驗**：偶爾重複處理比服務不可用更可接受
 3. **運維友善**：Redis 維護時不影響主服務
 
-## 核心架構
+## 核心架構與實作
 
 ### 1. 模組結構
 
@@ -68,17 +68,27 @@ app/line/service.py             # LINE handlers 整合
 ├── handle_location_message_event()  # 位置訊息處理
 ├── handle_postback_event()     # Postback 事件處理
 └── Follow/Unfollow handlers    # 不套用鎖
-
-app/core/config.py              # 配置設定
-├── PROCESSING_LOCK_ENABLED
-├── PROCESSING_LOCK_TIMEOUT_SECONDS
-└── REDIS_URL
 ```
 
-### 2. 鎖機制流程
+### 2. Redis 分散式鎖技術核心
 
 ```python
-# 偽代碼
+# 原子操作：SET ... EX NX 確保鎖的正確性
+result = redis_client.set(key, "1", ex=timeout_seconds, nx=True)
+# nx=True: 只在 key 不存在時設定（避免覆蓋現有鎖）
+# ex=timeout: 設定 TTL 過期時間（避免死鎖）
+# 返回值: 成功 True，失敗 None
+```
+
+**技術重點：**
+- **原子性保證**：三個操作（檢查存在、設定值、設定TTL）合併為單一原子命令
+- **競爭條件避免**：NX 參數確保同一時間只有一個客戶端能取得鎖
+- **自動故障恢復**：TTL 機制確保即使程序崩潰，鎖也會自動釋放
+
+### 3. 鎖機制整合流程
+
+```python
+# 處理流程偽代碼
 def handle_event(event):
     lock_key = build_actor_key(event.source)
 
@@ -95,25 +105,10 @@ def handle_event(event):
         process_event(event)
 ```
 
-## 關鍵技術實作
-
-### 1. Redis 原子操作
+### 4. 安全釋放與相容性設計
 
 ```python
-# 關鍵：使用 SET ... EX NX 確保原子性
-result = redis_client.set(key, "1", ex=timeout_seconds, nx=True)
-# nx=True: 只在 key 不存在時設定
-# ex=timeout: 設定過期時間，避免死鎖
-```
-
-**重要細節：**
-- `NX` 確保不會覆蓋已存在的鎖
-- `EX` 設定 TTL，最多 5 秒自動釋放
-- 返回值直接表示是否成功取得鎖
-
-### 2. 安全的鎖釋放
-
-```python
+# 鎖釋放：Best-effort 策略
 def release_lock(self, key: str) -> None:
     try:
         redis_client.delete(key)
@@ -121,224 +116,119 @@ def release_lock(self, key: str) -> None:
     except (ConnectionError, RedisError) as e:
         logger.warning("Failed to release processing lock: %s", e)
         # 不拋出異常，依賴 TTL 自動釋放
+
+# 向下相容：解決測試 Mock 對象問題
+lock_key = None
+if hasattr(event, 'source') and event.source:
+    lock_key = processing_lock_service.build_actor_key(event.source)
 ```
 
 **設計考量：**
-- Best-effort 釋放，失敗不影響主流程
-- TTL 作為最後保險機制
-- 詳細日誌記錄便於調試
+- **優雅降級**：釋放失敗不影響主流程，TTL 作為安全網
+- **測試相容**：使用 `hasattr` 檢查避免破壞現有 Mock 測試
+- **詳細日誌**：便於問題診斷和系統監控
 
-### 3. 向下相容的事件檢查
+## 實作過程關鍵問題與解決
 
+### 1. Mock 對象相容性問題
+
+**問題**：現有測試 Mock 對象缺少 `source` 屬性導致 `AttributeError`
+
+**解決**：使用 `hasattr` 進行安全檢查，確保向下相容
 ```python
-# 解決測試中 Mock 對象問題
-lock_key = None
-if hasattr(event, 'source') and event.source:
-    lock_key = processing_lock_service.build_actor_key(event.source)
+# 修正前：event.source if event.source else None
+# 修正後：hasattr(event, 'source') and event.source
 ```
 
-**背景：**
-- 現有測試使用 Mock 對象，可能沒有 `source` 屬性
-- 使用 `hasattr` 確保向下相容
-- 避免破壞現有測試套件
+### 2. 同步/異步 API 一致性
 
-## 遇到的問題與解決方案
+**問題**：LINE SDK 同步設計與異步 Redis 客戶端不匹配
 
-### 問題 1：測試 Mock 對象相容性
+**解決**：選用同步 Redis 客戶端 (`redis`) 保持架構一致性
 
-**現象：** 現有測試因為 Mock 對象沒有 `source` 屬性而失敗
-```
-AttributeError: Mock object has no attribute 'source'
-```
+### 3. 容器依賴管理
 
-**解決方案：**
-```python
-# 原始代碼（有問題）
-lock_key = processing_lock_service.build_actor_key(event.source) if event.source else None
+**問題**：Docker 映像缺少 Redis 客戶端庫 (`ModuleNotFoundError: No module named 'redis'`)
 
-# 修正後代碼（向下相容）
-lock_key = None
-if hasattr(event, 'source') and event.source:
-    lock_key = processing_lock_service.build_actor_key(event.source)
-```
+**解決**：依賴變更後重新建構映像 (`docker compose up -d --build`)
 
-**學習點：** 新功能整合時需考慮現有測試的相容性
-
-### 問題 2：Docker 容器中缺少 Redis 依賴
-
-**現象：** 測試時發現容器中沒有安裝 Redis 客戶端庫
-```
-ModuleNotFoundError: No module named 'redis'
-```
-
-**根本原因：** Docker 映像在添加 Redis 依賴前建立，未重新建構
-
-**解決方案：**
-1. 重新建構 Docker 映像：`docker compose up -d --build`
-2. 確認 `pyproject.toml` 中包含 `redis[hiredis]>=6.4.0`
-
-**學習點：** 依賴變更時需要重新建構容器映像
-
-### 問題 3：同步 vs 異步 API 設計
-
-**現象：** LINE SDK 是同步的，但初始設計使用了異步 Redis 客戶端
-
-**決策過程：**
-- 考慮使用 `asyncio.run()` 在同步函數中調用異步操作
-- 最終選擇同步 Redis 客戶端以保持一致性
-
-**最終方案：** 使用 `redis` 而非 `redis.asyncio`
-
-**學習點：** API 設計應與現有架構保持一致
-
-## Docker 配置重點
-
-### 1. Redis 服務配置
-
-```yaml
-# docker-compose.yml
-redis:
-  image: redis:8.2.1-bookworm  # 穩定版本，與 PostgreSQL 基礎映像一致
-  ports:
-    - "6379:6379"
-  networks:
-    - wea-net
-```
-
-**版本選擇考量：**
-- `8.2.1`: 最新穩定版，性能和安全性優化
-- `bookworm`: 與 PostgreSQL 使用相同基礎映像，保持一致性
-- 避免 `alpine`: bookworm 有更好的相容性
-
-### 2. 數據持久化
-
-```yaml
-# 開發環境
-redis:
-  container_name: wea-redis-dev
-  volumes:
-    - wea-redis-data-dev:/data
-
-# 生產環境
-redis:
-  container_name: wea-redis-prod
-  restart: always
-  volumes:
-    - wea-redis-data-prod:/data
-
-volumes:
-  wea-redis-data-prod:
-    external: true  # 生產環境使用外部 volume
-```
-
-**重要決策：**
-- 開發環境：自動創建 volume
-- 生產環境：使用外部 volume，確保數據持久性
-- 統一 volume 路徑：`/data`（Redis 預設數據目錄）
-
-### 3. 服務依賴
-
-```yaml
-app:
-  depends_on:
-    - db
-    - redis  # 確保 Redis 在應用啟動前就緒
-```
-
-## 測試策略
-
-### 1. 單元測試覆蓋
-
-- ✅ 鎖取得/釋放機制
-- ✅ TTL 過期行為
-- ✅ Redis 連線錯誤處理
-- ✅ 用戶 ID 解析邏輯
-- ✅ 配置開關控制
-
-### 2. 整合測試
-
-- ✅ 真實 Redis 環境中的鎖操作
-- ✅ 容器間網路連通性
-- ✅ 數據持久化驗證
-
-### 3. 端到端驗證
-
-```python
-# 實際驗證腳本要點
-def test_redis_connection():
-    # 1. 基本連線測試
-    r.ping()
-
-    # 2. SET/GET 操作測試
-    r.set('test_key', 'test_value', ex=5)
-    value = r.get('test_key')
-
-    # 3. 鎖機制測試
-    acquired = processing_lock_service.try_acquire_lock(key, 5)
-    acquired_again = processing_lock_service.try_acquire_lock(key, 5)  # 應該失敗
-
-    # 4. 鎖釋放測試
-    processing_lock_service.release_lock(key)
-    acquired_third = processing_lock_service.try_acquire_lock(key, 5)  # 應該成功
-```
-
-## 部署考量
+## 配置與部署
 
 ### 1. 環境變數配置
 
 ```bash
-# 關鍵環境變數
+# 核心設定
 PROCESSING_LOCK_ENABLED=true
 PROCESSING_LOCK_TIMEOUT_SECONDS=5
 REDIS_URL=redis://redis:6379/0
 ```
 
-### 2. 監控與觀測性
+### 2. Docker 服務配置
 
-**技術方案演進：**
+```yaml
+# Redis 服務
+redis:
+  image: redis:8.2.1-bookworm  # 與 PostgreSQL 基礎映像一致
+  ports: ["6379:6379"]
+  networks: [wea-net]
+  volumes:
+    - wea-redis-data:/data  # 數據持久化
 
-**Phase 1: Prometheus 指標（短期實作）**
+# 應用服務依賴
+app:
+  depends_on: [db, redis]  # 確保啟動順序
+```
+
+**配置重點：**
+- **版本選擇**：`8.2.1-bookworm` 提供穩定性和相容性
+- **數據持久化**：開發環境自動創建，生產環境使用外部 volume
+- **服務依賴**：確保 Redis 在應用啟動前就緒
+
+## 測試與驗證
+
+### 測試覆蓋範圍
+- ✅ **單元測試** (16/16)：鎖機制、TTL 行為、錯誤處理、配置控制
+- ✅ **整合測試** (218/218)：Redis 環境、網路連通、數據持久化
+- ✅ **端到端驗證**：連線測試、鎖操作、故障恢復
+
+### 關鍵驗證流程
 ```python
-# 專業指標系統，效能優異
-from prometheus_client import Counter, Histogram, start_http_server
+def test_lock_mechanism():
+    # 連線測試
+    redis_client.ping()
 
+    # 鎖取得/競爭測試
+    acquired = processing_lock_service.try_acquire_lock(key, 5)
+    acquired_again = processing_lock_service.try_acquire_lock(key, 5)  # 失敗
+
+    # 鎖釋放測試
+    processing_lock_service.release_lock(key)
+    acquired_third = processing_lock_service.try_acquire_lock(key, 5)  # 成功
+```
+
+### 3. 監控與可觀測性
+
+**當前階段：日誌記錄**
+- 鎖取得/釋放狀態記錄
+- 錯誤情況詳細日誌
+- 隱私保護：不記錄用戶個資
+
+**未來規劃：Prometheus 指標**
+```python
+# 核心指標設計
 processing_lock_acquire_total = Counter(
-    'processing_lock_acquire_total',
-    'Total processing lock acquisitions',
-    ['status', 'source_type']
+    'processing_lock_acquire_total', ['status', 'source_type']
 )
 processing_duration_seconds = Histogram(
-    'processing_duration_seconds',
-    'Processing duration in seconds',
-    ['event_type']
+    'processing_duration_seconds', ['event_type']
 )
 ```
 
-**Phase 2: OpenTelemetry Stack（長期目標）**
-(略)
-
-**方案比較：**
-- **Log-based**: 簡單但效能差，適合 debug 不適合生產指標
-- **Prometheus**: 專業指標系統，即時查詢告警，WeaMind 短期首選
-- **OpenTelemetry**: 完整可觀測性，關聯分析強大，長期演進方向
-
-**隱私保護：**
-- 日誌不記錄 `userId` 等個資
-- 指標不使用 `userId` 作為 label
-- 僅記錄操作狀態和結果
-- Trace 中避免敏感資料，使用 hashed ID
-
-### 3. 擴展性考量
-
-**當前設計支援：**
-- 多實例部署（通過 Redis 共享狀態）
-- 水平擴展（無狀態應用設計）
-- 高可用性（Redis 故障時 fail open）
-
-**未來優化方向：**
-- Redis Cluster 支援
-- 鎖的智慧超時（根據處理類型調整）
-- 更細粒度的鎖機制（如按操作類型分離）
+### 4. 擴展性設計
+- **多實例支援**：Redis 共享狀態
+- **水平擴展**：無狀態應用架構
+- **高可用性**：故障時優雅降級 (fail-open)
+- **未來擴展**：Redis Cluster、智慧超時、細粒度鎖控
 
 ## 核心設計原則總結
 
@@ -356,55 +246,37 @@ processing_duration_seconds = Histogram(
 - ✅ 效能測試：鎖操作延遲 < 1ms
 - ✅ 故障測試：Redis 停機時應用正常運作
 
-## 最終實作總結（2025-09-13 更新）
+## 實作成果總結
 
-### 技術成果與學習重點
+### 核心技術成就
+1. **Redis 分散式鎖實作**：原子操作 `SET NX EX` 確保競爭條件安全
+2. **Fail-Open 架構**：服務可用性優先，Redis 故障時優雅降級
+3. **Python 進階技巧**：`TYPE_CHECKING` 解決循環導入，Union types 正確標註
+4. **向下相容設計**：`hasattr` 安全檢查，不破壞現有測試
 
-1. **Redis 分散式鎖核心技術**
-   - 原子操作 `SET NX EX` 的重要性和正確使用
-   - Redis-py 返回值行為: 成功 `True`，失敗 `None`
-   - TTL 自動過期作為安全網機制
+### 關鍵設計模式
 
-2. **Python 進階程式設計技巧**
-   - `TYPE_CHECKING` 模式解決循環導入問題
-   - Union types `Source | None` 的正確標註
-   - 模組級單例模式在分散式環境下的應用
-
-3. **Fail-Open 架構設計哲學**
-   - 服務可用性優先於資料一致性
-   - 優雅降級: Redis 故障時系統仍可運作
-   - 配置化設計支援不同環境需求
-
-4. **程式碼品質與文件標準**
-   - 完整的英文註釋和 docstring 撰寫
-   - 靜態類型檢查 (Pyright) 和 linting (Ruff) 整合
-   - 分層錯誤處理和適當的日誌記錄
-
-### 關鍵實作洞察
-
-#### Redis 命令深度理解
+#### Redis 原子操作深度應用
 ```python
-# SET NX EX 的原子性避免了以下競爭條件：
-# 1. 檢查鍵是否存在
-# 2. 設定鍵值
-# 3. 設定過期時間
-# 三個步驟合併為一個原子操作
+# SET NX EX 將三個步驟合併為原子操作
+# 1. 檢查鍵存在性  2. 設定鍵值  3. 設定 TTL
+result = redis_client.set(key, "1", ex=timeout, nx=True)
 ```
 
 #### TYPE_CHECKING 最佳實務
 ```python
-# 解決 LINE SDK 導入問題的優雅方案
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from linebot.v3.webhooks.models.source import Source
 
-# 在函式簽名中使用字串標註
 def build_actor_key(self, source: "Source | None") -> str | None:
+    # 字串標註避免執行時導入錯誤
 ```
 
-#### 連線管理策略
-- 單例模式確保連線重用
-- Ping 測試驗證連線健康
-- 例外處理支援故障恢復
+### 驗證結果
+- ✅ 單元測試：16/16 通過
+- ✅ 整合測試：218/218 通過
+- ✅ 效能測試：鎖操作延遲 < 1ms
+- ✅ 故障測試：Redis 停機時應用正常運作
 
-此實作完整達成設計目標，提供了可靠、高效的重複請求防護機制，並成為團隊 Redis 分散式鎖的技術範本。
+此實作為團隊建立了可靠的 Redis 分散式鎖技術範本，完整達成重複請求防護的設計目標。
