@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     # Application URL settings
     BASE_URL: str = "https://api.kyomind.tw"
 
+    # Processing lock settings
+    PROCESSING_LOCK_ENABLED: bool = True
+    PROCESSING_LOCK_TIMEOUT_SECONDS: int = 5
+    REDIS_URL: str | None = "redis://redis:6379/0"
+
     @property
     def logs_dir(self) -> Path:
         """Get the logs directory path."""
