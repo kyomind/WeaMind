@@ -1,11 +1,17 @@
-# AGENT 規格：LINE Webhook「處理中鎖」（鎖定上限 5 秒）
+# AGENT 規格：LINE Webhook「處理中鎖」（Redis 分散式鎖實作）
 
 ## 快速摘要（給 AI agent）
 - 目標：同一使用者同時間只處理一次，其餘回覆「處理中」。
-- 鎖鍵：`processing:user:{userId}`；TTL 固定 5s。
+- 鎖鍵：`processing:user:{userId}`；TTL 可配置，預設 5s。
 - 流程：handler 開頭嘗試鎖 → 鎖已存在就回覆提示，不進入查詢 → 成功則執行查詢，`finally` 主動釋放；若異常最多等 TTL 自解。
-- 邊界：Redis 失敗放行；不使用 In-Memory fallback；不採 nonce+Lua；不做 i18n。
+- 邊界：Redis 失敗放行（fail-open 策略）；使用 TYPE_CHECKING 解決導入問題；完整的英文文件。
 - 隱私：log 不得記錄個資（含 ID）；可觀測性以不含個資的計數器/直方圖為主（後續實作）。
+
+**實作狀態**: ✅ **已完成** (2025-09-13)
+- 完整的 `ProcessingLockService` 實作
+- Redis 原子操作 SET NX EX
+- Fail-open 策略和錯誤處理
+- 正確的 Python type hints 和文件
 
 本文件提供給 AI agent（如 Claude Code、Copilot）作為本次功能的實作依據：聚焦 Why / What / How、限制與關鍵決策，僅在必要處附上介面與偽碼。
 
@@ -34,20 +40,29 @@
 ### 鎖鍵與 TTL
 - Key 命名：
   - `processing:user:{userId}`
-- 預設 TTL：`5` 秒（本次固定使用）。
+- 預設 TTL：`5` 秒（可透過 `PROCESSING_LOCK_TIMEOUT_SECONDS` 配置）。
 
 ### 設定項（新增於 `app/core/config.py`）
 - `PROCESSING_LOCK_ENABLED: bool = true`
-- `PROCESSING_LOCK_TIMEOUT_SECONDS: int = 5`
-- `REDIS_URL: str | None`（固定使用 `redis://redis:6379/0`；可視環境覆寫）
+- `PROCESSING_LOCK_TIMEOUT_SECONDS: int = 5`（可配置）
+- `REDIS_URL: str | None`（可視環境覆寫）
 
-### 模組（新增 `app/core/processing_lock.py`）
-- 介面合約（僅示意型別）：
-  - `def try_acquire_lock(key: str, timeout_seconds: int) -> bool`
-  - `def release_lock(key: str) -> None`
-  - `def build_actor_key(source: Any) -> str | None`（由 LINE 事件 `source` 萃取 `userId`，找不到則回 `None`）
+### 模組（實作於 `app/core/processing_lock.py`）
+- **實作狀態**: ✅ 已完成 `ProcessingLockService` 類別
+- 核心方法：
+  - `try_acquire_lock(key: str, timeout_seconds: int) -> bool`
+  - `release_lock(key: str) -> None`
+  - `build_actor_key(source: "Source | None") -> str | None`（由 LINE 事件 `source` 萃取 `userId`）
 - Redis 實作：
-  - 取得鎖：`SET key 1 EX <timeout> NX` → True/False
+  - 取得鎖：`SET key 1 EX <timeout> NX` → True/None（注意：不是 False）
+  - 釋放鎖：`DELETE key`（best-effort，TTL 作為後備）
+  - Fail-open：Redis 失敗時允許處理繼續進行
+
+### 技術重點與學習成果
+- **原子操作**: SET NX EX 避免競爭條件
+- **TYPE_CHECKING**: 解決 LINE SDK 循環導入問題
+- **Fail-open 策略**: 優先保證服務可用性
+- **模組級單例**: 確保連線重用和狀態一致性
   - 釋放鎖：`DEL key`（best-effort；finally 釋放）
 - 失敗策略：Redis 連線/操作失敗時「放行」（不鎖），不啟用 In-Memory fallback（本次 v1 不納入）。
 
