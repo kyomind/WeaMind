@@ -54,6 +54,7 @@ class TestProcessingLockService:
 
         service = ProcessingLockService()
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
             result = service._get_redis_client()
 
@@ -80,6 +81,7 @@ class TestProcessingLockService:
 
         service = ProcessingLockService()
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
             result = service.try_acquire_lock("test:key", 5)
 
@@ -101,6 +103,7 @@ class TestProcessingLockService:
         service = ProcessingLockService()
         service._redis_client = mock_redis
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.DEBUG):
             result = service.try_acquire_lock("test:key", 5)
 
@@ -123,6 +126,7 @@ class TestProcessingLockService:
         service = ProcessingLockService()
         service._redis_client = mock_redis
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.DEBUG):
             result = service.try_acquire_lock("test:key", 5)
 
@@ -145,6 +149,7 @@ class TestProcessingLockService:
         service = ProcessingLockService()
         service._redis_client = mock_redis
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
             result = service.try_acquire_lock("test:key", 5)
 
@@ -184,6 +189,7 @@ class TestProcessingLockService:
         service = ProcessingLockService()
         service._redis_client = mock_redis
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.DEBUG):
             service.release_lock("test:key")
 
@@ -205,6 +211,7 @@ class TestProcessingLockService:
         service = ProcessingLockService()
         service._redis_client = mock_redis
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
             service.release_lock("test:key")
 
@@ -227,6 +234,7 @@ class TestProcessingLockService:
 
         service = ProcessingLockService()
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
             result = service.build_actor_key(mock_source)
 
@@ -237,6 +245,7 @@ class TestProcessingLockService:
         """Test actor key building with invalid source structure."""
         service = ProcessingLockService()
 
+        # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
             result = service.build_actor_key(None)
 

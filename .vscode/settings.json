@@ -9,6 +9,7 @@
         "autoincrement",
         "autouse",
         "buildx",
+        "caplog",
         "carryforward",
         "celerybeat",
         "Certbot",
