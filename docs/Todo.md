@@ -34,6 +34,7 @@
 - [x] 31.Rich Menu 變動：將「其它」改為「更多資訊」 2025-08-28
 - [x] 32.LIFF 地點設定頁面錯誤處理與穩定性改善，包含 SDK 載入失敗、權限 scope、自動重新登入資料遺失、UI/UX 優化 2025-09-10
 - [x] 33.LINE ID Token 簽名與 audience 驗證（RS256/ES256、JWKS 快取、prod 護欄、測試覆蓋）2025-09-11
+- [x] 34.Processing Lock: 實作 Redis 分散式鎖防止重複處理，採用選擇性鎖策略與風險導向設計 2025-09-13
 
 ## 說明
 
@@ -44,6 +45,5 @@
 
 ## Future Todo
 
-- [ ] 實作完整的 LINE ID Token JWT 簽名驗證
 - [ ] 實作 LIFF SDK integrity 自動化檢查與更新機制，在 CI 中定期檢查 LINE SDK 版本並自動更新 integrity hash
 - [ ] 使用說明考慮用 MkDocs 生成靜態網站或 GitHub 倉庫首頁的 README.md

@@ -6,6 +6,7 @@ services:
       - .env
     depends_on:
       - db
+      - redis
     ports:
       - "8000:8000"
     networks:
@@ -16,6 +17,12 @@ services:
       - .env
     ports:
       - "5433:5432"
+    networks:
+      - wea-net
+  redis:
+    image: redis:8.2.1-bookworm
+    ports:
+      - "6379:6379"
     networks:
       - wea-net
 

@@ -23,7 +23,12 @@ services:
     container_name: wea-db-dev
     volumes:
       - wea-db-data-dev:/var/lib/postgresql/data
+  redis:
+    container_name: wea-redis-dev
+    volumes:
+      - wea-redis-data-dev:/data
 
 volumes:
   app-venv-dev:
   wea-db-data-dev:
+  wea-redis-data-dev:

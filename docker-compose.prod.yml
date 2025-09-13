@@ -25,7 +25,14 @@ services:
     restart: always
     volumes:
       - wea-db-data-prod:/var/lib/postgresql/data
+  redis:
+    container_name: wea-redis-prod
+    restart: always
+    volumes:
+      - wea-redis-data-prod:/data
 
 volumes:
   wea-db-data-prod:
+    external: true
+  wea-redis-data-prod:
     external: true
