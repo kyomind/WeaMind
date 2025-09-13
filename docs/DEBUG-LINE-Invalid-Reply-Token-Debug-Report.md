@@ -10,6 +10,7 @@
 - 錯誤集中於 LINE 回覆階段 `reply_message`（函式：`send_text_response`），HTTP 400：`{"message":"Invalid reply token"}`。
 - 日誌呈現「短時間連續數次」+「約 1 分鐘後再出現一次」之節奏，且同時段伴隨多筆 `POST /line/webhook 200`。
 - 使用者已停止操作，但仍定期出現新錯誤。
+- 部署背景：vm 主機位於德國，與台灣平均延遲約 800ms(和LINE server的延遲不確定)，這可能增加了 webhook 快速回 `200` 的難度，進而提高 redelivery 與 `replyToken` 逾時/重用風險。
 
 結論（暫擬）：高度懷疑是 LINE 的「重送（Redelivery）」被我們再次回覆所致（同一 `replyToken` 第二次使用 → 400）。
 
@@ -38,6 +39,7 @@
 - 「短時間連發 + 約一分鐘後再現」非常貼近重送退避模式。
 - 同時段多筆 `POST /line/webhook 200`，顯示 LINE 確實再次送入事件（非本服務自行重試）。
 - 錯誤堆疊集中於回覆階段（`send_text_response`），符合「同一 `replyToken` 被第二次使用」的典型症狀。
+- 高延遲環境（平均 ~800ms）使 webhook 處理時間更接近 redelivery 觸發的臨界，若回覆路徑包含外部 I/O 或等待，將更易命中重送/逾時情境。
 
 ---
 
