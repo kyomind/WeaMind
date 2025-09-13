@@ -33,6 +33,7 @@ from linebot.v3.webhooks import (
 
 from app.core.config import settings
 from app.core.database import get_session
+from app.core.processing_lock import processing_lock_service
 from app.user.service import (
     create_user_if_not_exists,
     deactivate_user,
@@ -350,6 +351,41 @@ def send_liff_location_setting_response(reply_token: str | None) -> None:
 # PostBack Event Handlers
 
 
+def should_use_processing_lock(postback_data: dict[str, str]) -> bool:
+    """
+    Determine if a PostBack operation requires processing lock.
+
+    Only 6 types of PostBack operations exist in Rich Menu:
+    1. action=weather&type=home - needs lock (DB + API query)
+    2. action=weather&type=office - needs lock (DB + API query)
+    3. action=weather&type=current - no lock (just shows map button)
+    4. action=recent_queries - needs lock (DB query)
+    5. action=settings&type=location - no lock (pure UI)
+    6. action=other&type=menu - no lock (pure UI)
+
+    Args:
+        postback_data: Parsed PostBack data
+
+    Returns:
+        bool: True if the operation requires lock, False otherwise
+    """
+    action = postback_data.get("action")
+
+    if action == "weather":
+        # Only home/office weather queries need lock (actual API calls)
+        # current location doesn't need lock (just shows map button)
+        return postback_data.get("type") in ["home", "office"]
+    elif action == "recent_queries":
+        # Database query operation needs lock
+        return True
+    elif action in ["settings", "other"]:
+        # Pure UI operations don't need lock
+        return False
+    else:
+        # This should not happen with current Rich Menu design
+        return False
+
+
 def parse_postback_data(data: str) -> dict[str, str]:
     """
     Parse PostBack data string into dictionary.
@@ -393,23 +429,47 @@ def handle_postback_event(event: PostbackEvent) -> None:
             logger.warning("PostBack event without user_id")
             return
 
-        # Route to appropriate handler
-        if postback_data.get("action") == "weather":  # include 3 types: home, office, current
-            handle_weather_postback(event, user_id, postback_data)
-        elif postback_data.get("action") == "settings":
-            handle_settings_postback(event, postback_data)
-        elif postback_data.get("action") == "recent_queries":
-            handle_recent_queries_postback(event)
-        elif postback_data.get("action") == "other":
-            handle_other_postback(event, postback_data)
+        # Selective processing lock based on operation type
+        needs_lock = should_use_processing_lock(postback_data)
+        lock_key = None
+
+        if needs_lock and hasattr(event, "source") and event.source:
+            lock_key = processing_lock_service.build_actor_key(event.source)
+
+        if lock_key and settings.PROCESSING_LOCK_ENABLED:
+            if not processing_lock_service.try_acquire_lock(
+                lock_key, settings.PROCESSING_LOCK_TIMEOUT_SECONDS
+            ):
+                send_text_response(event.reply_token, "⏳ 正在為您查詢天氣，請稍候...")
+                return
+
+            try:
+                _dispatch_postback(event, user_id, postback_data)
+            finally:
+                processing_lock_service.release_lock(lock_key)
         else:
-            logger.warning(f"Unknown PostBack action: {postback_data}")
-            send_error_response(event.reply_token, "未知的操作")
+            _dispatch_postback(event, user_id, postback_data)
 
     except Exception:
         logger.exception("Error handling PostBack event")
         if event.reply_token:
             send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
+
+
+def _dispatch_postback(event: PostbackEvent, user_id: str, postback_data: dict[str, str]) -> None:
+    """Dispatch PostBack events to appropriate handlers based on action type."""
+    # Route to appropriate handler
+    if postback_data.get("action") == "weather":  # include 3 types: home, office, current
+        handle_weather_postback(event, user_id, postback_data)
+    elif postback_data.get("action") == "settings":
+        handle_settings_postback(event, postback_data)
+    elif postback_data.get("action") == "recent_queries":
+        handle_recent_queries_postback(event)
+    elif postback_data.get("action") == "other":
+        handle_other_postback(event, postback_data)
+    else:
+        logger.warning(f"Unknown PostBack action: {postback_data}")
+        send_error_response(event.reply_token, "未知的操作")
 
 
 def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, str]) -> None:
