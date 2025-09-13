@@ -18,6 +18,7 @@ from app.line.service import (
     send_location_not_set_response,
     send_other_menu_quick_reply,
     send_text_response,
+    should_use_processing_lock,
 )
 from app.user.models import User
 from app.weather.models import Location
@@ -52,6 +53,31 @@ class TestPostBackEventHandlers:
         with patch("app.line.service.parse_qs", side_effect=Exception("Parse error")):
             result = parse_postback_data("action=weather&type=home")
             assert result == {}
+
+    def test_should_use_processing_lock_weather_actions(self) -> None:
+        """Test selective lock for weather PostBack actions."""
+        # Should use lock for home/office weather (actual queries)
+        assert should_use_processing_lock({"action": "weather", "type": "home"}) is True
+        assert should_use_processing_lock({"action": "weather", "type": "office"}) is True
+
+        # Should NOT use lock for current location (just shows map button)
+        assert should_use_processing_lock({"action": "weather", "type": "current"}) is False
+
+    def test_should_use_processing_lock_other_actions(self) -> None:
+        """Test selective lock for non-weather PostBack actions."""
+        # Should use lock for recent queries (database query)
+        assert should_use_processing_lock({"action": "recent_queries"}) is True
+
+        # Should NOT use lock for UI-only operations
+        assert should_use_processing_lock({"action": "settings", "type": "location"}) is False
+        assert should_use_processing_lock({"action": "other", "type": "menu"}) is False
+        assert should_use_processing_lock({"action": "other", "type": "announcements"}) is False
+
+    def test_should_use_processing_lock_unknown_actions(self) -> None:
+        """Test selective lock for unknown PostBack actions."""
+        # Should NOT use lock for unknown actions (not conservative anymore)
+        assert should_use_processing_lock({"action": "unknown"}) is False
+        assert should_use_processing_lock({}) is False
 
     def test_handle_postback_event_no_reply_token(self) -> None:
         """Test PostBack event without reply token."""
