@@ -72,7 +72,7 @@ async def line_webhook(
     def _process_webhook(body_text: str, signature: str) -> None:
         try:
             webhook_handler.handle(body_text, signature)
-            logger.info("LINE webhook processed successfully (background)")
+            logger.info("LINE webhook completed")
         except InvalidSignatureError:
             # Should not happen since we verified already, but keep for safety
             logger.warning("Background processing failed due to invalid signature")
