@@ -434,7 +434,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
         lock_key = None
 
         if needs_lock and hasattr(event, "source") and event.source:
-            lock_key = processing_lock_service.build_actor_key(event.source)
+            lock_key = processing_lock_service.build_lock_key(event.source)
 
         if lock_key and settings.PROCESSING_LOCK_ENABLED:
             if not processing_lock_service.try_acquire_lock(lock_key):

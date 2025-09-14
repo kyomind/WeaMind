@@ -156,18 +156,18 @@ class TestProcessingLockService:
         assert result is True  # Fail open
         assert "Failed to acquire processing lock, allowing processing" in caplog.text
 
-    def test_build_actor_key_success(self) -> None:
-        """Test successful actor key building."""
+    def test_build_lock_key_success(self) -> None:
+        """Test successful lock key building."""
         mock_source = Mock()
         mock_source.user_id = "U12345"
 
         service = ProcessingLockService()
-        result = service.build_actor_key(mock_source)
+        result = service.build_lock_key(mock_source)
 
         assert result == "processing:user:U12345"
 
-    def test_build_actor_key_no_user_id(self, caplog: pytest.LogCaptureFixture) -> None:
-        """Test actor key building when user_id is missing."""
+    def test_build_lock_key_no_user_id(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test lock key building when user_id is missing."""
         mock_source = Mock()
         del mock_source.user_id  # Simulate missing user_id
 
@@ -175,18 +175,18 @@ class TestProcessingLockService:
 
         # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
-            result = service.build_actor_key(mock_source)
+            result = service.build_lock_key(mock_source)
 
         assert result is None
         assert "No user_id found in event source" in caplog.text
 
-    def test_build_actor_key_attribute_error(self, caplog: pytest.LogCaptureFixture) -> None:
-        """Test actor key building with invalid source structure."""
+    def test_build_lock_key_attribute_error(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test lock key building with invalid source structure."""
         service = ProcessingLockService()
 
         # caplog: pytest fixture to capture log messages
         with caplog.at_level(logging.WARNING):
-            result = service.build_actor_key(None)
+            result = service.build_lock_key(None)
 
         assert result is None
         assert "No user_id found in event source" in caplog.text

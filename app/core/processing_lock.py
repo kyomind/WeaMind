@@ -94,7 +94,7 @@ class ProcessingLockService:
             # Fail-open strategy: continue processing despite Redis errors
             return True
 
-    def build_actor_key(self, source: "Source | None") -> str | None:
+    def build_lock_key(self, source: "Source | None") -> str | None:
         """
         Build processing lock key from LINE event source.
 
