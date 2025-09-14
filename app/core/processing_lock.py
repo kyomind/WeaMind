@@ -9,7 +9,7 @@ availability over duplicate prevention.
 
 Key features:
 - Atomic lock acquisition using Redis SET NX EX command
-- Fixed 1-second TTL for automatic lock expiration
+- Configurable TTL for automatic lock expiration
 - Graceful degradation when Redis is unavailable
 - Support for LINE Bot webhook event sources
 """
@@ -56,10 +56,10 @@ class ProcessingLockService:
 
     def try_acquire_lock(self, key: str) -> bool:
         """
-        Try to acquire a processing lock with fixed 1-second TTL.
+        Try to acquire a processing lock with configurable TTL.
 
-        Uses Redis SET key value EX 1 NX command for atomic operation.
-        The lock automatically expires after 1 second regardless of processing completion.
+        Uses Redis SET key value EX TTL NX command for atomic operation.
+        The lock automatically expires after the configured TTL regardless of processing completion.
         This provides better protection against rapid successive requests while maintaining
         simplicity by eliminating manual lock release requirements.
 
@@ -80,11 +80,12 @@ class ProcessingLockService:
             return True
 
         try:
-            # SET key 1 EX 1 NX - atomic operation with fixed 1-second TTL
+            # SET key 1 EX TTL NX - atomic operation with configurable TTL
             # Note: The value "1" is arbitrary - we only care about key existence
-            is_lock_acquired = redis_client.set(key, "1", ex=1, nx=True)
+            ttl_seconds = settings.PROCESSING_LOCK_TTL_SECONDS
+            is_lock_acquired = redis_client.set(key, "1", ex=ttl_seconds, nx=True)
             if is_lock_acquired:
-                logger.debug("Processing lock acquired with 1-second TTL")
+                logger.debug(f"Processing lock acquired with {ttl_seconds}-second TTL")
                 return True
             else:
                 logger.debug("Processing lock acquisition failed - another request is in progress")

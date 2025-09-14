@@ -290,4 +290,13 @@ processing_lock_duration_seconds = Histogram('processing_lock_duration_seconds')
 - **影響範圍**：更新了 `app/core/processing_lock.py`、`app/line/service.py` 和相關測試
 - **測試狀態**：43/43 通過（處理鎖 + LINE服務測試）
 
-這些優化提升了程式碼的可讀性和維護性，移除了不必要的配置複雜度。
+**3. 動態TTL配置 + 用戶訊息優化**：
+- ✅ 新增 `PROCESSING_LOCK_TTL_SECONDS` 環境變數（預設1秒）
+- ✅ 支援運營時動態調整TTL（1秒→2秒→3秒等）
+- ✅ 更新訊息為「⏳ 操作太過頻繁，請稍後再試...」
+- **設計考量**：避免暴露具體時間間隔，防止用戶鑽邊緣
+- **運營彈性**：高流量時可提高TTL，維護期間可延長限制
+- **影響範圍**：config.py、processing_lock.py、service.py、測試案例
+- **測試狀態**：12/12 通過（處理鎖測試）
+
+這些優化提升了程式碼的可讀性和維護性，移除了不必要的配置複雜度，同時提供了運營所需的動態控制能力。

@@ -36,6 +36,7 @@ class Settings(BaseSettings):
 
     # Processing lock settings
     PROCESSING_LOCK_ENABLED: bool = True
+    PROCESSING_LOCK_TTL_SECONDS: int = 1
     REDIS_URL: str | None = "redis://redis:6379/0"
 
     @property

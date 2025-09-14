@@ -94,6 +94,7 @@ class TestProcessingLockService:
     ) -> None:
         """Test successful lock acquisition."""
         mock_settings.PROCESSING_LOCK_ENABLED = True
+        mock_settings.PROCESSING_LOCK_TTL_SECONDS = 1
         mock_settings.REDIS_URL = "redis://localhost:6379/0"
 
         mock_redis = Mock()
@@ -117,6 +118,7 @@ class TestProcessingLockService:
     ) -> None:
         """Test lock acquisition when lock already exists."""
         mock_settings.PROCESSING_LOCK_ENABLED = True
+        mock_settings.PROCESSING_LOCK_TTL_SECONDS = 1
         mock_settings.REDIS_URL = "redis://localhost:6379/0"
 
         mock_redis = Mock()
@@ -140,6 +142,7 @@ class TestProcessingLockService:
     ) -> None:
         """Test lock acquisition with Redis operation error."""
         mock_settings.PROCESSING_LOCK_ENABLED = True
+        mock_settings.PROCESSING_LOCK_TTL_SECONDS = 1
         mock_settings.REDIS_URL = "redis://localhost:6379/0"
 
         mock_redis = Mock()
