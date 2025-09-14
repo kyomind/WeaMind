@@ -9,7 +9,7 @@ availability over duplicate prevention.
 
 Key features:
 - Atomic lock acquisition using Redis SET NX EX command
-- Automatic TTL-based lock expiration (configurable timeout)
+- Configurable TTL for automatic lock expiration
 - Graceful degradation when Redis is unavailable
 - Support for LINE Bot webhook event sources
 """
@@ -54,16 +54,17 @@ class ProcessingLockService:
 
         return self._redis_client
 
-    def try_acquire_lock(self, key: str, timeout_seconds: int) -> bool:
+    def try_acquire_lock(self, key: str) -> bool:
         """
-        Try to acquire a processing lock.
+        Try to acquire a processing lock with configurable TTL.
 
-        Uses Redis SET key value EX timeout NX command for atomic operation.
-        Returns True if lock was acquired, False if already locked.
+        Uses Redis SET key value EX TTL NX command for atomic operation.
+        The lock automatically expires after the configured TTL regardless of processing completion.
+        This provides better protection against rapid successive requests while maintaining
+        simplicity by eliminating manual lock release requirements.
 
         Args:
             key: The lock key to acquire
-            timeout_seconds: TTL for the lock in seconds
 
         Returns:
             bool: True if lock acquired, False if already locked or Redis unavailable
@@ -79,11 +80,12 @@ class ProcessingLockService:
             return True
 
         try:
-            # SET key 1 EX timeout NX - atomic operation
+            # SET key 1 EX TTL NX - atomic operation with configurable TTL
             # Note: The value "1" is arbitrary - we only care about key existence
-            is_lock_acquired = redis_client.set(key, "1", ex=timeout_seconds, nx=True)
+            ttl_seconds = settings.PROCESSING_LOCK_TTL_SECONDS
+            is_lock_acquired = redis_client.set(key, "1", ex=ttl_seconds, nx=True)
             if is_lock_acquired:
-                logger.debug("Processing lock acquired")
+                logger.debug(f"Processing lock acquired with {ttl_seconds}-second TTL")
                 return True
             else:
                 logger.debug("Processing lock acquisition failed - another request is in progress")
@@ -93,31 +95,7 @@ class ProcessingLockService:
             # Fail-open strategy: continue processing despite Redis errors
             return True
 
-    def release_lock(self, key: str) -> None:
-        """
-        Release a processing lock.
-
-        Best-effort operation - does not fail if key doesn't exist or Redis is unavailable.
-        TTL serves as a safety net if this method fails to execute.
-
-        Args:
-            key: The lock key to release
-        """
-        if not settings.PROCESSING_LOCK_ENABLED:
-            return
-
-        redis_client = self._get_redis_client()
-        if redis_client is None:
-            return
-
-        try:
-            redis_client.delete(key)
-            logger.debug("Processing lock released")
-        except (ConnectionError, RedisError) as e:
-            # Fail-open strategy: TTL will eventually expire the lock
-            logger.warning(f"Failed to release processing lock: {e}")
-
-    def build_actor_key(self, source: "Source | None") -> str | None:
+    def build_lock_key(self, source: "Source | None") -> str | None:
         """
         Build processing lock key from LINE event source.
 

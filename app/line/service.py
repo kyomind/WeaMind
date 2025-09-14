@@ -434,21 +434,14 @@ def handle_postback_event(event: PostbackEvent) -> None:
         lock_key = None
 
         if needs_lock and hasattr(event, "source") and event.source:
-            lock_key = processing_lock_service.build_actor_key(event.source)
+            lock_key = processing_lock_service.build_lock_key(event.source)
 
         if lock_key and settings.PROCESSING_LOCK_ENABLED:
-            if not processing_lock_service.try_acquire_lock(
-                lock_key, settings.PROCESSING_LOCK_TIMEOUT_SECONDS
-            ):
-                send_text_response(event.reply_token, "⏳ 正在為您查詢天氣，請稍候...")
+            if not processing_lock_service.try_acquire_lock(lock_key):
+                send_text_response(event.reply_token, "操作太過頻繁，請放慢腳步☕️")
                 return
 
-            try:
-                _dispatch_postback(event, user_id, postback_data)
-            finally:
-                processing_lock_service.release_lock(lock_key)
-        else:
-            _dispatch_postback(event, user_id, postback_data)
+        _dispatch_postback(event, user_id, postback_data)
 
     except Exception:
         logger.exception("Error handling PostBack event")
