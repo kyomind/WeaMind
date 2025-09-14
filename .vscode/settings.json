@@ -1,5 +1,11 @@
 {
     "cSpell.words": [
+        "ASGI",
+        "SETEX",
+        "SETNX",
+        "Subresource",
+        "Substack",
+        "Xinyi",
         "abstractmethod",
         "addopts",
         "ALGS",
@@ -91,7 +97,6 @@
         "Scrapy",
         "sdist",
         "SECP",
-        "SETEX",
         "softprops",
         "sonarcloud",
         "sonarqube",
@@ -101,9 +106,10 @@
         "spyderproject",
         "spyproject",
         "sqlalchemy",
+        "starlette",
+        "Starlette",
+        "slowapi",
         "staticfiles",
-        "Subresource",
-        "Substack",
         "tablename",
         "Taitung",
         "testpaths",
@@ -116,7 +122,6 @@
         "worktree",
         "worktrees",
         "xdist",
-        "Xinyi",
         "zoneinfo"
     ]
 }
