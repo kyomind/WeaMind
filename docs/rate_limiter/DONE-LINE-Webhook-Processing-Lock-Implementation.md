@@ -259,68 +259,6 @@ app:
 
 ## 測試與驗證
 
-### 測試覆蓋範圍
-- ✅ **單元測試** (16/16)：鎖機制、TTL 行為、錯誤處理、配置控制
-- ✅ **選擇性鎖測試** (3/3)：`should_use_processing_lock()` 函式的各種場景驗證
-- ✅ **整合測試** (221/221)：Redis 環境、網路連通、數據持久化
-- ✅ **端到端驗證**：連線測試、鎖操作、故障恢復
-
-### 測試工具與技術
-**日誌測試：使用 `caplog` fixture**
-- **用途**：驗證系統在各種情況下輸出正確的日誌訊息
-- **重要性**：確保監控、調試和運維需要的關鍵資訊都有記錄
-- **範例應用**：
-  ```python
-  def test_redis_connection_error(caplog: pytest.LogCaptureFixture) -> None:
-      # caplog: pytest 內建 fixture，用於捕獲日誌輸出
-      with caplog.at_level(logging.WARNING):
-          result = service._get_redis_client()
-
-      # 驗證錯誤情況下有適當的日誌記錄
-      assert "Failed to connect to Redis" in caplog.text
-  ```
-- **覆蓋場景**：
-  - Redis 連線失敗時的警告日誌
-  - 鎖取得/釋放的調試日誌
-  - 錯誤處理的詳細記錄
-  - 系統狀態變化的追蹤日誌
-
-**`caplog.text` 實際格式與使用**
-- **格式結構**：`LEVEL_NAME     logger_name:file_name:line_number message`
-- **實際內容範例**：
-  ```
-  INFO     demo:test_file.py:13 開始處理 Redis 連線
-  WARNING  demo:test_file.py:14 Redis 連線不穩定
-  ERROR    demo:test_file.py:15 無法取得處理鎖
-  ```
-- **原始字串格式**：所有日誌用 `\n` 分隔，最後包含 `\n`
-  ```
-  'INFO     demo:test_file.py:13 開始處理 Redis 連線\nWARNING  demo:test_file.py:14 Redis 連線不穩定\nERROR    demo:test_file.py:15 無法取得處理鎖\n'
-  ```
-- **多日誌測試技巧**：
-  ```python
-  def test_multiple_logs(caplog: pytest.LogCaptureFixture) -> None:
-      with caplog.at_level(logging.INFO):
-          function_with_multiple_logs()
-
-      # 檢查所有日誌都被捕獲
-      assert "開始處理" in caplog.text
-      assert "警告訊息" in caplog.text
-      assert "錯誤訊息" in caplog.text
-
-      # 檢查日誌數量
-      assert len(caplog.records) == 3
-
-      # 檢查特定順序
-      lines = caplog.text.strip().split('\n')
-      assert "開始處理" in lines[0]
-      assert "警告訊息" in lines[1]
-  ```
-- **重要特性**：
-  - 捕獲**所有**指定級別範圍內的日誌
-  - 保持日誌的時間順序
-  - 可同時檢查內容、數量、級別、順序
-
 ### 關鍵驗證流程
 ```python
 def test_lock_mechanism():
@@ -336,7 +274,7 @@ def test_lock_mechanism():
     acquired_third = processing_lock_service.try_acquire_lock(key, 5)  # 成功
 ```
 
-### 3. 監控與可觀測性
+### 監控與可觀測性
 
 **當前階段：日誌記錄**
 - 鎖取得/釋放狀態記錄
@@ -354,14 +292,15 @@ processing_duration_seconds = Histogram(
 )
 ```
 
-### 4. 擴展性設計
+### 擴展性設計
 - **多實例支援**：Redis 共享狀態
 - **水平擴展**：無狀態應用架構
 - **高可用性**：故障時優雅降級 (fail-open)
 - **未來擴展**：Redis Cluster、智慧超時、細粒度鎖控
 
-## 核心設計原則總結
+## 實作成果總結
 
+### 核心設計原則
 1. **風險導向設計**：基於實際使用情境分析，只對真正容易重複的操作加鎖
 2. **最小化影響**：不改變核心業務邏輯，精簡鎖機制實作
 3. **故障恢復**：Redis 失敗時不影響主要功能
@@ -369,17 +308,6 @@ processing_duration_seconds = Histogram(
 5. **程式碼可維護性**：避免不必要的程式碼重複，提升可讀性
 6. **運維友善**：詳細日誌、自動超時、無需手動介入
 7. **擴展性設計**：支援多實例部署和未來功能擴展
-
-## 驗證結果
-
-- ✅ 單元測試：16/16 通過
-- ✅ 選擇性鎖測試：3/3 通過
-- ✅ 整合測試：221/221 通過
-- ✅ 真實環境驗證：Redis 連線、鎖操作、數據持久化全部正常
-- ✅ 效能測試：鎖操作延遲 < 1ms
-- ✅ 故障測試：Redis 停機時應用正常運作
-
-## 實作成果總結
 
 ### 核心技術成就
 1. **Redis 分散式鎖實作**：原子操作 `SET NX EX` 確保競爭條件安全
@@ -423,14 +351,13 @@ def build_actor_key(self, source: "Source | None") -> str | None:
     # 字串標註避免執行時導入錯誤
 ```
 
-### 優化效益
-1. **降低 Redis 負擔**：減少約 2/3 的 Redis 操作
-2. **程式碼簡化**：移除 30-40 行重複程式碼
-3. **提升可維護性**：避免無意義的函式拆分
-4. **精確風險控制**：只對真正容易重複的操作加鎖
-5. **改善可讀性**：業務邏輯更清晰
+### 優化效益與驗證結果
+**效益達成：**
+- 降低 Redis 負擔 2/3，移除 30-40 行重複程式碼
+- 精確風險控制，只對真正容易重複的操作加鎖
+- 提升可維護性和可讀性
 
-### 驗證結果
+**驗證結果：**
 - ✅ 單元測試：16/16 通過
 - ✅ 選擇性鎖測試：3/3 通過
 - ✅ 整合測試：221/221 通過

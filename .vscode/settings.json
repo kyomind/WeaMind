@@ -1,14 +1,9 @@
 {
     "cSpell.words": [
-        "ASGI",
-        "SETEX",
-        "SETNX",
-        "Subresource",
-        "Substack",
-        "Xinyi",
         "abstractmethod",
         "addopts",
         "ALGS",
+        "ASGI",
         "asyncio",
         "autobuild",
         "autoflush",
@@ -57,6 +52,7 @@
         "localtime",
         "Mailchimp",
         "mkdocs",
+        "msecs",
         "Mypy",
         "nopad",
         "noqa",
@@ -97,6 +93,9 @@
         "Scrapy",
         "sdist",
         "SECP",
+        "SETEX",
+        "SETNX",
+        "slowapi",
         "softprops",
         "sonarcloud",
         "sonarqube",
@@ -108,8 +107,9 @@
         "sqlalchemy",
         "starlette",
         "Starlette",
-        "slowapi",
         "staticfiles",
+        "Subresource",
+        "Substack",
         "tablename",
         "Taitung",
         "testpaths",
@@ -122,6 +122,7 @@
         "worktree",
         "worktrees",
         "xdist",
+        "Xinyi",
         "zoneinfo"
     ]
 }
