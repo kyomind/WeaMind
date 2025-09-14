@@ -12,7 +12,7 @@ def setup_logging() -> None:
     if settings.DEBUG:
         log_level = logging.DEBUG
     elif settings.is_production:
-        log_level = logging.WARNING
+        log_level = logging.DEBUG
     else:
         log_level = logging.INFO
 
