@@ -106,6 +106,6 @@ class TestSetupLogging:
         # Verify basicConfig was called
         mock_logging.basicConfig.assert_called_once()
 
-        # Get the call args to verify WARNING level was used
+        # Get the call args to verify DEBUG level was used
         call_args = mock_logging.basicConfig.call_args
-        assert call_args[1]["level"] == 30  # WARNING level
+        assert call_args[1]["level"] == 10  # DEBUG level
