@@ -9,7 +9,7 @@ availability over duplicate prevention.
 
 Key features:
 - Atomic lock acquisition using Redis SET NX EX command
-- Automatic TTL-based lock expiration (configurable timeout)
+- Fixed 1-second TTL for automatic lock expiration
 - Graceful degradation when Redis is unavailable
 - Support for LINE Bot webhook event sources
 """
