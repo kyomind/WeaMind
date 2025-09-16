@@ -63,19 +63,60 @@ CREATE TABLE task (
 
 ### 3.2 Alembic 遷移流程
 
+**重要**: 需要建立**兩個**獨立的 migration 檔案，以確保權限設定正確。
+
+#### Migration 1: 建立 `task` 表結構
 1.  **確保 Model 已被 `env.py` 引用**: 確認 Alembic 的 `env.py` 設定能夠偵測到 `app.weather.models` 中的新 `Task` model。
 2.  **產生遷移檔**: 執行 `uv run alembic revision --autogenerate -m "Add task table for wea-data monitoring"`。
-3.  **執行遷移**: 執行 `uv run alembic upgrade head`。
+
+#### Migration 2: 設定資料庫權限
+3.  **產生權限遷移檔**: 執行 `uv run alembic revision -m "Setup task table permissions"`。
+4.  **手動編輯權限設定**: 在第二個 migration 中加入以下權限設定：
+    ```sql
+    -- 賦予 wea_data 完整權限 (ETL 服務需要寫入監控資料)
+    GRANT SELECT, INSERT, UPDATE, DELETE ON task TO wea_data;
+    GRANT USAGE, SELECT ON SEQUENCE task_id_seq TO wea_data;
+
+    -- 限制 wea_bot 只有讀取權限 (主應用只需要查看監控資料)
+    REVOKE INSERT, UPDATE, DELETE ON task FROM wea_bot;
+    GRANT SELECT ON task TO wea_bot;
+    ```
+
+#### 執行遷移
+5.  **執行遷移**: 執行 `uv run alembic upgrade head`。
 
 ---
 
-## 4. Memory Hooks for AI Agent
+## 4. 權限設計說明
+
+### 4.1 目前資料庫帳號概況
+- **`wea_bot` (`POSTGRES_USER`)**: 資料庫主要擁有者，WeaMind 主應用使用
+- **`wea_data` (`WEA_DATA_USER`)**: ETL 服務專用帳號，負責資料抓取和更新
+
+### 4.2 權限設計原則
+根據**最小權限原則**和**責任分離**設計：
+
+| 表格       | wea_bot 權限     | wea_data 權限                  | 說明                   |
+| ---------- | ---------------- | ------------------------------ | ---------------------- |
+| `user`     | 完整權限 (owner) | 無權限                         | 用戶管理，僅主應用需要 |
+| `location` | 完整權限 (owner) | SELECT, INSERT, UPDATE         | 地點資料，ETL 需要維護 |
+| `weather`  | 僅 SELECT        | SELECT, INSERT, UPDATE, DELETE | 天氣資料，ETL 負責維護 |
+| `task`     | 僅 SELECT        | SELECT, INSERT, UPDATE, DELETE | 監控資料，ETL 負責記錄 |
+
+### 4.3 `task` 表權限說明
+- **`wea_data` 完整權限**: ETL 服務需要記錄任務狀態、更新結果、清理舊記錄
+- **`wea_bot` 僅讀取**: 主應用只需要查看監控資料，用於管理介面或偵錯
+
+---
+
+## 5. Memory Hooks for AI Agent
 
 - **核心提醒 (Memento)**:
     - **職責單一**: 這個 `task` 表的唯一目的是「監控」，`wea-data` 服務是唯一的寫入者。WeaMind 主應用目前**只需定義它、建立它**，不需要任何讀取或寫入 `task` 表的業務邏輯。
     - **設計已定**: `Task` model 的欄位設計是最終版本，請勿修改、增加或刪減任何欄位，以免破壞與 `wea-data` 的契約。
     - **前置作業**: 這是 `wea-data` 服務能正確運作的**前置依賴**。沒有這個表，ETL 流程將因無法記錄日誌而失敗。
     - **無關功能**: 此表與 LINE Bot 的天氣查詢功能**完全無關**。
+    - **權限設計**: 必須建立兩個 migration - 第一個建立表結構，第二個設定權限。`wea_data` 需要完整權限，`wea_bot` 限制為只讀。
 
 ---
 **相關文件**:
