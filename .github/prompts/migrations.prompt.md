@@ -1,7 +1,3 @@
----
-applyTo: '**/models.py'
----
-
 # Migrations Instructions
 
 ## Overview
