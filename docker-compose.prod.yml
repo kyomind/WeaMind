@@ -28,6 +28,8 @@ services:
   redis:
     container_name: wea-redis-prod
     restart: always
+    ports:
+      - "6379:6379"
     volumes:
       - wea-redis-data-prod:/data
 
