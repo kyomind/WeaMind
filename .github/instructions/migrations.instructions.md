@@ -19,9 +19,9 @@ When processing migrations, pay special attention to the following commands in t
 
 ## Critical Requirements
 
-### When Creating New Tables (SQLAlchemy Models)
-1. **ALWAYS use the `revision` command**: When creating new SQLAlchemy base models (i.e., adding new tables), you MUST use the `revision` command from the Makefile. Never manually create database migration files.
-2. **Rename migration files for readability**: After using the `revision` command, you MUST rename the generated migration file to make it more readable and descriptive. The default filename is often generic and should be improved for better maintainability.
+### When Generating Database Migration Files
+1. **ALWAYS use the `revision` command**: For any action that generates a new database migration file (e.g., creating, modifying, or deleting SQLAlchemy models/tables), use the `revision` command from the Makefile to generate migration files.
+2. **Rename migration files for readability**: After using the `revision` command, rename the generated migration file to a descriptive and readable name to improve maintainability.
 
 ## Best Practices
 1. Before modifying or creating migration files, understand the existing migration workflow
