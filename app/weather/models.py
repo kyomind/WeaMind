@@ -3,6 +3,7 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -11,6 +12,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -85,3 +87,21 @@ class Weather(Base):
             name="unique_location_time_fetched",
         ),
     )
+
+
+class Task(Base):
+    """
+    Database model for monitoring wea-data ETL service execution.
+    Records task status, success/failure, and processing statistics.
+    """
+
+    __tablename__ = "task"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    county: Mapped[str] = mapped_column(String(10), nullable=False)
+    start_time: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    end_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    is_success: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    attempt_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    records_processed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
