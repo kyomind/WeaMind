@@ -438,7 +438,7 @@ def handle_postback_event(event: PostbackEvent) -> None:
 
         if lock_key and settings.PROCESSING_LOCK_ENABLED:
             if not processing_lock_service.try_acquire_lock(lock_key):
-                send_text_response(event.reply_token, "操作太過頻繁，請放慢腳步☕️")
+                send_text_response(event.reply_token, "操作太過頻繁，請放慢腳步 ☕️")
                 return
 
         _dispatch_postback(event, user_id, postback_data)
