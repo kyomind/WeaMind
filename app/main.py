@@ -7,8 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.admin_divisions import initialize_admin_divisions
-from app.core.config import settings
-from app.core.log_config import setup_logging
+from app.core.config import settings, setup_logging
 from app.line.router import router as line_router
 from app.user.router import router as user_router
 

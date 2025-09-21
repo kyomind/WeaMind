@@ -1,16 +1,16 @@
-"""Tests for app.core.log_config module."""
+"""Tests for app.core.config module's logging functionality."""
 
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from app.core.log_config import setup_logging
+from app.core.config import setup_logging
 
 
 class TestSetupLogging:
     """Test setup_logging function by mocking all logging components."""
 
-    @patch("app.core.logging.settings")
-    @patch("app.core.logging.logging")
+    @patch("app.core.config.settings")
+    @patch("app.core.config.logging")
     def test_setup_logging_function_executes_without_errors(
         self, mock_logging: Mock, mock_settings: Mock
     ) -> None:
@@ -46,8 +46,8 @@ class TestSetupLogging:
         mock_logging.FileHandler.assert_called_once()
         mock_logging.StreamHandler.assert_called_once()
 
-    @patch("app.core.logging.settings")
-    @patch("app.core.logging.logging")
+    @patch("app.core.config.settings")
+    @patch("app.core.config.logging")
     def test_setup_logging_development_mode(self, mock_logging: Mock, mock_settings: Mock) -> None:
         """Test that setup_logging handles development mode correctly."""
         # Mock settings for development
@@ -78,8 +78,8 @@ class TestSetupLogging:
         call_args = mock_logging.basicConfig.call_args
         assert call_args[1]["level"] == 10  # DEBUG level
 
-    @patch("app.core.logging.settings")
-    @patch("app.core.logging.logging")
+    @patch("app.core.config.settings")
+    @patch("app.core.config.logging")
     def test_setup_logging_production_mode(self, mock_logging: Mock, mock_settings: Mock) -> None:
         """Test that setup_logging handles production mode correctly."""
         # Mock settings for production
