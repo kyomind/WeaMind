@@ -64,12 +64,6 @@ class Weather(Base):
     min_temperature: Mapped[int | None] = mapped_column(Integer, nullable=True)
     max_temperature: Mapped[int | None] = mapped_column(Integer, nullable=True)
     raw_description: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC))
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=lambda: datetime.now(UTC),
-        onupdate=lambda: datetime.now(UTC),
-    )
 
     # Relationship to Location model
     location: Mapped["Location"] = relationship(back_populates="forecasts")
