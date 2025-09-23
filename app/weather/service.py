@@ -394,11 +394,8 @@ class WeatherService:
             end_hour = local_end.strftime("%H")
             time_range = f"{start_hour}-{end_hour}"
 
-            # Format temperature
-            if weather.min_temperature == weather.max_temperature:
-                temp_str = f"{weather.min_temperature}°"
-            else:
-                temp_str = f"{weather.min_temperature}-{weather.max_temperature}°"
+            # Format temperature - only show max temperature
+            temp_str = f"{weather.max_temperature}°"
 
             # Format precipitation
             if weather.precipitation_probability is not None:
