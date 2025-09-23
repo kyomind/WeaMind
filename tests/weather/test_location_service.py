@@ -373,7 +373,7 @@ class TestWeatherService:
         result = WeatherService.handle_location_weather_query(session, 25.0340, 121.5660)
 
         # Should return formatted weather data
-        assert "🏯 臺北市中正區" in result
+        assert "🗺️ 臺北市中正區" in result
         assert "⛅" in result
         assert "🌡️" in result
 
@@ -424,7 +424,7 @@ class TestWeatherService:
         result = WeatherService.handle_text_weather_query(session, "臺北")
 
         # Should return formatted weather data
-        assert "🏯 臺北市中正區" in result
+        assert "🗺️ 臺北市中正區" in result
         assert "⛅" in result
         assert "🌡️" in result
 
@@ -572,7 +572,7 @@ class TestWeatherServiceAddressIntegration:
         )
 
         # Should return formatted weather data
-        assert "🏯 臺北市信義區" in result
+        assert "🗺️ 臺北市信義區" in result
         assert "⛅" in result
         assert "🌡️" in result
 
@@ -607,7 +607,7 @@ class TestWeatherServiceAddressIntegration:
         )
 
         # Should return formatted weather data for 永和區
-        assert "🏯 新北市永和區" in result
+        assert "🗺️ 新北市永和區" in result
         assert "⛅" in result
         assert "🌡️" in result
 
@@ -636,7 +636,7 @@ class TestWeatherServiceAddressIntegration:
         )
 
         # Should return formatted weather data
-        assert "🏯 臺北市信義區" in result
+        assert "🗺️ 臺北市信義區" in result
         assert "⛅" in result
         assert "🌡️" in result
 

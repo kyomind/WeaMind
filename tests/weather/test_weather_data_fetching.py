@@ -56,8 +56,8 @@ class TestWeatherDataFetching:
         # Test the query
         result = WeatherService.get_weather_forecast_by_location(session, location.id)
 
-        # Should return 8 records (excluding the past one)
-        assert len(result) == 8
+        # Should return 5 records (excluding the past one)
+        assert len(result) == 5
         assert all(weather.location_id == location.id for weather in result)
         assert result[0].start_time < result[-1].start_time  # Ordered by time
 
@@ -100,8 +100,7 @@ class TestWeatherDataFetching:
         formatted_response = WeatherService.format_weather_response(location, weather_records)
 
         # Check basic structure
-        assert "🏯 臺北市中正區" in formatted_response
-        assert "📅" in formatted_response  # Date header
+        assert "🗺️ 臺北市中正區" in formatted_response
         assert "⛅" in formatted_response  # Weather emoji
         assert "🌡️" in formatted_response  # Temperature emoji
         assert "💧20%" in formatted_response  # Precipitation
@@ -148,7 +147,7 @@ class TestWeatherDataFetching:
         result = WeatherService.handle_text_weather_query(session, "臺北市中正區")
 
         # Should return formatted weather data
-        assert "🏯 臺北市中正區" in result
+        assert "🗺️ 臺北市中正區" in result
         assert "⛅" in result
         assert "🌡️" in result
         assert not result.startswith("找到了")  # New behavior - direct weather data

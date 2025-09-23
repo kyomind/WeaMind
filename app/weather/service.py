@@ -319,17 +319,17 @@ class WeatherService:
     @staticmethod
     def get_weather_forecast_by_location(session: Session, location_id: int) -> list[Weather]:
         """
-        Get weather forecast using sliding window logic to ensure consistent 24-hour forecast.
+        Get weather forecast using sliding window logic to ensure consistent 15-hour forecast.
 
         This function implements the sliding window strategy to guarantee users always see
-        a complete 24-hour (8 time periods) forecast, regardless of query time.
+        a complete 15-hour (5 time periods) forecast, regardless of query time.
 
         Args:
             session: Database session
             location_id: ID of the location to query weather for
 
         Returns:
-            list[Weather]: List of 8 Weather objects representing 24-hour forecast,
+            list[Weather]: List of 5 Weather objects representing 15-hour forecast,
                           ordered by start_time. Empty list if no data found.
         """
         try:
@@ -352,7 +352,7 @@ class WeatherService:
                     Weather.fetched_at == latest_fetched_subquery,
                 )
                 .order_by(Weather.start_time)
-                .limit(8)
+                .limit(5)
                 .all()
             )
 
@@ -373,7 +373,7 @@ class WeatherService:
 
         Args:
             location: Location object with name information
-            weather_data: List of Weather objects (should be 8 items for 24 hours)
+            weather_data: List of Weather objects (should be 5 items for 15 hours)
 
         Returns:
             str: Formatted weather message for LINE Bot
@@ -381,32 +381,13 @@ class WeatherService:
         if not weather_data:
             return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
 
-        lines = [f"🏯 {location.full_name}"]
-        current_date = None
+        lines = [f"🗺️ {location.full_name}"]
 
         for weather in weather_data:
             # Convert UTC to Taiwan time (UTC+8)
             taiwan_tz = timezone(timedelta(hours=8))
             local_start = weather.start_time.replace(tzinfo=UTC).astimezone(taiwan_tz)
             local_end = weather.end_time.replace(tzinfo=UTC).astimezone(taiwan_tz)
-
-            # Add date header if date changes
-            date_str = local_start.strftime("%m/%d")
-            weekday_map = {
-                0: "星期一",
-                1: "星期二",
-                2: "星期三",
-                3: "星期四",
-                4: "星期五",
-                5: "星期六",
-                6: "星期日",
-            }
-            weekday = weekday_map[local_start.weekday()]
-            date_header = f"📅 {date_str} {weekday}"
-
-            if current_date != date_str:
-                lines.append(date_header)
-                current_date = date_str
 
             # Format time range
             start_hour = local_start.strftime("%H")
@@ -423,11 +404,11 @@ class WeatherService:
             if weather.precipitation_probability is not None:
                 precip_str = f"💧{weather.precipitation_probability}%"
             else:
-                precip_str = ""
+                precip_str = "💧0%"
 
-            # Combine line
+            # Combine line - new compact format
             emoji = weather.weather_emoji or "⛅"
-            weather_line = f"{emoji} {time_range}：🌡️ {temp_str} {precip_str}"
+            weather_line = f"{emoji} {time_range} 🌡️{temp_str}{precip_str}"
             lines.append(weather_line)
 
         return "\n".join(lines)
