@@ -26,21 +26,6 @@
 - **檔案位置**: `app/weather/service.py`
 - **核心 SQL**: 必須嚴格遵循 `weather-query-logic.md` 中定義的查詢策略。這是確保使用者體驗一致性的關鍵。
 
-```sql
--- 這是 SQL 邏輯示意，請使用 SQLAlchemy Core 或 ORM 實作
-SELECT * FROM weather
-WHERE
-    location_id = :location_id
-    AND end_time > NOW()  -- 關鍵 1: 過濾掉已過期的預報時段
-    AND fetched_at >= (   -- 關鍵 2: 確保只從最新的一批資料中選取
-        SELECT MAX(fetched_at) - INTERVAL '5 minutes'
-        FROM weather
-        WHERE location_id = :location_id
-    )
-ORDER BY start_time      -- 關鍵 3: 按時間順序排列
-LIMIT 8;                 -- 關鍵 4: 只取未來 24 小時 (8 * 3h)
-```
-
 ### 3.2 服務層實作
 
 - 建立一個函式，接收 `location_id` 作為參數。
@@ -64,9 +49,3 @@ LIMIT 8;                 -- 關鍵 4: 只取未來 24 小時 (8 * 3h)
     - **滑動窗口是唯一解**: 「滑動窗口」查詢是達成此目標的唯一指定方法，請勿嘗試其他複雜的 `CASE` 或 `OFFSET` 邏輯。`end_time > NOW()` 是實現滑動的關鍵。
     - **`fetched_at` 的重要性**: `fetched_at` 搭配 `INTERVAL '5 minutes'` 的過濾條件是為了隔離出「同一次更新」的所有資料，避免新舊資料混雜。這是確保資料一致性的命脈。
     - **假設資料已存在**: 開發此功能時，請**假設 `wea-data` 服務已經成功運作**，且 `weather` 表中有正確的資料。你的任務是專注於「如何正確地查詢和呈現」。
-    - **輸出格式**: 最終呈現給使用者的文字格式，請參考 `weather-query-logic.md` 中的範例，特別是溫度的顯示方式（`27～28°C` vs `26°C`）。
-
----
-**相關文件**:
-- `prd/wea_data/weather-query-logic.md` (最重要的核心邏輯文件)
-- `prd/wea_data/MEMO-for-next-conversation.md` (高階決策)
