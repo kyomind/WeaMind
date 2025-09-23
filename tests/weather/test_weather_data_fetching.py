@@ -101,6 +101,7 @@ class TestWeatherDataFetching:
 
         # Check basic structure
         assert "🗺️ 臺北市中正區" in formatted_response
+        assert "\n\n" in formatted_response  # Contains empty line after location
         assert "⛅" in formatted_response  # Weather emoji
         assert "🌡️" in formatted_response  # Temperature emoji
         assert "💧20%" in formatted_response  # Precipitation
