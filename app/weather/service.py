@@ -381,7 +381,7 @@ class WeatherService:
         if not weather_data:
             return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
 
-        lines = [f"🗺️ {location.full_name}", ""]  # 添加空行
+        lines = [f"🗺️ {location.full_name}", ""]
 
         for weather in weather_data:
             # Convert UTC to Taiwan time (UTC+8)
