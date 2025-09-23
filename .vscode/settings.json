@@ -67,6 +67,7 @@
         "Pipfile",
         "poolclass",
         "postback",
+        "precip",
         "Pseudonymization",
         "pycache",
         "Pydantic",
