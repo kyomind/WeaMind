@@ -514,6 +514,7 @@ class TestLocationMessageHandler:
             patch("app.line.service.get_session") as mock_get_session,
             patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
             patch("app.line.service.LocationService.find_nearest_location") as mock_find,
+            patch("app.line.service.LocationService.extract_location_from_address") as mock_extract,
             patch("app.line.service.get_user_by_line_id") as mock_get_user,
             patch("app.line.service.record_user_query") as mock_record,
             patch("app.line.service.send_text_response") as mock_send,
@@ -525,10 +526,15 @@ class TestLocationMessageHandler:
             # Mock successful location query
             mock_weather.return_value = "找到了 臺北市信義區，正在查詢天氣..."
 
-            # Mock location found for recording
-            mock_location = Mock()
-            mock_location.id = 123
-            mock_find.return_value = mock_location
+            # Mock address location found for recording (address-first strategy)
+            mock_address_location = Mock()
+            mock_address_location.id = 123
+            mock_extract.return_value = mock_address_location
+
+            # Mock GPS location (fallback, not used when address succeeds)
+            mock_gps_location = Mock()
+            mock_gps_location.id = 456
+            mock_find.return_value = mock_gps_location
 
             # Mock user for recording
             mock_user = Mock()
@@ -545,7 +551,7 @@ class TestLocationMessageHandler:
                 mock_session, 25.0330, 121.5654, "台北市信義區信義路五段7號"
             )
 
-            # Should record query for user history
+            # Should record query for user history using address location (address-first strategy)
             mock_record.assert_called_once_with(mock_session, 456, 123)
 
             # Should send response

@@ -86,9 +86,10 @@ def handle_message_event(event: MessageEvent) -> None:
         # Check if Quick Reply is needed (2-3 locations found)
         needs_quick_reply = 2 <= len(locations) <= 3
 
-        # Record successful location queries for history
-        # This includes both direct single matches and Quick Reply selections
+        # For single location match, get actual weather data
         if len(locations) == 1:
+            response_message = WeatherService.handle_text_weather_query(session, message.text)
+
             # Get user for recording query history
             user_id = getattr(event.source, "user_id", None) if event.source else None
             if user_id:
@@ -193,11 +194,15 @@ def handle_location_message_event(event: MessageEvent) -> None:
         # Record query for user history if location was found in Taiwan
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if user_id:
-            # Try GPS location first
-            location = LocationService.find_nearest_location(session, lat, lon)
-            # If no GPS result but we have address, try address location
-            if not location and address:
+            # Use same logic as WeatherService.handle_location_weather_query
+            # Step 1: Address-first strategy (if available)
+            location = None
+            if address:
                 location = LocationService.extract_location_from_address(session, address)
+
+            # Step 2: GPS fallback (if address failed or not available)
+            if not location:
+                location = LocationService.find_nearest_location(session, lat, lon)
 
             if location:
                 user = get_user_by_line_id(session, user_id)
@@ -516,7 +521,7 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
 
         # Query weather using existing logic
         location_text = location.full_name
-        _, response_message = LocationService.parse_location_input(session, location_text)
+        response_message = WeatherService.handle_text_weather_query(session, location_text)
 
         # Record query for home/office weather lookups (but don't duplicate in history)
         # Note: These are not recorded as they are the user's preset locations
