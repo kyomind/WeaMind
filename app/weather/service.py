@@ -4,11 +4,13 @@ import logging
 import math
 import re
 from collections.abc import Sequence
+from datetime import UTC, timedelta, timezone
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.admin_divisions import is_valid_taiwan_division
-from app.weather.models import Location
+from app.weather.models import Location, Weather
 
 logger = logging.getLogger(__name__)
 
@@ -315,22 +317,149 @@ class WeatherService:
     """Service for handling weather queries with different location sources."""
 
     @staticmethod
+    def get_weather_forecast_by_location(session: Session, location_id: int) -> list[Weather]:
+        """
+        Get weather forecast using sliding window logic to ensure consistent 24-hour forecast.
+
+        This function implements the sliding window strategy to guarantee users always see
+        a complete 24-hour (8 time periods) forecast, regardless of query time.
+
+        Args:
+            session: Database session
+            location_id: ID of the location to query weather for
+
+        Returns:
+            list[Weather]: List of 8 Weather objects representing 24-hour forecast,
+                          ordered by start_time. Empty list if no data found.
+        """
+        try:
+            # Get the latest fetched_at timestamp for this location
+            latest_fetched_subquery = (
+                session.query(func.max(Weather.fetched_at))
+                .filter(Weather.location_id == location_id)
+                .scalar_subquery()
+            )
+
+            # Sliding window query as defined in weather-query-logic.md
+            # Use database-agnostic approach: get all recent data and filter in Python if needed
+            weather_data = (
+                session.query(Weather)
+                .filter(
+                    Weather.location_id == location_id,
+                    # Filter out expired time periods (sliding window key)
+                    Weather.end_time > func.now(),
+                    # Get data from the latest batch
+                    Weather.fetched_at == latest_fetched_subquery,
+                )
+                .order_by(Weather.start_time)
+                .limit(8)
+                .all()
+            )
+
+            logger.info(
+                f"Retrieved {len(weather_data)} weather records for location_id={location_id}"
+            )
+
+        except Exception:
+            logger.exception(f"Error retrieving weather forecast for location_id={location_id}")
+            return []
+        else:
+            return weather_data
+
+    @staticmethod
+    def format_weather_response(location: Location, weather_data: list[Weather]) -> str:
+        """
+        Format weather forecast data into LINE Bot message according to PRD specifications.
+
+        Args:
+            location: Location object with name information
+            weather_data: List of Weather objects (should be 8 items for 24 hours)
+
+        Returns:
+            str: Formatted weather message for LINE Bot
+        """
+        if not weather_data:
+            return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+
+        lines = [f"🏯 {location.full_name}"]
+        current_date = None
+
+        for weather in weather_data:
+            # Convert UTC to Taiwan time (UTC+8)
+            taiwan_tz = timezone(timedelta(hours=8))
+            local_start = weather.start_time.replace(tzinfo=UTC).astimezone(taiwan_tz)
+            local_end = weather.end_time.replace(tzinfo=UTC).astimezone(taiwan_tz)
+
+            # Add date header if date changes
+            date_str = local_start.strftime("%m/%d")
+            weekday_map = {
+                0: "星期一",
+                1: "星期二",
+                2: "星期三",
+                3: "星期四",
+                4: "星期五",
+                5: "星期六",
+                6: "星期日",
+            }
+            weekday = weekday_map[local_start.weekday()]
+            date_header = f"📅 {date_str} {weekday}"
+
+            if current_date != date_str:
+                lines.append(date_header)
+                current_date = date_str
+
+            # Format time range
+            start_hour = local_start.strftime("%H")
+            end_hour = local_end.strftime("%H")
+            time_range = f"{start_hour}-{end_hour}"
+
+            # Format temperature
+            if weather.min_temperature == weather.max_temperature:
+                temp_str = f"{weather.min_temperature}°"
+            else:
+                temp_str = f"{weather.min_temperature}-{weather.max_temperature}°"
+
+            # Format precipitation
+            if weather.precipitation_probability is not None:
+                precip_str = f"💧{weather.precipitation_probability}%"
+            else:
+                precip_str = ""
+
+            # Combine line
+            emoji = weather.weather_emoji or "⛅"
+            weather_line = f"{emoji} {time_range}：🌡️ {temp_str} {precip_str}"
+            lines.append(weather_line)
+
+        return "\n".join(lines)
+
+    @staticmethod
     def handle_text_weather_query(session: Session, text_input: str) -> str:
         """
-        Handle weather query from text input.
+        Handle weather query from text input with actual weather data retrieval.
 
         Args:
             session: Database session
             text_input: User text input
 
         Returns:
-            str: Weather response message
+            str: Weather response message with forecast data
 
         Raises:
             LocationParseError: If input format is invalid
         """
-        # Use existing location parsing logic
+        # Parse location input
         locations, response_message = LocationService.parse_location_input(session, text_input)
+
+        # If exactly one location found, get weather data
+        if len(locations) == 1:
+            location = locations[0]
+            weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+            if weather_data:
+                return WeatherService.format_weather_response(location, weather_data)
+            else:
+                return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+
+        # For other cases (0, 2-3, or >3 locations), return original parsing response
         return response_message
 
     @staticmethod
@@ -338,7 +467,7 @@ class WeatherService:
         session: Session, lat: float, lon: float, address: str | None = None
     ) -> str:
         """
-        Handle weather query from GPS coordinates with address-first strategy.
+        Handle weather query from GPS coordinates with actual weather data retrieval.
 
         Implementation of "address priority + GPS fallback" strategy:
         1. If address is available, try to parse it first
@@ -353,25 +482,36 @@ class WeatherService:
             address: Optional address string from LINE location sharing
 
         Returns:
-            str: Weather response message
+            str: Weather response message with forecast data
         """
+        location = None
+
         # Step 1: Address-first strategy (if available)
         if address:
             address_location = LocationService.extract_location_from_address(session, address)
             if address_location:
                 # Address parsing succeeded - use it directly
                 logger.info("Address parsing succeeded")
-                return f"找到了 {address_location.full_name}，正在查詢天氣..."
+                location = address_location
             else:
                 # Address parsing failed - log and continue to GPS fallback
                 logger.warning("Address parsing failed, falling back to GPS")
 
         # Step 2: GPS fallback (if address failed or not available)
-        gps_location = LocationService.find_nearest_location(session, lat, lon)
-        if gps_location:
-            logger.info(f"GPS calculation succeeded: {gps_location.full_name}")
-            return f"找到了 {gps_location.full_name}，正在查詢天氣..."
+        if not location:
+            gps_location = LocationService.find_nearest_location(session, lat, lon)
+            if gps_location:
+                logger.info(f"GPS calculation succeeded: {gps_location.full_name}")
+                location = gps_location
 
-        # Step 3: Both methods failed
+        # Step 3: Get weather data if location found
+        if location:
+            weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+            if weather_data:
+                return WeatherService.format_weather_response(location, weather_data)
+            else:
+                return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+
+        # Step 4: Both methods failed
         logger.warning("Both address parsing and GPS calculation failed")
         return "抱歉，目前僅支援台灣地區的天氣查詢 🌏"

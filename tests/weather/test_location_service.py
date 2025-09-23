@@ -1,11 +1,13 @@
 """Test cases for location service functionality."""
 
 from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
 
 import pytest
 from sqlalchemy.orm import Session
 
-from app.weather.models import Location
+from app.weather.models import Location, Weather
 from app.weather.service import LocationParseError, LocationService, WeatherService
 
 
@@ -331,7 +333,7 @@ class TestWeatherService:
     """Test WeatherService functionality."""
 
     def test_handle_location_weather_query_success(self, session: Session) -> None:
-        """Test successful location weather query."""
+        """Test successful location weather query with actual weather data."""
         # Create a test location
         location = Location(
             geocode="6300100",
@@ -344,9 +346,36 @@ class TestWeatherService:
         session.add(location)
         session.commit()
 
+        # Add test weather data
+        base_time = datetime.now(UTC)
+        weather_records = []
+        for i in range(9):
+            start_time = base_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location.id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
         result = WeatherService.handle_location_weather_query(session, 25.0340, 121.5660)
 
-        assert result == "找到了 臺北市中正區，正在查詢天氣..."
+        # Should return formatted weather data
+        assert "🏯 臺北市中正區" in result
+        assert "⛅" in result
+        assert "🌡️" in result
 
     def test_handle_location_weather_query_outside_taiwan(self, session: Session) -> None:
         """Test location weather query outside Taiwan."""
@@ -355,7 +384,7 @@ class TestWeatherService:
         assert result == "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
 
     def test_handle_text_weather_query_success(self, session: Session) -> None:
-        """Test successful text weather query."""
+        """Test successful text weather query with actual weather data."""
         # Create test locations
         location = Location(
             geocode="6300100",
@@ -368,9 +397,36 @@ class TestWeatherService:
         session.add(location)
         session.commit()
 
+        # Add test weather data
+        base_time = datetime.now(UTC)
+        weather_records = []
+        for i in range(9):
+            start_time = base_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location.id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
         result = WeatherService.handle_text_weather_query(session, "臺北")
 
-        assert "找到了 臺北市中正區" in result
+        # Should return formatted weather data
+        assert "🏯 臺北市中正區" in result
+        assert "⛅" in result
+        assert "🌡️" in result
 
 
 class TestLocationServiceAddressParsing:
@@ -466,6 +522,31 @@ class TestLocationServiceAddressParsing:
 class TestWeatherServiceAddressIntegration:
     """Test WeatherService with address verification integration."""
 
+    def _add_test_weather_data(self, session: Session, location_id: int) -> None:
+        """Helper method to add test weather data for a location."""
+        base_time = datetime.now(UTC)
+        weather_records = []
+        for i in range(9):
+            start_time = base_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location_id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
     def test_handle_location_weather_query_with_address_verification(
         self, session: Session
     ) -> None:
@@ -482,11 +563,18 @@ class TestWeatherServiceAddressIntegration:
         session.add(location)
         session.commit()
 
+        # Add test weather data
+        self._add_test_weather_data(session, location.id)
+
         # Test GPS coordinates with matching address
         result = WeatherService.handle_location_weather_query(
             session, 25.0340, 121.5660, "台北市信義區信義路五段7號"
         )
-        assert result == "找到了 臺北市信義區，正在查詢天氣..."
+
+        # Should return formatted weather data
+        assert "🏯 臺北市信義區" in result
+        assert "⛅" in result
+        assert "🌡️" in result
 
     def test_handle_location_weather_query_address_overrides_gps(self, session: Session) -> None:
         """Test that address takes priority when GPS and address conflict."""
@@ -510,11 +598,18 @@ class TestWeatherServiceAddressIntegration:
         session.add_all([location1, location2])
         session.commit()
 
+        # Add test weather data for location2 (永和區)
+        self._add_test_weather_data(session, location2.id)
+
         # GPS points to 信義區 but address says 永和區 - should use address
         result = WeatherService.handle_location_weather_query(
             session, 25.0340, 121.5660, "新北市永和區中正路123號"
         )
-        assert result == "找到了 新北市永和區，正在查詢天氣..."
+
+        # Should return formatted weather data for 永和區
+        assert "🏯 新北市永和區" in result
+        assert "⛅" in result
+        assert "🌡️" in result
 
     def test_handle_location_weather_query_gps_outside_address_inside(
         self, session: Session
@@ -532,11 +627,18 @@ class TestWeatherServiceAddressIntegration:
         session.add(location)
         session.commit()
 
+        # Add test weather data
+        self._add_test_weather_data(session, location.id)
+
         # GPS outside Taiwan bounds but address is Taiwan - should use address
         result = WeatherService.handle_location_weather_query(
             session, 35.6762, 139.6503, "台北市信義區信義路五段7號"
         )
-        assert result == "找到了 臺北市信義區，正在查詢天氣..."
+
+        # Should return formatted weather data
+        assert "🏯 臺北市信義區" in result
+        assert "⛅" in result
+        assert "🌡️" in result
 
     def test_handle_location_weather_query_both_outside_taiwan(self, session: Session) -> None:
         """Test both GPS and address outside Taiwan."""
@@ -554,8 +656,6 @@ class TestWeatherServiceAddressIntegration:
 
     def test_extract_location_not_in_database(self, session: Session) -> None:
         """Test extract location not found in database."""
-        from unittest.mock import patch
-
         # Mock a valid division that doesn't exist in database
         with patch("app.weather.service.is_valid_taiwan_division", return_value=True):
             result = LocationService.extract_location_from_address(session, "臺北市不存在區123號")
