@@ -4,22 +4,24 @@ from unittest.mock import Mock, patch
 
 from linebot.v3.webhooks import PostbackEvent
 
-from app.line.service import (
+from app.line.messaging import (
     handle_announcements,
+    send_error_response,
+    send_location_not_set_response,
+    send_other_menu_quick_reply,
+    send_text_response,
+)
+from app.line.postback import (
     handle_current_location_weather,
     handle_other_postback,
-    handle_postback_event,
     handle_recent_queries_postback,
     handle_settings_postback,
     handle_user_location_weather,
     handle_weather_postback,
     parse_postback_data,
-    send_error_response,
-    send_location_not_set_response,
-    send_other_menu_quick_reply,
-    send_text_response,
     should_use_processing_lock,
 )
+from app.line.service import handle_postback_event
 from app.user.models import User
 from app.weather.models import Location
 
@@ -50,7 +52,7 @@ class TestPostBackEventHandlers:
 
     def test_parse_postback_data_exception(self) -> None:
         """Test parsing PostBack data with exception."""
-        with patch("app.line.service.parse_qs", side_effect=Exception("Parse error")):
+        with patch("app.line.postback.parse_qs", side_effect=Exception("Parse error")):
             result = parse_postback_data("action=weather&type=home")
             assert result == {}
 
@@ -112,7 +114,7 @@ class TestPostBackEventHandlers:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.send_error_response") as mock_send:
+        with patch("app.line.postback.send_error_response") as mock_send:
             handle_postback_event(mock_event)
 
             mock_send.assert_called_once_with("test_token", "未知的操作")
@@ -158,7 +160,7 @@ class TestPostBackEventHandlers:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.handle_weather_postback") as mock_handle:
+        with patch("app.line.postback.handle_weather_postback") as mock_handle:
             handle_postback_event(mock_event)
 
             mock_handle.assert_called_once_with(
@@ -175,7 +177,7 @@ class TestPostBackEventHandlers:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.handle_settings_postback") as mock_handle:
+        with patch("app.line.postback.handle_settings_postback") as mock_handle:
             handle_postback_event(mock_event)
 
             mock_handle.assert_called_once_with(
@@ -192,7 +194,7 @@ class TestPostBackEventHandlers:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.handle_recent_queries_postback") as mock_handle:
+        with patch("app.line.postback.handle_recent_queries_postback") as mock_handle:
             handle_postback_event(mock_event)
 
             mock_handle.assert_called_once_with(mock_event)
@@ -207,7 +209,7 @@ class TestPostBackEventHandlers:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.handle_other_postback") as mock_handle:
+        with patch("app.line.postback.handle_other_postback") as mock_handle:
             handle_postback_event(mock_event)
 
             mock_handle.assert_called_once_with(mock_event, {"action": "other", "type": "menu"})
@@ -217,7 +219,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.postback.get_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
 
@@ -227,11 +229,12 @@ class TestPostBackEventHandlers:
             mock_location.full_name = "台北市中正區"
             mock_user.home_location = mock_location
 
-            with patch("app.line.service.get_user_by_line_id", return_value=mock_user):
-                with patch("app.line.service.LocationService.parse_location_input") as mock_parse:
-                    mock_parse.return_value = ([], "台北市中正區的天氣...")
-
-                    with patch("app.line.service.send_text_response") as mock_send:
+            with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
+                with patch(
+                    "app.line.postback.WeatherService.handle_text_weather_query",
+                    return_value="台北市中正區的天氣...",
+                ):
+                    with patch("app.line.postback.send_text_response") as mock_send:
                         handle_weather_postback(
                             mock_event, "test_user_id", {"action": "weather", "type": "home"}
                         )
@@ -243,7 +246,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.postback.get_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
 
@@ -251,8 +254,8 @@ class TestPostBackEventHandlers:
             mock_user = Mock(spec=User)
             mock_user.home_location = None
 
-            with patch("app.line.service.get_user_by_line_id", return_value=mock_user):
-                with patch("app.line.service.send_location_not_set_response") as mock_send:
+            with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
+                with patch("app.line.postback.send_location_not_set_response") as mock_send:
                     handle_weather_postback(
                         mock_event, "test_user_id", {"action": "weather", "type": "home"}
                     )
@@ -264,7 +267,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.postback.get_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
 
@@ -274,11 +277,12 @@ class TestPostBackEventHandlers:
             mock_location.full_name = "新北市板橋區"
             mock_user.work_location = mock_location
 
-            with patch("app.line.service.get_user_by_line_id", return_value=mock_user):
-                with patch("app.line.service.LocationService.parse_location_input") as mock_parse:
-                    mock_parse.return_value = ([], "新北市板橋區的天氣...")
-
-                    with patch("app.line.service.send_text_response") as mock_send:
+            with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
+                with patch(
+                    "app.line.postback.WeatherService.handle_text_weather_query",
+                    return_value="新北市板橋區的天氣...",
+                ):
+                    with patch("app.line.postback.send_text_response") as mock_send:
                         handle_weather_postback(
                             mock_event, "test_user_id", {"action": "weather", "type": "office"}
                         )
@@ -290,7 +294,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.postback.get_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
 
@@ -299,9 +303,9 @@ class TestPostBackEventHandlers:
             mock_user.home_location = None
             mock_user.work_location = None
 
-            with patch("app.line.service.get_user_by_line_id", return_value=None):
-                with patch("app.line.service.create_user_if_not_exists", return_value=mock_user):
-                    with patch("app.line.service.send_location_not_set_response") as mock_send:
+            with patch("app.line.postback.get_user_by_line_id", return_value=None):
+                with patch("app.line.postback.create_user_if_not_exists", return_value=mock_user):
+                    with patch("app.line.postback.send_location_not_set_response") as mock_send:
                         handle_weather_postback(
                             mock_event, "test_user_id", {"action": "weather", "type": "home"}
                         )
@@ -313,7 +317,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.handle_current_location_weather") as mock_handle:
+        with patch("app.line.postback.handle_current_location_weather") as mock_handle:
             handle_weather_postback(
                 mock_event, "test_user_id", {"action": "weather", "type": "current"}
             )
@@ -325,7 +329,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.send_error_response") as mock_send:
+        with patch("app.line.postback.send_error_response") as mock_send:
             handle_weather_postback(
                 mock_event, "test_user_id", {"action": "weather", "type": "unknown"}
             )
@@ -337,12 +341,12 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.postback.get_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
 
-            with patch("app.line.service.get_user_by_line_id", side_effect=Exception("DB error")):
-                with patch("app.line.service.send_error_response") as mock_send:
+            with patch("app.line.postback.get_user_by_line_id", side_effect=Exception("DB error")):
+                with patch("app.line.postback.send_error_response") as mock_send:
                     handle_user_location_weather(mock_event, "test_user_id", "home")
 
                     mock_send.assert_called_once_with("test_token", "查詢時發生錯誤，請稍後再試。")
@@ -352,11 +356,11 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+        with patch("app.line.postback.MessagingApi") as mock_messaging_api:
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
 
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.postback.ApiClient"):
                 handle_current_location_weather(mock_event)
 
                 # Should send location request message with Quick Reply
@@ -379,7 +383,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.send_liff_location_setting_response") as mock_send:
+        with patch("app.line.postback.send_liff_location_setting_response") as mock_send:
             handle_settings_postback(mock_event, {"action": "settings", "type": "location"})
 
             mock_send.assert_called_once_with("test_token")
@@ -389,7 +393,7 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.send_error_response") as mock_send:
+        with patch("app.line.postback.send_error_response") as mock_send:
             handle_settings_postback(mock_event, {"action": "settings", "type": "unknown"})
 
             mock_send.assert_called_once_with("test_token", "未知的設定類型")
@@ -402,10 +406,10 @@ class TestPostBackEventHandlers:
         mock_event.source.user_id = "test_line_user_id"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.get_user_by_line_id") as mock_get_user,
-            patch("app.line.service.get_recent_queries") as mock_get_recent,
-            patch("app.line.service.send_text_response") as mock_send,
+            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
+            patch("app.line.postback.get_recent_queries") as mock_get_recent,
+            patch("app.line.postback.send_text_response") as mock_send,
         ):
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
@@ -428,11 +432,11 @@ class TestPostBackEventHandlers:
         mock_event.source.user_id = "test_line_user_id"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.get_user_by_line_id") as mock_get_user,
-            patch("app.line.service.create_user_if_not_exists") as mock_create_user,
-            patch("app.line.service.get_recent_queries") as mock_get_recent,
-            patch("app.line.service.send_text_response") as mock_send,
+            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
+            patch("app.line.postback.create_user_if_not_exists") as mock_create_user,
+            patch("app.line.postback.get_recent_queries") as mock_get_recent,
+            patch("app.line.postback.send_text_response") as mock_send,
         ):
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
@@ -469,11 +473,11 @@ class TestPostBackEventHandlers:
         mock_location2.full_name = "新北市板橋區"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.get_user_by_line_id") as mock_get_user,
-            patch("app.line.service.get_recent_queries") as mock_get_recent,
-            patch("app.line.service.MessagingApi") as mock_messaging_api,
-            patch("app.line.service.ApiClient"),
+            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
+            patch("app.line.postback.get_recent_queries") as mock_get_recent,
+            patch("app.line.postback.MessagingApi") as mock_messaging_api,
+            patch("app.line.postback.ApiClient"),
         ):
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
@@ -501,7 +505,7 @@ class TestPostBackEventHandlers:
         mock_event.reply_token = "test_token"
         mock_event.source = None  # No user_id
 
-        with patch("app.line.service.send_error_response") as mock_send:
+        with patch("app.line.postback.send_error_response") as mock_send:
             handle_recent_queries_postback(mock_event)
 
             mock_send.assert_called_once_with("test_token", "用戶識別錯誤")
@@ -517,14 +521,14 @@ class TestPostBackEventHandlers:
         mock_location.full_name = "台北市中正區"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.get_user_by_line_id") as mock_get_user,
-            patch("app.line.service.get_recent_queries") as mock_get_recent,
+            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
+            patch("app.line.postback.get_recent_queries") as mock_get_recent,
             patch(
-                "app.line.service.MessagingApi.reply_message", side_effect=Exception("API Error")
+                "app.line.postback.MessagingApi.reply_message", side_effect=Exception("API Error")
             ),
-            patch("app.line.service.send_error_response") as mock_send,
-            patch("app.line.service.ApiClient"),
+            patch("app.line.postback.send_error_response") as mock_send,
+            patch("app.line.postback.ApiClient"),
         ):
             mock_session = Mock()
             mock_get_session.return_value = iter([mock_session])
@@ -546,8 +550,8 @@ class TestPostBackEventHandlers:
         mock_event.source.user_id = "test_line_user_id"
 
         with (
-            patch("app.line.service.get_session", side_effect=Exception("DB Error")),
-            patch("app.line.service.send_error_response") as mock_send,
+            patch("app.line.postback.get_session", side_effect=Exception("DB Error")),
+            patch("app.line.postback.send_error_response") as mock_send,
         ):
             handle_recent_queries_postback(mock_event)
 
@@ -556,11 +560,11 @@ class TestPostBackEventHandlers:
 
     def test_send_text_response_success(self) -> None:
         """Test successful text response sending."""
-        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+        with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
 
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.messaging.ApiClient"):
                 send_text_response("test_token", "Hello World")
 
                 mock_api_instance.reply_message.assert_called_once()
@@ -574,15 +578,15 @@ class TestPostBackEventHandlers:
     def test_send_text_response_api_exception(self) -> None:
         """Test text response with API exception."""
         with patch(
-            "app.line.service.MessagingApi.reply_message", side_effect=Exception("API Error")
+            "app.line.messaging.MessagingApi.reply_message", side_effect=Exception("API Error")
         ):
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.messaging.ApiClient"):
                 # Should not raise exception, just log error
                 send_text_response("test_token", "Hello World")
 
     def test_send_location_not_set_response(self) -> None:
         """Test location not set response."""
-        with patch("app.line.service.send_text_response") as mock_send:
+        with patch("app.line.messaging.send_text_response") as mock_send:
             send_location_not_set_response("test_token", "住家")
 
             expected_message = "請先設定住家地址，點擊下方「設定地點」按鈕即可設定。"
@@ -590,7 +594,7 @@ class TestPostBackEventHandlers:
 
     def test_send_error_response(self) -> None:
         """Test error response."""
-        with patch("app.line.service.send_text_response") as mock_send:
+        with patch("app.line.messaging.send_text_response") as mock_send:
             send_error_response("test_token", "錯誤訊息")
 
             mock_send.assert_called_once_with("test_token", "錯誤訊息")
@@ -602,7 +606,7 @@ class TestPostBackEventHandlers:
 
         data = {"action": "other", "type": "menu"}
 
-        with patch("app.line.service.send_other_menu_quick_reply") as mock_send:
+        with patch("app.line.postback.send_other_menu_quick_reply") as mock_send:
             handle_other_postback(mock_event, data)
             mock_send.assert_called_once_with("test_reply_token")
 
@@ -613,7 +617,7 @@ class TestPostBackEventHandlers:
 
         data = {"action": "other", "type": "announcements"}
 
-        with patch("app.line.service.handle_announcements") as mock_handle:
+        with patch("app.line.postback.handle_announcements") as mock_handle:
             handle_other_postback(mock_event, data)
             mock_handle.assert_called_once_with("test_reply_token")
 
@@ -624,7 +628,7 @@ class TestPostBackEventHandlers:
 
         data = {"action": "other", "type": "unknown"}
 
-        with patch("app.line.service.send_error_response") as mock_send:
+        with patch("app.line.postback.send_error_response") as mock_send:
             handle_other_postback(mock_event, data)
             mock_send.assert_called_once_with("test_reply_token", "未知的操作")
 
@@ -635,11 +639,11 @@ class TestPostBackEventHandlers:
 
     def test_send_other_menu_success(self) -> None:
         """Test successful other menu sending."""
-        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+        with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
 
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.messaging.ApiClient"):
                 send_other_menu_quick_reply("test_token")
 
                 mock_api_instance.reply_message.assert_called_once()
@@ -647,10 +651,10 @@ class TestPostBackEventHandlers:
     def test_send_other_menu_api_error(self) -> None:
         """Test other menu sending with API error."""
         with patch(
-            "app.line.service.MessagingApi.reply_message",
+            "app.line.messaging.MessagingApi.reply_message",
             side_effect=Exception("API Error"),
         ):
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.messaging.ApiClient"):
                 # Should not raise exception, just log error
                 send_other_menu_quick_reply("test_token")
 
@@ -661,8 +665,8 @@ class TestPostBackEventHandlers:
 
     def test_handle_announcements_success(self) -> None:
         """Test successful announcements handling."""
-        with patch("app.line.service.Path.exists", return_value=True):
-            with patch("app.line.service.Path.open") as mock_open:
+        with patch("app.line.messaging.Path.exists", return_value=True):
+            with patch("app.line.messaging.Path.open") as mock_open:
                 mock_file = Mock()
                 mock_file.read.return_value = (
                     '{"announcements": [{"title": "Test", "content": "Test content", '
@@ -670,11 +674,11 @@ class TestPostBackEventHandlers:
                 )
                 mock_open.return_value.__enter__.return_value = mock_file
 
-                with patch("app.line.service.MessagingApi") as mock_messaging_api:
+                with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
                     mock_api_instance = Mock()
                     mock_messaging_api.return_value = mock_api_instance
 
-                    with patch("app.line.service.ApiClient"):
+                    with patch("app.line.messaging.ApiClient"):
                         handle_announcements("test_token")
 
                         mock_api_instance.reply_message.assert_called_once()
