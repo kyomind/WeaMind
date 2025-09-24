@@ -14,11 +14,11 @@ class TestMainApplication:
     def test_app_basic_properties(self) -> None:
         """Test that the actual FastAPI app has expected basic properties."""
         # Import the real app instance
-        from app.main import app
+        import app.main
 
         # Test basic app properties
-        assert "WeaMind" in app.title
-        assert "Weather LINE BOT" in app.description
+        assert "WeaMind" in app.main.app.title
+        assert "Weather LINE BOT" in app.main.app.description
 
     def test_root_endpoint(self, client: TestClient) -> None:
         """Test the root endpoint returns welcome message."""
@@ -29,11 +29,11 @@ class TestMainApplication:
 
     def test_app_has_registered_routers(self) -> None:
         """Test that the app has registered all expected routers."""
-        from app.main import app
+        import app.main
 
         # The app should have multiple routes registered from different routers
         # (root + user routes + line routes + static files)
-        assert len(app.routes) > 3  # Should have more than just basic routes
+        assert len(app.main.app.routes) > 3  # Should have more than just basic routes
 
     def test_production_mode_configuration(self) -> None:
         """Test FastAPI app configuration in production mode."""
