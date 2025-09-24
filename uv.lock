@@ -1401,7 +1401,7 @@ wheels = [
 
 [[package]]
 name = "weamind"
-version = "0.9.1"
+version = "0.10.0"
 source = { virtual = "." }
 dependencies = [
     { name = "alembic" },
