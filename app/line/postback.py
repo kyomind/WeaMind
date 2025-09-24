@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from types import ModuleType
 from urllib.parse import parse_qs
 
 from linebot.v3.messaging import (
@@ -19,7 +18,15 @@ from linebot.v3.messaging import (
 from linebot.v3.webhooks import PostbackEvent
 
 from app.core.database import get_session
-from app.line.messaging import configuration
+from app.line.messaging import (
+    configuration,
+    handle_announcements,
+    send_error_response,
+    send_liff_location_setting_response,
+    send_location_not_set_response,
+    send_other_menu_quick_reply,
+    send_text_response,
+)
 from app.user.service import (
     create_user_if_not_exists,
     get_recent_queries,
@@ -28,13 +35,6 @@ from app.user.service import (
 from app.weather.service import WeatherService
 
 logger = logging.getLogger(__name__)
-
-
-def _service_module() -> ModuleType:
-    """Import `app.line.service` on demand so both modules can reference each other safely."""
-    from app.line import service as service_module
-
-    return service_module
 
 
 def parse_postback_data(data: str) -> dict[str, str]:
@@ -86,7 +86,7 @@ def dispatch_postback(event: PostbackEvent, user_id: str, postback_data: dict[st
         return
 
     logger.warning("Unknown PostBack action", extra={"postback_data": postback_data})
-    _service_module().send_error_response(event.reply_token, "未知的操作")
+    send_error_response(event.reply_token, "未知的操作")
 
 
 def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, str]) -> None:
@@ -101,7 +101,7 @@ def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, 
         handle_current_location_weather(event)
         return
 
-    _service_module().send_error_response(event.reply_token, "未知的地點類型")
+    send_error_response(event.reply_token, "未知的地點類型")
 
 
 def handle_user_location_weather(event: PostbackEvent, user_id: str, location_type: str) -> None:
@@ -117,14 +117,14 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
         location = user.home_location if location_type == "home" else user.work_location
 
         if not location:
-            _service_module().send_location_not_set_response(event.reply_token, location_name)
+            send_location_not_set_response(event.reply_token, location_name)
             return
 
         response_message = WeatherService.handle_text_weather_query(session, location.full_name)
-        _service_module().send_text_response(event.reply_token, response_message)
+        send_text_response(event.reply_token, response_message)
     except Exception:
         logger.exception("Error handling preset location weather", extra={"type": location_type})
-        _service_module().send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
+        send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
     finally:
         session.close()
 
@@ -135,22 +135,20 @@ def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None
 
     if settings_type == "location":
         logger.info("Location setting requested via PostBack")
-        _service_module().send_liff_location_setting_response(event.reply_token)
+        send_liff_location_setting_response(event.reply_token)
         return
 
     logger.warning("Unknown settings PostBack type", extra={"type": settings_type})
-    _service_module().send_error_response(event.reply_token, "未知的設定類型")
+    send_error_response(event.reply_token, "未知的設定類型")
 
 
 def handle_recent_queries_postback(event: PostbackEvent) -> None:
     """Handle PostBack events requesting recent query history."""
-    service = _service_module()
-
     try:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("Recent queries PostBack event without user_id")
-            service.send_error_response(event.reply_token, "用戶識別錯誤")
+            send_error_response(event.reply_token, "用戶識別錯誤")
             return
 
         session = next(get_session())
@@ -161,7 +159,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
 
             recent_locations = get_recent_queries(session, user.id, limit=5)
             if not recent_locations:
-                service.send_text_response(
+                send_text_response(
                     event.reply_token,
                     "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
                 )
@@ -204,13 +202,13 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
                     )
                 except Exception:
                     logger.exception("Error sending recent queries response")
-                    service.send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
+                    send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
         finally:
             session.close()
 
     except Exception:
         logger.exception("Error handling recent queries PostBack")
-        service.send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
+        send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
 
 
 def handle_current_location_weather(event: PostbackEvent) -> None:
@@ -258,15 +256,13 @@ def handle_other_postback(event: PostbackEvent, data: dict[str, str]) -> None:
     """Handle PostBack events triggered from the 'other' menu."""
     postback_type = data.get("type")
 
-    service = _service_module()
-
     if postback_type == "menu":
-        service.send_other_menu_quick_reply(event.reply_token)
+        send_other_menu_quick_reply(event.reply_token)
         return
 
     if postback_type == "announcements":
-        service.handle_announcements(event.reply_token)
+        handle_announcements(event.reply_token)
         return
 
     logger.warning("Unknown other PostBack type", extra={"type": postback_type})
-    service.send_error_response(event.reply_token, "未知的操作")
+    send_error_response(event.reply_token, "未知的操作")
