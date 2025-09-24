@@ -21,8 +21,6 @@ services:
       - wea-net
   redis:
     image: redis:8.2.1-bookworm
-    ports:
-      - "6379:6379"
     networks:
       - wea-net
 

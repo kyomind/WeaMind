@@ -67,3 +67,19 @@ class TestLineWebhook:
         )
         assert response.status_code == 400
         assert response.json()["detail"] == "Invalid signature"
+
+    def test_webhook_signature_computation_error(self, client: TestClient) -> None:
+        """Test webhook signature computation error."""
+        body = b'{"events":[]}'
+
+        with patch("hmac.new") as mock_hmac:
+            # Mock hmac to raise exception during signature computation
+            mock_hmac.side_effect = Exception("HMAC computation failed")
+
+            response = client.post(
+                "/line/webhook",
+                content=body,
+                headers={"X-Line-Signature": "test_signature", "Content-Type": "application/json"},
+            )
+            assert response.status_code == 400
+            assert response.json()["detail"] == "Signature verification error"

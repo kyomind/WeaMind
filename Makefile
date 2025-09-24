@@ -1,12 +1,12 @@
 APP_SERVICE=app
 
-.PHONY: dev-up dev-down dev-clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete update-static-version
+.PHONY: dev-up clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean update-liff-version update-static-version changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete
 
 # === Container & Image Management ===
 dev-up:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
-dev-clean:
+clean:
 	docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
 
 setup-prod:
