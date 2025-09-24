@@ -319,17 +319,17 @@ class WeatherService:
     @staticmethod
     def get_weather_forecast_by_location(session: Session, location_id: int) -> list[Weather]:
         """
-        Get weather forecast using sliding window logic to ensure consistent 15-hour forecast.
+        Get weather forecast using sliding window logic to ensure consistent 24-hour forecast.
 
         This function implements the sliding window strategy to guarantee users always see
-        a complete 15-hour (5 time periods) forecast, regardless of query time.
+        a complete 24-hour (8 time periods) forecast, regardless of query time.
 
         Args:
             session: Database session
             location_id: ID of the location to query weather for
 
         Returns:
-            list[Weather]: List of 5 Weather objects representing 15-hour forecast,
+            list[Weather]: List of 8 Weather objects representing 24-hour forecast,
                           ordered by start_time. Empty list if no data found.
         """
         try:
@@ -352,7 +352,7 @@ class WeatherService:
                     Weather.fetched_at == latest_fetched_subquery,
                 )
                 .order_by(Weather.start_time)
-                .limit(5)
+                .limit(8)
                 .all()
             )
 
@@ -373,7 +373,7 @@ class WeatherService:
 
         Args:
             location: Location object with name information
-            weather_data: List of Weather objects (should be 5 items for 15 hours)
+            weather_data: List of Weather objects (should be 8 items for 24 hours)
 
         Returns:
             str: Formatted weather message for LINE Bot
@@ -383,7 +383,10 @@ class WeatherService:
 
         lines = [f"🗺️ {location.full_name}", ""]
 
-        for weather in weather_data:
+        # Show up to 8 time periods, split into 2 groups (4 + 4) with a blank line between
+        display_data = weather_data[:8]
+
+        for idx, weather in enumerate(display_data, start=1):
             # Convert UTC to Taiwan time (UTC+8)
             taiwan_tz = timezone(timedelta(hours=8))
             local_start = weather.start_time.replace(tzinfo=UTC).astimezone(taiwan_tz)
@@ -407,6 +410,10 @@ class WeatherService:
             emoji = weather.weather_emoji or "⛅"
             weather_line = f"{emoji} {time_range} 🌡️{temp_str}{precip_str}"
             lines.append(weather_line)
+
+            # Insert a blank line after the first 4 items when there are more than 4
+            if idx == 4 and len(display_data) > 4:
+                lines.append("")
 
         return "\n".join(lines)
 
