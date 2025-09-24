@@ -193,3 +193,19 @@ class TestProcessingLockService:
 
         assert result is None
         assert "No user_id found in event source" in caplog.text
+
+    def test_build_lock_key_getattr_exception(self, caplog: pytest.LogCaptureFixture) -> None:
+        """Test lock key building when getattr raises AttributeError."""
+        service = ProcessingLockService()
+        mock_source = Mock()
+        mock_source.user_id = "U12345"
+
+        # Patch getattr in the specific module context
+        with patch("app.core.processing_lock.getattr") as mock_getattr:
+            mock_getattr.side_effect = AttributeError("Getattr failed")
+
+            with caplog.at_level(logging.WARNING):
+                result = service.build_lock_key(mock_source)
+
+            assert result is None
+            assert "Invalid event source structure" in caplog.text

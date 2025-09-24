@@ -1,5 +1,10 @@
 """Test main application setup and configuration."""
 
+import importlib
+import tempfile
+from pathlib import Path
+from unittest.mock import patch
+
 from fastapi.testclient import TestClient
 
 
@@ -29,3 +34,23 @@ class TestMainApplication:
         # The app should have multiple routes registered from different routers
         # (root + user routes + line routes + static files)
         assert len(app.routes) > 3  # Should have more than just basic routes
+
+    def test_production_mode_configuration(self) -> None:
+        """Test FastAPI app configuration in production mode."""
+        # Create a temporary directory for logs
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with patch("app.core.config.settings") as mock_settings:
+                mock_settings.is_development = False
+                mock_settings.APP_NAME = "WeaMind Test"
+                mock_settings.logs_dir = Path(temp_dir)
+
+                # Import the main module to trigger app creation in production mode
+                import app.main
+
+                importlib.reload(app.main)
+
+                # Check that docs are disabled in production
+                prod_app = app.main.app
+                assert prod_app.docs_url is None
+                assert prod_app.redoc_url is None
+                assert prod_app.openapi_url is None
