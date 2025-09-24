@@ -8,9 +8,9 @@
 
 A smart LINE bot for Taiwan weather updates. See [DeepWiki](https://deepwiki.com/kyomind/WeaMind) for details.
 
-WeaMind 是一個智慧天氣 LINE Bot，透過簡單的點擊或文字查詢，提供即時台灣天氣資訊。
+WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，提供即時台灣天氣資訊。
 
-本服務**完全免費**，如果對你有幫助，歡迎[贊助我一杯咖啡](https://portaly.cc/kyomind/support)，或按下右上角的 ⭐️ 支持我。
+本服務**完全免費**，如果對你有幫助，歡迎[贊助我一杯咖啡](https://portaly.cc/kyomind/support)，或點擊右上角的 ⭐️ 支持我。
 
 ## 使用說明
 
