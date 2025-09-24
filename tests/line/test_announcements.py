@@ -56,14 +56,14 @@ class TestAnnouncementFeatures:
             ],
         }
 
-        with patch("app.line.service.Path") as mock_path:
+        with patch("app.line.messaging.Path") as mock_path:
             # Mock Path.exists() to return True
             mock_path.return_value.exists.return_value = True
 
             # Mock the file opening and JSON loading
-            with patch("app.line.service.json.load", return_value=announcements_data):
-                with patch("app.line.service.ApiClient"):
-                    with patch("app.line.service.MessagingApi") as mock_messaging_api:
+            with patch("app.line.messaging.json.load", return_value=announcements_data):
+                with patch("app.line.messaging.ApiClient"):
+                    with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
                         mock_api_instance = Mock()
                         mock_messaging_api.return_value = mock_api_instance
 
@@ -74,12 +74,12 @@ class TestAnnouncementFeatures:
 
     def test_handle_announcements_file_not_found(self) -> None:
         """Test handling when announcements file doesn't exist."""
-        with patch("app.line.service.Path") as mock_path:
+        with patch("app.line.messaging.Path") as mock_path:
             mock_file = Mock()
             mock_file.exists.return_value = False
             mock_path.return_value = mock_file
 
-            with patch("app.line.service.send_error_response") as mock_send_error:
+            with patch("app.line.messaging.send_error_response") as mock_send_error:
                 handle_announcements("test_reply_token")
                 mock_send_error.assert_called_once_with("test_reply_token", "公告資料載入失敗")
 
@@ -100,23 +100,23 @@ class TestAnnouncementFeatures:
             ],
         }
 
-        with patch("app.line.service.Path") as mock_path:
+        with patch("app.line.messaging.Path") as mock_path:
             mock_path.return_value.exists.return_value = True
 
-            with patch("app.line.service.json.load", return_value=announcements_data):
-                with patch("app.line.service.send_text_response") as mock_send_text:
+            with patch("app.line.messaging.json.load", return_value=announcements_data):
+                with patch("app.line.messaging.send_text_response") as mock_send_text:
                     handle_announcements("test_reply_token")
                     mock_send_text.assert_called_once_with("test_reply_token", "目前沒有新公告")
 
     def test_handle_announcements_json_error(self) -> None:
         """Test handling JSON parsing errors."""
-        with patch("app.line.service.Path") as mock_path:
+        with patch("app.line.messaging.Path") as mock_path:
             mock_path.return_value.exists.return_value = True
 
             # Simulate JSON decoding error
             error = json.JSONDecodeError("msg", "doc", 0)
-            with patch("app.line.service.json.load", side_effect=error):
-                with patch("app.line.service.send_error_response") as mock_send_error:
+            with patch("app.line.messaging.json.load", side_effect=error):
+                with patch("app.line.messaging.send_error_response") as mock_send_error:
                     handle_announcements("test_reply_token")
                     mock_send_error.assert_called_once_with(
                         "test_reply_token", "載入公告時發生錯誤"

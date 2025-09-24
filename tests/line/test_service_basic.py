@@ -301,11 +301,11 @@ class TestLineService:
     def test_send_liff_location_setting_response_success(self) -> None:
         """Test successful LIFF location setting response."""
 
-        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+        with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
 
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.messaging.ApiClient"):
                 send_liff_location_setting_response("test_token")
 
                 mock_api_instance.reply_message.assert_called_once()
@@ -319,10 +319,10 @@ class TestLineService:
         """Test LIFF location setting response with API error."""
 
         with patch(
-            "app.line.service.MessagingApi.reply_message",
+            "app.line.messaging.MessagingApi.reply_message",
             side_effect=Exception("API Error"),
         ):
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.messaging.ApiClient"):
                 # Should not raise exception, just log error
                 send_liff_location_setting_response("test_token")
 
@@ -649,11 +649,11 @@ class TestCurrentLocationWeatherHandler:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.service.MessagingApi") as mock_messaging_api:
+        with patch("app.line.postback.MessagingApi") as mock_messaging_api:
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
 
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.postback.ApiClient"):
                 handle_current_location_weather(mock_event)
 
                 mock_api_instance.reply_message.assert_called_once()
@@ -666,9 +666,9 @@ class TestCurrentLocationWeatherHandler:
         mock_event.reply_token = "test_token"
 
         with patch(
-            "app.line.service.MessagingApi.reply_message",
+            "app.line.postback.MessagingApi.reply_message",
             side_effect=Exception("API Error"),
         ):
-            with patch("app.line.service.ApiClient"):
+            with patch("app.line.postback.ApiClient"):
                 # Should not raise exception, just log error
                 handle_current_location_weather(mock_event)
