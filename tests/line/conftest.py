@@ -166,15 +166,7 @@ def create_mock_postback_event() -> Callable[..., Mock]:
     return _create
 
 
-# Database Mock Fixtures
-
-
 @pytest.fixture()
-def setup_mock_db_session() -> Callable[[], Mock]:
-    """Return a helper for setting up mock database session."""
-
-    def _setup() -> Mock:
-        mock_session = Mock()
-        return mock_session
-
-    return _setup
+def mock_db_session() -> Mock:
+    """Return a mock database session."""
+    return Mock()
