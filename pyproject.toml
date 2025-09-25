@@ -74,6 +74,7 @@ ignore = [
   "S101", # Allow use of assert statements in tests
   "S105", # hardcoded-password-string
   "S106", # hardcoded-password-func-arg
+  "S107", # hardcoded-password-default
 ]
 
 [tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
