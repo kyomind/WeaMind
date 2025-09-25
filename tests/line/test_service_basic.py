@@ -1,5 +1,6 @@
 """Test basic LINE service functionality."""
 
+from collections.abc import Callable
 from unittest.mock import Mock, patch
 
 from linebot.v3.webhooks import (
@@ -26,49 +27,49 @@ from app.weather.models import Location
 class TestLineService:
     """Test LINE webhook handler functions."""
 
-    def test_handle_message_event_non_text_message(self) -> None:
+    def test_handle_message_event_non_text_message(
+        self, create_mock_message_event: Callable[..., Mock]
+    ) -> None:
         """Test handling non-text message events."""
         # Create mock event with non-text message
-        mock_event = Mock(spec=MessageEvent)
+        mock_event = create_mock_message_event()
         mock_event.message = Mock()  # Not TextMessageContent
-        mock_event.reply_token = "test_token"
 
         # Should return early without processing
         handle_message_event(mock_event)
         # No exception should be raised
 
-    def test_handle_message_event_empty_reply_token(self) -> None:
+    def test_handle_message_event_empty_reply_token(
+        self, create_mock_message_event: Callable[..., Mock]
+    ) -> None:
         """Test handling events with empty reply token."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.message = Mock(spec=TextMessageContent)
-        mock_event.message.text = "Hello"
-        mock_event.reply_token = None
+        mock_event = create_mock_message_event(reply_token=None)
 
         # Should return early without processing
         handle_message_event(mock_event)
         # No exception should be raised
 
-    def test_handle_message_event_dev_mode(self) -> None:
+    def test_handle_message_event_dev_mode(
+        self, create_mock_message_event: Callable[..., Mock]
+    ) -> None:
         """Test handling message events in development mode."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.message = Mock(spec=TextMessageContent)
-        mock_event.message.text = "Hello"
-        mock_event.reply_token = "test_token"
+        mock_event = create_mock_message_event()
 
         # In dev mode (CHANGE_ME token), should just log
         handle_message_event(mock_event)
         # No exception should be raised
 
-    def test_handle_message_event_api_success(self) -> None:
+    def test_handle_message_event_api_success(
+        self,
+        create_mock_message_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test successful message handling with real API token."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.message = Mock(spec=TextMessageContent)
-        mock_event.message.text = "Hello"
-        mock_event.reply_token = "test_token"
+        mock_event = create_mock_message_event()
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
             with patch("app.line.service.get_session") as mock_get_session:
-                mock_session = Mock()
+                mock_session = mock_db_session
                 mock_get_session.return_value = iter([mock_session])
 
                 with patch("app.line.service.LocationService.parse_location_input") as mock_parse:
@@ -78,16 +79,17 @@ class TestLineService:
                         handle_message_event(mock_event)
                         mock_reply.assert_called_once()
 
-    def test_handle_message_event_api_error(self) -> None:
+    def test_handle_message_event_api_error(
+        self,
+        create_mock_message_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test message handling with API error."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.message = Mock(spec=TextMessageContent)
-        mock_event.message.text = "Hello"
-        mock_event.reply_token = "test_token"
+        mock_event = create_mock_message_event()
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
             with patch("app.line.service.get_session") as mock_get_session:
-                mock_session = Mock()
+                mock_session = mock_db_session
                 mock_get_session.return_value = iter([mock_session])
 
                 with patch("app.line.service.LocationService.parse_location_input") as mock_parse:
@@ -108,16 +110,16 @@ class TestLineService:
         handle_default_event(mock_event)
         # No exception should be raised
 
-    def test_handle_follow_event_success(self) -> None:
+    def test_handle_follow_event_success(
+        self,
+        create_mock_follow_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test successful follow event handling."""
-        mock_event = Mock(spec=FollowEvent)
-        mock_event.reply_token = "test_token"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_follow_event()
 
         with patch("app.line.service.get_session") as mock_get_session:
-            mock_session = Mock()
+            mock_session = mock_db_session
             mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
@@ -132,26 +134,27 @@ class TestLineService:
                     mock_reply.assert_called_once()
                     mock_session.close.assert_called_once()
 
-    def test_handle_follow_event_no_user_id(self) -> None:
+    def test_handle_follow_event_no_user_id(
+        self, create_mock_follow_event: Callable[..., Mock]
+    ) -> None:
         """Test follow event without user_id."""
-        mock_event = Mock(spec=FollowEvent)
+        mock_event = create_mock_follow_event()
         mock_event.source = None
-        mock_event.reply_token = "test_token"
 
         # Should return early without processing
         handle_follow_event(mock_event)
         # No exception should be raised
 
-    def test_handle_follow_event_no_reply_token(self) -> None:
+    def test_handle_follow_event_no_reply_token(
+        self,
+        create_mock_follow_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test follow event without reply token."""
-        mock_event = Mock(spec=FollowEvent)
-        mock_event.reply_token = None
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_follow_event(reply_token=None)
 
         with patch("app.line.service.get_session") as mock_get_session:
-            mock_session = Mock()
+            mock_session = mock_db_session
             mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
@@ -191,15 +194,16 @@ class TestLineService:
                     mock_create_user.assert_called_once_with(mock_session, "test_user_id")
                     mock_session.close.assert_called_once()
 
-    def test_handle_unfollow_event_success(self) -> None:
+    def test_handle_unfollow_event_success(
+        self,
+        create_mock_unfollow_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test successful unfollow event handling."""
-        mock_event = Mock(spec=UnfollowEvent)
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_unfollow_event()
 
         with patch("app.line.service.get_session") as mock_get_session:
-            mock_session = Mock()
+            mock_session = mock_db_session
             mock_get_session.return_value = iter([mock_session])
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
@@ -270,12 +274,11 @@ class TestLineService:
                         message = request.messages[0]
                         assert "系統暫時有點忙" in message.text
 
-    def test_handle_follow_event_exception(self) -> None:
+    def test_handle_follow_event_exception(
+        self, create_mock_follow_event: Callable[..., Mock]
+    ) -> None:
         """Test follow event with general exception."""
-        mock_event = Mock(spec=FollowEvent)
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_follow_event()
 
         with patch(
             "app.line.service.get_session",
@@ -284,12 +287,11 @@ class TestLineService:
             # Should not raise exception, just log error
             handle_follow_event(mock_event)
 
-    def test_handle_unfollow_event_exception(self) -> None:
+    def test_handle_unfollow_event_exception(
+        self, create_mock_unfollow_event: Callable[..., Mock]
+    ) -> None:
         """Test unfollow event with general exception."""
-        mock_event = Mock(spec=UnfollowEvent)
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_unfollow_event()
 
         with patch(
             "app.line.service.get_session",
@@ -332,15 +334,13 @@ class TestLineService:
         send_liff_location_setting_response(None)
         # No exception should be raised
 
-    def test_handle_message_event_with_user_query_recording(self) -> None:
+    def test_handle_message_event_with_user_query_recording(
+        self,
+        create_mock_message_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test message handling with user query recording."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.message = Mock(spec=TextMessageContent)
-        mock_event.message.text = "台北"
-        mock_source = Mock()
-        mock_source.user_id = "test_line_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_message_event(text="台北", user_id="test_line_user_id")
 
         # Mock single location result to trigger recording
         mock_location = Mock(spec=Location)
@@ -355,7 +355,7 @@ class TestLineService:
             patch("app.line.service.MessagingApi") as mock_messaging_api,
             patch("app.line.service.ApiClient"),
         ):
-            mock_session = Mock()
+            mock_session = mock_db_session
             mock_get_session.return_value = iter([mock_session])
 
             # Single location triggers recording
@@ -374,15 +374,13 @@ class TestLineService:
             # Verify query was recorded
             mock_record_query.assert_called_once_with(mock_session, 456, 123)
 
-    def test_handle_message_event_no_user_for_recording(self) -> None:
+    def test_handle_message_event_no_user_for_recording(
+        self,
+        create_mock_message_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test message handling when user not found for recording."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.message = Mock(spec=TextMessageContent)
-        mock_event.message.text = "台北"
-        mock_source = Mock()
-        mock_source.user_id = "test_line_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_message_event(text="台北", user_id="test_line_user_id")
 
         mock_location = Mock(spec=Location)
         mock_location.id = 123
@@ -396,7 +394,7 @@ class TestLineService:
             patch("app.line.service.MessagingApi") as mock_messaging_api,
             patch("app.line.service.ApiClient"),
         ):
-            mock_session = Mock()
+            mock_session = mock_db_session
             mock_get_session.return_value = iter([mock_session])
 
             # Single location triggers recording attempt
@@ -450,17 +448,13 @@ class TestLineService:
 class TestLocationMessageHandler:
     """Test location message handler functionality."""
 
-    def test_handle_location_message_event_success(self) -> None:
+    def test_handle_location_message_event_success(
+        self,
+        create_mock_location_message_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
         """Test successful location message handling."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.reply_token = "test_token"
-        mock_message = Mock(spec=LocationMessageContent)
-        mock_message.latitude = 25.0330
-        mock_message.longitude = 121.5654
-        mock_event.message = mock_message
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        mock_event = create_mock_location_message_event()
 
         with (
             patch("app.line.service.get_session") as mock_get_session,
@@ -470,7 +464,7 @@ class TestLocationMessageHandler:
             patch("app.line.service.record_user_query") as mock_record,
             patch("app.line.service.send_text_response") as mock_send,
         ):
-            mock_session = Mock()
+            mock_session = mock_db_session
             mock_get_session.return_value = iter([mock_session])
 
             # Mock successful location query
@@ -557,18 +551,20 @@ class TestLocationMessageHandler:
             # Should send response
             mock_send.assert_called_once_with("test_token", "找到了 臺北市信義區，正在查詢天氣...")
 
-    def test_handle_location_message_event_empty_reply_token(self) -> None:
+    def test_handle_location_message_event_empty_reply_token(
+        self, create_mock_location_message_event: Callable[..., Mock]
+    ) -> None:
         """Test location message handling with empty reply token."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.reply_token = None
+        mock_event = create_mock_location_message_event(reply_token=None)
 
         # Should return early without processing
         handle_location_message_event(mock_event)
 
-    def test_handle_location_message_event_wrong_message_type(self) -> None:
+    def test_handle_location_message_event_wrong_message_type(
+        self, create_mock_location_message_event: Callable[..., Mock]
+    ) -> None:
         """Test location message handling with wrong message type."""
-        mock_event = Mock(spec=MessageEvent)
-        mock_event.reply_token = "test_token"
+        mock_event = create_mock_location_message_event()
         mock_event.message = Mock()  # Not LocationMessageContent
 
         # Should return early without processing
