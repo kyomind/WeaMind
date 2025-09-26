@@ -144,6 +144,85 @@ def add_test_weather_data() -> Callable[..., list[Weather]]:
     return _add_data
 
 
+@pytest.fixture()
+def create_freshness_test_location() -> Callable[[Session], Location]:
+    """Return a helper for creating the standard location used in freshness tests."""
+
+    def _create(session: Session) -> Location:
+        """Create the standard test location for freshness testing."""
+        location = Location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+        session.add(location)
+        session.commit()
+        session.refresh(location)
+        return location
+
+    return _create
+
+
+@pytest.fixture()
+def create_weather_data_with_fetchtime() -> Callable[..., list[Weather]]:
+    """Return a helper for creating weather data with specific fetched_at time."""
+
+    def _create(
+        session: Session,
+        location_id: int,
+        fetched_at: datetime,
+        use_current_time_for_periods: bool = False,
+        num_records: int = 9,
+    ) -> list[Weather]:
+        """
+        Create weather data with specified fetched_at time.
+
+        Args:
+            session: Database session
+            location_id: ID of the location
+            fetched_at: When the weather data was fetched
+            use_current_time_for_periods: If True, use current time for start/end periods
+                                        If False, use fetched_at as base time
+            num_records: Number of weather records to create
+
+        Returns:
+            List of created Weather records
+        """
+        # Choose base time for start/end periods
+        if use_current_time_for_periods:
+            base_time = datetime.now(UTC)
+        else:
+            base_time = fetched_at
+
+        weather_records = []
+        for i in range(num_records):
+            start_time = base_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location_id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=fetched_at,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+        return weather_records
+
+    return _create
+
+
 @pytest.fixture(autouse=True)
 def setup_weather_tests() -> Iterator[None]:
     """Setup admin divisions and clean up after weather tests."""
