@@ -114,8 +114,8 @@ class TestWeatherDataFetching:
         formatted = WeatherService.format_weather_response(location, records)
         # Split by lines and verify an empty line exists exactly after the 4th item
         lines = formatted.split("\n")
-        # header + empty + 8 items + 1 empty (after 4th) = 11 lines total
-        assert len(lines) == 11
+        # header + empty + 8 items + 1 empty (after 4th) + 1 empty + 1 update time = 13 lines total
+        assert len(lines) == 13
         assert lines[0].startswith("🗺️ ")
         assert lines[1] == ""
         # Items 2..5 are first 4 items
@@ -124,6 +124,10 @@ class TestWeatherDataFetching:
         assert lines[6] == ""
         # Items 7..10 are next 4 items
         assert all(lines[i] for i in range(7, 11))
+        # Blank line before update time
+        assert lines[11] == ""
+        # Update time line
+        assert lines[12].startswith("✅ ") and lines[12].endswith(" 更新")
 
     def test_handle_text_weather_query_with_data(
         self,

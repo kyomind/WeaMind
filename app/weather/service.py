@@ -421,6 +421,13 @@ class WeatherService:
             if idx == 4 and len(display_data) > 4:
                 lines.append("")
 
+        # Add last updated timestamp
+        if weather_data:
+            taiwan_tz = timezone(timedelta(hours=8))
+            last_updated = weather_data[0].fetched_at.replace(tzinfo=UTC).astimezone(taiwan_tz)
+            update_time_str = last_updated.strftime("%m/%d %H:%M")
+            lines.extend(["", f"✅ {update_time_str} 更新"])
+
         return "\n".join(lines)
 
     @staticmethod
