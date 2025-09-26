@@ -391,6 +391,98 @@ class TestWeatherService:
         assert "⛅" in result
         assert "🌡️" in result
 
+    def test_weather_data_freshness_normal(
+        self,
+        session: Session,
+        create_freshness_test_location: Callable[[Session], Location],
+        create_weather_data_with_fetchtime: Callable[..., list[Weather]],
+    ) -> None:
+        """Test weather query with fresh data (3 hours old)."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_freshness_test_location(session)
+
+        # Create fresh weather data (3 hours ago)
+        fetched_at = datetime.now(UTC) - timedelta(hours=3)
+        create_weather_data_with_fetchtime(session, location.id, fetched_at)
+
+        # Query weather data
+        weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+
+        # Should return data (fresh within 6.5 hours)
+        assert len(weather_data) > 0
+
+    def test_weather_data_freshness_boundary(
+        self,
+        session: Session,
+        create_freshness_test_location: Callable[[Session], Location],
+        create_weather_data_with_fetchtime: Callable[..., list[Weather]],
+    ) -> None:
+        """Test weather query with data exactly at 6.5 hour boundary."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_freshness_test_location(session)
+
+        # Create boundary weather data (6.4 hours ago, within boundary)
+        fetched_at = datetime.now(UTC) - timedelta(hours=6.4)
+        create_weather_data_with_fetchtime(session, location.id, fetched_at)
+
+        # Query weather data
+        weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+
+        # Should return data (exactly at boundary, should be acceptable)
+        assert len(weather_data) > 0
+
+    def test_weather_data_freshness_stale(
+        self,
+        session: Session,
+        create_freshness_test_location: Callable[[Session], Location],
+        create_weather_data_with_fetchtime: Callable[..., list[Weather]],
+    ) -> None:
+        """Test weather query with stale data (8 hours old)."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_freshness_test_location(session)
+
+        # Create stale weather data (8 hours ago fetched_at, but future time periods)
+        fetched_at = datetime.now(UTC) - timedelta(hours=8)
+        create_weather_data_with_fetchtime(
+            session, location.id, fetched_at, use_current_time_for_periods=True
+        )
+
+        # Query weather data
+        weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+
+        # Should return empty list (data too stale)
+        assert len(weather_data) == 0
+
+    def test_weather_data_freshness_error_message(
+        self,
+        session: Session,
+        create_freshness_test_location: Callable[[Session], Location],
+        create_weather_data_with_fetchtime: Callable[..., list[Weather]],
+    ) -> None:
+        """Test error message when weather data is stale."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_freshness_test_location(session)
+
+        # Create stale weather data (8 hours ago fetched_at, but future time periods)
+        fetched_at = datetime.now(UTC) - timedelta(hours=8)
+        create_weather_data_with_fetchtime(
+            session, location.id, fetched_at, use_current_time_for_periods=True
+        )
+
+        # Query weather through text handler
+        result = WeatherService.handle_text_weather_query(session, "臺北市中正區")
+
+        # Should return error message
+        assert "抱歉，目前無法取得 臺北市中正區 的天氣資料，請稍後再試。" == result
+
 
 class TestLocationServiceAddressParsing:
     """Test address parsing functionality of LocationService."""
