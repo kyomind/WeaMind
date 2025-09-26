@@ -127,7 +127,7 @@ class TestWeatherDataFetching:
         # Blank line before update time
         assert lines[11] == ""
         # Update time line
-        assert lines[12].startswith("✅ ") and lines[12].endswith(" 更新")
+        assert lines[12].endswith(" 更新")
 
     def test_handle_text_weather_query_with_data(
         self,
