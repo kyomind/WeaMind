@@ -12,7 +12,6 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -93,7 +92,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     county: Mapped[str] = mapped_column(String(10), nullable=False)
-    start_time: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nullable=False)
+    start_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     end_time: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     is_success: Mapped[bool] = mapped_column(Boolean, nullable=False)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
