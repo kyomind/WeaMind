@@ -391,6 +391,204 @@ class TestWeatherService:
         assert "⛅" in result
         assert "🌡️" in result
 
+    def test_weather_data_freshness_normal(
+        self,
+        session: Session,
+        create_location: Callable[..., Location],
+    ) -> None:
+        """Test weather query with fresh data (3 hours old)."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+
+        # Create fresh weather data (3 hours ago)
+        base_time = datetime.now(UTC) - timedelta(hours=3)
+        weather_records = []
+        for i in range(9):
+            start_time = base_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location.id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
+        # Query weather data
+        weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+
+        # Should return data (fresh within 6.5 hours)
+        assert len(weather_data) > 0
+
+    def test_weather_data_freshness_boundary(
+        self,
+        session: Session,
+        create_location: Callable[..., Location],
+    ) -> None:
+        """Test weather query with data exactly at 6.5 hour boundary."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+
+        # Create boundary weather data (6.4 hours ago, within boundary)
+        base_time = datetime.now(UTC) - timedelta(hours=6.4)
+        weather_records = []
+        for i in range(9):
+            start_time = base_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location.id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
+        # Query weather data
+        weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+
+        # Should return data (exactly at boundary, should be acceptable)
+        assert len(weather_data) > 0
+
+    def test_weather_data_freshness_stale(
+        self,
+        session: Session,
+        create_location: Callable[..., Location],
+    ) -> None:
+        """Test weather query with stale data (8 hours old)."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+
+        # Create stale weather data (8 hours ago fetched_at, but future time periods)
+        base_time = datetime.now(UTC) - timedelta(hours=8)
+        weather_records = []
+
+        # Create weather records that start from current time (to pass end_time > now check)
+        current_time = datetime.now(UTC)
+        for i in range(9):
+            start_time = current_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location.id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
+        # Query weather data
+        weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
+
+        # Should return empty list (data too stale)
+        assert len(weather_data) == 0
+
+    def test_weather_data_freshness_error_message(
+        self,
+        session: Session,
+        create_location: Callable[..., Location],
+    ) -> None:
+        """Test error message when weather data is stale."""
+        from datetime import UTC, datetime, timedelta
+
+        # Create test location
+        location = create_location(
+            geocode="6300100",
+            county="臺北市",
+            district="中正區",
+            full_name="臺北市中正區",
+            latitude=25.0330,
+            longitude=121.5654,
+        )
+
+        # Create stale weather data (8 hours ago fetched_at, but future time periods)
+        base_time = datetime.now(UTC) - timedelta(hours=8)
+        weather_records = []
+
+        # Create weather records that start from current time (to pass end_time > now check)
+        current_time = datetime.now(UTC)
+        for i in range(9):
+            start_time = current_time + timedelta(hours=i * 3)
+            end_time = start_time + timedelta(hours=3)
+
+            weather = Weather(
+                location_id=location.id,
+                start_time=start_time,
+                end_time=end_time,
+                fetched_at=base_time,  # This is the stale part - 8 hours ago
+                weather_condition="晴時多雲",
+                weather_emoji="⛅",
+                precipitation_probability=20,
+                min_temperature=25,
+                max_temperature=28,
+                raw_description="Test weather data",
+            )
+            weather_records.append(weather)
+
+        session.add_all(weather_records)
+        session.commit()
+
+        # Query weather through text handler
+        result = WeatherService.handle_text_weather_query(session, "臺北市中正區")
+
+        # Should return error message
+        assert "抱歉，目前無法取得 臺北市中正區 的天氣資料，請稍後再試。" == result
+
 
 class TestLocationServiceAddressParsing:
     """Test address parsing functionality of LocationService."""

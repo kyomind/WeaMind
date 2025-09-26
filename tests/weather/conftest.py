@@ -155,6 +155,7 @@ def setup_weather_tests() -> Iterator[None]:
     # Clean up after test
     session = next(get_session())
     try:
+        session.query(Weather).delete()  # Clean weather data first (has FK to location)
         session.query(Location).delete()
         session.commit()
     finally:

@@ -4,7 +4,7 @@ import logging
 import math
 import re
 from collections.abc import Sequence
-from datetime import UTC, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -333,10 +333,16 @@ class WeatherService:
                           ordered by start_time. Empty list if no data found.
         """
         try:
-            # Get the latest fetched_at timestamp for this location
+            # Get the latest fetched_at timestamp for this location (within freshness window)
+            # Use explicit UTC time to ensure consistency with stored data
+            utc_now = datetime.now(UTC)
+            freshness_threshold = utc_now - timedelta(hours=6.5)
+
             latest_fetched_subquery = (
                 session.query(func.max(Weather.fetched_at))
-                .filter(Weather.location_id == location_id)
+                .filter(
+                    Weather.location_id == location_id, Weather.fetched_at >= freshness_threshold
+                )
                 .scalar_subquery()
             )
 
@@ -346,9 +352,9 @@ class WeatherService:
                 session.query(Weather)
                 .filter(
                     Weather.location_id == location_id,
-                    # Filter out expired time periods (sliding window key)
-                    Weather.end_time > func.now(),
-                    # Get data from the latest batch
+                    # Filter out expired time periods (sliding window key) - use same UTC time
+                    Weather.end_time > utc_now,
+                    # Get data from the latest batch (already filtered for freshness)
                     Weather.fetched_at == latest_fetched_subquery,
                 )
                 .order_by(Weather.start_time)
