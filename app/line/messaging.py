@@ -14,7 +14,6 @@ from linebot.v3.messaging import (
     FlexContainer,
     FlexMessage,
     MessagingApi,
-    PostbackAction,
     QuickReply,
     QuickReplyItem,
     ReplyMessageRequest,
@@ -109,18 +108,6 @@ def send_other_menu_quick_reply(reply_token: str | None) -> None:
         return
 
     quick_reply_items = [
-        QuickReplyItem(
-            type="action",
-            imageUrl=None,
-            action=PostbackAction(
-                type="postback",
-                label="📢 公告",
-                data="action=other&type=announcements",
-                displayText="查看系統公告",
-                inputOption=None,
-                fillInText=None,
-            ),
-        ),
         QuickReplyItem(
             type="action",
             imageUrl=None,
