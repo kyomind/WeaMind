@@ -34,8 +34,6 @@ from app.weather.service import LocationParseError, LocationService, WeatherServ
 
 from .messaging import (
     configuration,
-    create_announcements_flex_message,
-    handle_announcements,
     send_error_response,
     send_liff_location_setting_response,
     send_location_not_set_response,
@@ -74,8 +72,6 @@ __all__ = [
     "send_liff_location_setting_response",
     "send_location_not_set_response",
     "send_other_menu_quick_reply",
-    "handle_announcements",
-    "create_announcements_flex_message",
     "webhook_handler",
 ]
 
