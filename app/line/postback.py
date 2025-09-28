@@ -20,7 +20,6 @@ from linebot.v3.webhooks import PostbackEvent
 from app.core.database import get_session
 from app.line.messaging import (
     configuration,
-    handle_announcements,
     send_error_response,
     send_liff_location_setting_response,
     send_location_not_set_response,
@@ -258,10 +257,6 @@ def handle_other_postback(event: PostbackEvent, data: dict[str, str]) -> None:
 
     if postback_type == "menu":
         send_other_menu_quick_reply(event.reply_token)
-        return
-
-    if postback_type == "announcements":
-        handle_announcements(event.reply_token)
         return
 
     logger.warning("Unknown other PostBack type", extra={"type": postback_type})
