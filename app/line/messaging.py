@@ -118,7 +118,7 @@ def send_other_menu_quick_reply(reply_token: str | None) -> None:
             action=URIAction(
                 type="uri",
                 label="📖 使用說明",
-                uri="https://api.kyomind.tw/static/help/index.html",
+                uri="https://github.com/kyomind/WeaMind/blob/main/README.md",
                 altUri=None,
             ),
         ),
