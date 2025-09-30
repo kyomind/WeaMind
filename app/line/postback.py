@@ -30,6 +30,7 @@ from app.user.service import (
     create_user_if_not_exists,
     get_recent_queries,
     get_user_by_line_id,
+    record_user_query,
 )
 from app.weather.service import WeatherService
 
@@ -118,6 +119,10 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
         if not location:
             send_location_not_set_response(event.reply_token, location_name)
             return
+
+        # Record query for user history
+        record_user_query(session, user.id, location.id)
+        logger.info("Recorded home/work query for user", extra={"location_type": location_type})
 
         response_message = WeatherService.handle_text_weather_query(session, location.full_name)
         send_text_response(event.reply_token, response_message)
