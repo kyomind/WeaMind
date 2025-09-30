@@ -223,7 +223,9 @@ class TestPostBackEventHandlers:
 
             # Mock user with home location
             mock_user = Mock(spec=User)
+            mock_user.id = 123
             mock_location = Mock()
+            mock_location.id = 456
             mock_location.full_name = "台北市中正區"
             mock_user.home_location = mock_location
 
@@ -233,11 +235,13 @@ class TestPostBackEventHandlers:
                     return_value="台北市中正區的天氣...",
                 ):
                     with patch("app.line.postback.send_text_response") as mock_send:
-                        handle_weather_postback(
-                            mock_event, "test_user_id", {"action": "weather", "type": "home"}
-                        )
+                        with patch("app.line.postback.record_user_query") as mock_record:
+                            handle_weather_postback(
+                                mock_event, "test_user_id", {"action": "weather", "type": "home"}
+                            )
 
-                        mock_send.assert_called_once_with("test_token", "台北市中正區的天氣...")
+                            mock_send.assert_called_once_with("test_token", "台北市中正區的天氣...")
+                            mock_record.assert_called_once_with(mock_session, 123, 456)
 
     def test_handle_weather_postback_home_no_location(self) -> None:
         """Test home weather PostBack when user has no home location set."""
@@ -271,7 +275,9 @@ class TestPostBackEventHandlers:
 
             # Mock user with work location
             mock_user = Mock(spec=User)
+            mock_user.id = 789
             mock_location = Mock()
+            mock_location.id = 101
             mock_location.full_name = "新北市板橋區"
             mock_user.work_location = mock_location
 
@@ -281,11 +287,13 @@ class TestPostBackEventHandlers:
                     return_value="新北市板橋區的天氣...",
                 ):
                     with patch("app.line.postback.send_text_response") as mock_send:
-                        handle_weather_postback(
-                            mock_event, "test_user_id", {"action": "weather", "type": "office"}
-                        )
+                        with patch("app.line.postback.record_user_query") as mock_record:
+                            handle_weather_postback(
+                                mock_event, "test_user_id", {"action": "weather", "type": "office"}
+                            )
 
-                        mock_send.assert_called_once_with("test_token", "新北市板橋區的天氣...")
+                            mock_send.assert_called_once_with("test_token", "新北市板橋區的天氣...")
+                            mock_record.assert_called_once_with(mock_session, 789, 101)
 
     def test_handle_weather_postback_user_not_found(self) -> None:
         """Test weather PostBack when user not found - should auto-create user."""
