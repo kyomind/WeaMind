@@ -21,7 +21,6 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     line_user_id: Mapped[str] = mapped_column(String, unique=True, index=True)
-    display_name: Mapped[str | None] = mapped_column(String, nullable=True)
     home_location_id: Mapped[int | None] = mapped_column(ForeignKey("location.id"), nullable=True)
     work_location_id: Mapped[int | None] = mapped_column(ForeignKey("location.id"), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
