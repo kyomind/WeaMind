@@ -14,16 +14,13 @@ def get_user_by_line_id(session: Session, line_user_id: str) -> User | None:
     return session.query(User).filter(User.line_user_id == line_user_id).first()
 
 
-def create_user_if_not_exists(
-    session: Session, line_user_id: str, display_name: str | None = None
-) -> User:
+def create_user_if_not_exists(session: Session, line_user_id: str) -> User:
     """
     Create a user if not exists, or reactivate if exists but inactive.
 
     Args:
         session: database Session object
         line_user_id: LINE user ID
-        display_name: display name of the user
 
     Returns:
         The user model (either created or reactivated)
@@ -34,14 +31,12 @@ def create_user_if_not_exists(
         # Reactivate if the user exists but is inactive
         if not existing_user.is_active:
             existing_user.is_active = True
-            if display_name:
-                existing_user.display_name = display_name
             session.commit()
             session.refresh(existing_user)
         return existing_user
     else:
         # Create new user
-        user = User(line_user_id=line_user_id, display_name=display_name, is_active=True)
+        user = User(line_user_id=line_user_id, is_active=True)
         session.add(user)
         session.commit()
         session.refresh(user)
@@ -113,7 +108,7 @@ def set_user_location(
     user = get_user_by_line_id(session, line_user_id)
     if not user:
         # Auto-create user for LIFF users (they must be authenticated by LINE)
-        user = create_user_if_not_exists(session, line_user_id, display_name=None)
+        user = create_user_if_not_exists(session, line_user_id)
 
     # Get location
     location = get_location_by_county_district(session, county, district)

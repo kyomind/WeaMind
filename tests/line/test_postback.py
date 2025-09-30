@@ -449,9 +449,7 @@ class TestPostBackEventHandlers:
             handle_recent_queries_postback(mock_event)
 
             # Verify user was auto-created
-            mock_create_user.assert_called_once_with(
-                mock_session, "test_line_user_id", display_name=None
-            )
+            mock_create_user.assert_called_once_with(mock_session, "test_line_user_id")
             # Verify appropriate message was sent for new user with no history
             mock_send.assert_called_once_with(
                 "test_token", "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"

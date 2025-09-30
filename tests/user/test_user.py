@@ -64,7 +64,7 @@ class TestUserService:
     def test_get_user_by_line_id_exists(self, session: Session) -> None:
         """Test getting user by LINE ID when user exists."""
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
         session.commit()
 
@@ -81,13 +81,10 @@ class TestUserService:
     def test_create_user_if_not_exists_new_user(self, session: Session) -> None:
         """Test creating new user when user doesn't exist."""
         line_user_id = str(uuid4())
-        display_name = "New User"
 
-        user = create_user_if_not_exists(session, line_user_id, display_name)
+        user = create_user_if_not_exists(session, line_user_id)
 
         assert user.line_user_id == line_user_id
-
-        assert user.display_name == display_name
         assert user.is_active
         # Verify user was saved to database
         db_user = get_user_by_line_id(session, line_user_id)
@@ -98,51 +95,36 @@ class TestUserService:
     def test_create_user_if_not_exists_existing_active_user(self, session: Session) -> None:
         """Test creating user when active user already exists."""
         line_user_id = str(uuid4())
-        existing_user = User(line_user_id=line_user_id, display_name="Existing User")
+        existing_user = User(line_user_id=line_user_id)
         session.add(existing_user)
         session.commit()
         existing_id = existing_user.id
 
-        user = create_user_if_not_exists(session, line_user_id, "New Display Name")
+        user = create_user_if_not_exists(session, line_user_id)
 
         assert user.id == existing_id
-
         assert user.line_user_id == line_user_id
-        assert user.display_name == "Existing User"
         assert user.is_active
 
     def test_create_user_if_not_exists_existing_inactive_user(self, session: Session) -> None:
         """Test creating user when inactive user already exists."""
         line_user_id = str(uuid4())
-        existing_user = User(line_user_id=line_user_id, display_name="Existing User")
+        existing_user = User(line_user_id=line_user_id)
         existing_user.is_active = False
         session.add(existing_user)
         session.commit()
         existing_id = existing_user.id
 
-        user = create_user_if_not_exists(session, line_user_id, "New Display Name")
-
-        assert user.id == existing_id
-
-        assert user.line_user_id == line_user_id
-        assert user.display_name == "New Display Name"
-        assert user.is_active
-
-    def test_create_user_if_not_exists_no_display_name(self, session: Session) -> None:
-        """Test creating user without display name."""
-        line_user_id = str(uuid4())
-
         user = create_user_if_not_exists(session, line_user_id)
 
+        assert user.id == existing_id
         assert user.line_user_id == line_user_id
-
-        assert user.display_name is None
         assert user.is_active
 
     def test_deactivate_user_exists(self, session: Session) -> None:
         """Test deactivating user when user exists."""
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
         session.commit()
         user_id = user.id
@@ -272,7 +254,7 @@ class TestUserServiceAdditional:
 
         # Create user and location
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Existing User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
 
         location = Location(
@@ -428,7 +410,7 @@ class TestUserQueryHistory:
         """Test recording a user query."""
         # Create user and location
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
 
         location = Location(
@@ -459,7 +441,7 @@ class TestUserQueryHistory:
         """Test getting recent queries when user has no queries."""
         # Create user
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
         session.commit()
 
@@ -471,7 +453,7 @@ class TestUserQueryHistory:
         """Test getting recent queries when user has queries."""
         # Create user
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
 
         # Create locations
@@ -506,7 +488,7 @@ class TestUserQueryHistory:
         """Test that recent queries exclude home and work locations."""
         # Create user
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
 
         # Create locations
@@ -552,7 +534,7 @@ class TestUserQueryHistory:
         """Test that recent queries respects the limit parameter."""
         # Create user
         line_user_id = str(uuid4())
-        user = User(line_user_id=line_user_id, display_name="Test User")
+        user = User(line_user_id=line_user_id)
         session.add(user)
 
         # Create multiple locations

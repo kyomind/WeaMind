@@ -110,7 +110,7 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
     try:
         user = get_user_by_line_id(session, user_id)
         if not user:
-            user = create_user_if_not_exists(session, user_id, display_name=None)
+            user = create_user_if_not_exists(session, user_id)
 
         location_name = "住家" if location_type == "home" else "公司"
         location = user.home_location if location_type == "home" else user.work_location
@@ -154,7 +154,7 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
         try:
             user = get_user_by_line_id(session, user_id)
             if not user:
-                user = create_user_if_not_exists(session, user_id, display_name=None)
+                user = create_user_if_not_exists(session, user_id)
 
             recent_locations = get_recent_queries(session, user.id, limit=5)
             if not recent_locations:
