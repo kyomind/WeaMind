@@ -142,7 +142,6 @@ async def line_webhook(request, x_line_signature, background_tasks):
 ```python
 class User(Base):
     line_user_id: Mapped[str]           # LINE 使用者 ID
-    display_name: Mapped[str | None]    # 顯示名稱
     home_location_id: Mapped[int | None] # 住家地點 ID
     work_location_id: Mapped[int | None] # 公司地點 ID
     is_active: Mapped[bool]             # 帳號狀態
