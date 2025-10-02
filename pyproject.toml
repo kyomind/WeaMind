@@ -11,6 +11,7 @@ dependencies = [
   "sqlalchemy>=2.0.40",
   "uvicorn[standard]>=0.34.2",
   "redis[hiredis]>=6.4.0",
+  "starlette>=0.47.2",
 ]
 description = "Your smart LINE assistant for instant weather updates."
 name = "WeaMind"
@@ -20,8 +21,10 @@ version = "1.0.2"
 
 [dependency-groups]
 dev = [
+  "bandit>=1.8.0",
   "coverage>=7.9.1",
   "deptry>=0.23.0",
+  "pip-audit>=2.7.0",
   "pre-commit>=4.2.0",
   "pyright>=1.1.401",
   "pytest>=8.4.0",
