@@ -35,6 +35,12 @@ jobs:
       - name: Type check (pyright)
         run: uv run pyright
 
+      - name: Security scan (Bandit)
+        run: uv run bandit -c bandit.yaml -r app
+
+      - name: Dependency vulnerability scan (pip-audit)
+        run: uv run pip-audit --progress-spinner=off --ignore-vuln=GHSA-xqrq-4mgf-ff32 --ignore-vuln=GHSA-4xh5-x5gv-qwph
+
       - name: Run unit tests with coverage
         # Run tests and generate coverage.xml with pytest-cov
         run: |

@@ -41,6 +41,14 @@ repos:
             static/.*\.html
           )$
 
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ['-c', 'bandit.yaml', '-r', 'app']
+        types: [python]
+        stages: [pre-push]
+
   - repo: local
     hooks:
       - id: pyright
