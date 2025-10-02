@@ -1,6 +1,6 @@
 APP_SERVICE=app
 
-.PHONY: dev-up clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean update-liff-version update-static-version changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete
+.PHONY: dev-up clean up down deploy migrate revision rollback tree check prune setup-prod upgrade-pyright sync-instructions export-docs clean-docs worktree-add worktree-list worktree-remove worktree-clean update-liff-version update-static-version changelog-status changelog-prepare changelog-release changelog-help upload upload-list upload-delete security-bandit security-audit security-all
 
 # === Container & Image Management ===
 dev-up:
@@ -128,3 +128,22 @@ upload-delete:
 		exit 1; \
 	fi
 	@uv run python scripts/rich_menu_manager.py delete --rich-menu-id "$(ID)"
+
+# === Security Scanning ===
+security-bandit:
+	@echo "🔒 執行 Bandit 安全掃描..."
+	@mkdir -p security-reports
+	@uv run bandit -c bandit.yaml -r app -f json -o security-reports/bandit-report.json
+	@uv run bandit -c bandit.yaml -r app
+
+security-audit:
+	@echo "🔍 執行 pip-audit 依賴弱點掃描..."
+	@mkdir -p security-reports
+	@uv run pip-audit --format=json --output=security-reports/pip-audit-report.json --ignore-vuln=GHSA-xqrq-4mgf-ff32 --ignore-vuln=GHSA-4xh5-x5gv-qwph
+	@uv run pip-audit --ignore-vuln=GHSA-xqrq-4mgf-ff32 --ignore-vuln=GHSA-4xh5-x5gv-qwph
+
+security-all:
+	@echo "🛡️ 執行完整安全掃描..."
+	@$(MAKE) security-bandit
+	@$(MAKE) security-audit
+	@echo "✅ 安全掃描完成！"
