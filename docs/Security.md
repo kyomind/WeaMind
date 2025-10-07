@@ -75,7 +75,7 @@ make security-audit
 - `security-reports/bandit-report.json`：Bandit 掃描結果
 - `security-reports/pip-audit-report.json`：pip-audit 掃描結果
 
-## 相關文檔
+## 相關文件
 
 詳細的使用指南和實作說明請參考：
 - [實作重點總結](./security-scan/implementation-highlights.md)
@@ -88,7 +88,7 @@ make security-audit
 
 1. 更新 `Makefile` 中的 `--ignore-vuln` 參數
 2. 更新 `.github/workflows/ci.yml` 中的相同參數
-3. 在此文檔中記錄忽略原因
+3. 在此文件中記錄忽略原因
 
 ### 定期檢查
 建議每季度重新評估已忽略的弱點，確保風險仍在可接受範圍內。
