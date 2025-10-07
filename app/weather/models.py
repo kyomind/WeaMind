@@ -84,7 +84,7 @@ class Weather(Base):
 
 class Task(Base):
     """
-    Database model for monitoring wea-data ETL service execution.
+    Database model for monitoring weamind-data ETL service execution.
     Records task status, success/failure, and processing statistics.
     """
 
