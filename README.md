@@ -56,15 +56,17 @@ graph TB
     DATA[weamind-data<br/>微服務]
 
     LINE -->|Webhook| WEB
-    WEB -->|Fast ACK<br/>< 3秒| LINE
+    WEB -->|Fast ACK<br/>數十毫秒| LINE
     WEB -->|非阻塞| BG
-    BG <-->|鎖定機制| REDIS
+    BG -->|選擇性鎖定| REDIS
     BG <-->|資料讀寫| DB
+    BG -->|用戶回應<br/>< 3秒| LINE
     DATA -->|每6小時<br/>ETL更新| DB
 ```
 
 ### 🚀 Fast ACK Webhook 架構
-- **3 秒內回應**：LINE webhook 採用「驗證→後台處理→立即回應」流程
+- **數十毫秒 ACK**：LINE webhook 收到請求後立即驗證並回應，避免平台重送
+- **3 秒內用戶回應**：採用「快速 ACK→背景處理→用戶回應」的異步流程
 - **背景任務處理**：使用 FastAPI BackgroundTasks，避免業務邏輯阻塞 ACK
 - **錯誤隔離**：後台例外不影響 webhook 成功回應，防止 LINE 平台重送
 
