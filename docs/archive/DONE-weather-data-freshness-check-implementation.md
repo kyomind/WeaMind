@@ -8,7 +8,7 @@
 ## 1. 問題背景與需求
 
 ### 原始問題
-如果 wea-data 微服務長時間無法正常更新天氣資料，WeaMind 可能會提供過時的預報資訊給使用者，造成誤導。
+如果 weamind-data 微服務長時間無法正常更新天氣資料，WeaMind 可能會提供過時的預報資訊給使用者，造成誤導。
 
 ### 使用者需求
 > "如果查到的是過時的資料(表示db資料沒有正確更新)，應該就不能回應天氣資料，以免誤導用戶"
@@ -34,7 +34,7 @@
 
 **閾值選擇**: 6.5 小時
 **設計理由**:
-- wea-data 微服務每 6 小時更新一次
+- weamind-data 微服務每 6 小時更新一次
 - 6.5 小時提供 30 分鐘的緩衝時間
 - 平衡資料時效性與系統容錯性
 
@@ -213,7 +213,7 @@ start_time: Mapped[datetime] = mapped_column(DateTime, default=func.now(), nulla
 ```
 
 **分析結果**：
-- wea-data 服務實際上會明確提供 `start_time` 值
+- weamind-data 服務實際上會明確提供 `start_time` 值
 - Model 中的 `default=func.now()` 永遠不會被使用
 - 但為保持程式碼一致性，建議移除
 
@@ -274,7 +274,7 @@ AND fetched_at >= NOW() - INTERVAL '6.5 hours'
 ## 8. 未來維護建議
 
 ### 8.1 監控要點
-- 關注 wea-data 服務的更新頻率
+- 關注 weamind-data 服務的更新頻率
 - 監控「查無資料」錯誤的頻率變化
 - 考慮添加新鮮度相關的 metrics
 

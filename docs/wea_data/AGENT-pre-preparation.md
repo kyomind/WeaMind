@@ -6,8 +6,8 @@
 
 ## 1. WHY：為何需要此功能？
 
-- **問題**: `wea-data` 是一個獨立的 ETL 微服務，負責從氣象局抓取資料。我們需要一個機制來監控它每次執行的狀況（成功、失敗、處理筆數等）。
-- **目標**: 在 WeaMind 主專案的資料庫中建立一個 `task` 表，專門用來儲存 `wea-data` 服務的執行記錄。這使得監控和偵錯變得簡單，且無需引入複雜的監控系統。
+- **問題**: `weamind-data` 是一個獨立的 ETL 微服務，負責從氣象局抓取資料。我們需要一個機制來監控它每次執行的狀況（成功、失敗、處理筆數等）。
+- **目標**: 在 WeaMind 主專案的資料庫中建立一個 `task` 表，專門用來儲存 `weamind-data` 服務的執行記錄。這使得監控和偵錯變得簡單，且無需引入複雜的監控系統。
 
 ---
 
@@ -24,7 +24,7 @@
 ### 3.1 `Task` Model 定義
 
 - **檔案位置**: 建議在 `app/weather/models.py` 中加入 `Task` 類別，因為它與天氣資料的更新流程密切相關。
-- **欄位設計**: 必須嚴格遵循我們在 `MEMO-for-next-conversation.md` 中確定的最終設計，以確保與 `wea-data` 服務的相容性。
+- **欄位設計**: 必須嚴格遵循我們在 `MEMO-for-next-conversation.md` 中確定的最終設計，以確保與 `weamind-data` 服務的相容性。
 
 ```python
 # 參考實作，具體程式碼由 AI Agent 完成
@@ -67,7 +67,7 @@ CREATE TABLE task (
 
 #### Migration 1: 建立 `task` 表結構
 1.  **確保 Model 已被 `env.py` 引用**: 確認 Alembic 的 `env.py` 設定能夠偵測到 `app.weather.models` 中的新 `Task` model。
-2.  **產生遷移檔**: 執行 `uv run alembic revision --autogenerate -m "Add task table for wea-data monitoring"`。
+2.  **產生遷移檔**: 執行 `uv run alembic revision --autogenerate -m "Add task table for weamind-data monitoring"`。
 
 #### Migration 2: 設定資料庫權限
 3.  **產生權限遷移檔**: 執行 `uv run alembic revision -m "Setup task table permissions"`。
@@ -112,13 +112,13 @@ CREATE TABLE task (
 ## 5. Memory Hooks for AI Agent
 
 - **核心提醒 (Memento)**:
-    - **職責單一**: 這個 `task` 表的唯一目的是「監控」，`wea-data` 服務是唯一的寫入者。WeaMind 主應用目前**只需定義它、建立它**，不需要任何讀取或寫入 `task` 表的業務邏輯。
-    - **設計已定**: `Task` model 的欄位設計是最終版本，請勿修改、增加或刪減任何欄位，以免破壞與 `wea-data` 的契約。
-    - **前置作業**: 這是 `wea-data` 服務能正確運作的**前置依賴**。沒有這個表，ETL 流程將因無法記錄日誌而失敗。
+    - **職責單一**: 這個 `task` 表的唯一目的是「監控」，`weamind-data` 服務是唯一的寫入者。WeaMind 主應用目前**只需定義它、建立它**，不需要任何讀取或寫入 `task` 表的業務邏輯。
+    - **設計已定**: `Task` model 的欄位設計是最終版本，請勿修改、增加或刪減任何欄位，以免破壞與 `weamind-data` 的契約。
+    - **前置作業**: 這是 `weamind-data` 服務能正確運作的**前置依賴**。沒有這個表，ETL 流程將因無法記錄日誌而失敗。
     - **無關功能**: 此表與 LINE Bot 的天氣查詢功能**完全無關**。
     - **權限設計**: 必須建立兩個 migration - 第一個建立表結構，第二個設定權限。`wea_data` 需要完整權限，`wea_bot` 限制為只讀。
 
 ---
 **相關文件**:
 - `prd/wea_data/MEMO-for-next-conversation.md` (最終決策)
-- `prd/wea_data/wea-data-architecture.md` (架構設計)
+- `prd/wea_data/weamind-data-architecture.md` (架構設計)

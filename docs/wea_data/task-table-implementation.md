@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文件記錄了為 WeaMind 專案實作 Task 監控表的完整過程。該表專門用於監控 `wea-data` ETL 服務的執行狀況，包括成功/失敗狀態、處理筆數等關鍵資訊。
+本文件記錄了為 WeaMind 專案實作 Task 監控表的完整過程。該表專門用於監控 `weamind-data` ETL 服務的執行狀況，包括成功/失敗狀態、處理筆數等關鍵資訊。
 
 **實作日期**: 2025年9月16日
 **分支**: `feature/weather-data`
@@ -12,8 +12,8 @@
 
 ## 為何需要此功能？
 
-- **問題**: `wea-data` 是獨立的 ETL 微服務，負責從氣象局抓取資料。需要一個機制來監控每次執行的狀況
-- **目標**: 在 WeaMind 主專案的資料庫中建立 `task` 表，專門儲存 `wea-data` 服務的執行記錄
+- **問題**: `weamind-data` 是獨立的 ETL 微服務，負責從氣象局抓取資料。需要一個機制來監控每次執行的狀況
+- **目標**: 在 WeaMind 主專案的資料庫中建立 `task` 表，專門儲存 `weamind-data` 服務的執行記錄
 - **效益**: 使監控和偵錯變得簡單，無需引入複雜的監控系統
 
 ## 資料表設計
@@ -23,7 +23,7 @@
 ```python
 class Task(Base):
     """
-    Database model for monitoring wea-data ETL service execution.
+    Database model for monitoring weamind-data ETL service execution.
     Records task status, success/failure, and processing statistics.
     """
     __tablename__ = "task"
@@ -227,7 +227,7 @@ WHERE table_name = 'task' AND grantee = 'wea_bot';
 
 ### 3. 測試 ETL 服務整合
 ```python
-# wea-data 服務應能成功執行以下操作
+# weamind-data 服務應能成功執行以下操作
 from app.weather.models import Task
 
 # 記錄任務開始
@@ -245,9 +245,9 @@ session.commit()
 ## 重要注意事項
 
 ### ⚠️ 設計限制
-- **欄位固定**: Task model 的欄位設計是最終版本，請勿修改、增加或刪減，以免破壞與 `wea-data` 的契約
-- **前置依賴**: 這是 `wea-data` 服務能正確運作的前置依賴，沒有這個表 ETL 流程將失敗
-- **職責單一**: 此表的唯一目的是「監控」，`wea-data` 服務是唯一的寫入者
+- **欄位固定**: Task model 的欄位設計是最終版本，請勿修改、增加或刪減，以免破壞與 `weamind-data` 的契約
+- **前置依賴**: 這是 `weamind-data` 服務能正確運作的前置依賴，沒有這個表 ETL 流程將失敗
+- **職責單一**: 此表的唯一目的是「監控」，`weamind-data` 服務是唯一的寫入者
 
 ### 🎯 使用範圍
 - ✅ **適用於**: ETL 服務監控、偵錯、管理介面展示
@@ -256,7 +256,7 @@ session.commit()
 
 ## 後續工作
 
-1. **wea-data 服務整合**: 在 ETL 服務中實作 Task 記錄邏輯
+1. **weamind-data 服務整合**: 在 ETL 服務中實作 Task 記錄邏輯
 2. **監控介面**: 可考慮在管理介面中展示 Task 執行狀況
 3. **清理機制**: 可設定定期清理舊的 Task 記錄，避免資料表過大
 

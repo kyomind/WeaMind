@@ -2,19 +2,19 @@
 
 ## High-Level Architecture Overview
 
-- Two-component separation: line-bot (FastAPI app, this project), wea-data (periodically updates weather data)
-- wea-data: Deployed independently, operates separately from line-bot. Responsible only for ETL, updating the latest weather data from external sources
+- Two-component separation: line-bot (FastAPI app, this project), weamind-data (periodically updates weather data)
+- weamind-data: Deployed independently, operates separately from line-bot. Responsible only for ETL, updating the latest weather data from external sources
 
 ## Project Scope
 
 - This repo only contains the **line-bot** module code
-- wea-data is an independent component (microservice) and is not included in this repo
+- weamind-data is an independent component (microservice) and is not included in this repo
 
 ## Component Interaction Flow
 
 - line-bot handles all external requests and processes text input using implemented location parsing logic
 - line-bot processes LINE webhook events with location query parsing and user interaction management
-- wea-data only performs scheduled ETL, writing weather data into the database, and does not provide any API
+- weamind-data only performs scheduled ETL, writing weather data into the database, and does not provide any API
 - All data queries and access are performed directly by line-bot via the database
 
 ## Main Module Responsibilities
@@ -29,7 +29,7 @@
 
 ## Data Flow and Persistence
 
-- wea-data periodically ETLs external weather data into PostgreSQL
+- weamind-data periodically ETLs external weather data into PostgreSQL
 - line-bot directly queries/writes PostgreSQL, including user state and weather data
 - Alembic manages database schema migrations
 - SQLAlchemy manages all tables
