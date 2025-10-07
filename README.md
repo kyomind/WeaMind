@@ -44,6 +44,8 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
 
 ![WeaMind QR Code](https://img.kyomind.tw/wea-qrcode-min-20250929-223022.png)
 
+---
+
 ## 開發者技術亮點
 
 ```mermaid
@@ -98,7 +100,7 @@ graph TB
 ### 🛠️ 現代化開發工具鏈
 - **uv 套件管理**：替代 pip + venv，統一 `uv run` 指令執行
 - **Ruff 靜態檢查與格式化**：整合 linting + formatting，取代 black + isort + flake8
-- **pre-commit hooks**：透過 pre-commit 工具設定 Git hooks，於 commit 前自動執行程式碼檢查
+- **pre-commit hooks**：透過 pre-commit 工具設定 Git hooks，於 commit 前自動檢查程式碼
 - **多重安全掃描**：Bandit（靜態安全）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）
 
 ### 🔄 完整 CI Pipeline
