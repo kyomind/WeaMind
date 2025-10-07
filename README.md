@@ -66,7 +66,7 @@ graph TB
 
 ### 🚀 Fast ACK Webhook 架構
 - **數十毫秒 ACK**：LINE webhook 收到請求後立即驗證並回應，避免平台重送
-- **3 秒內用戶回應**：採用「快速 ACK→背景處理→用戶回應」的異步流程
+- **3 秒內用戶回應**：採用「快速 ACK→背景處理→用戶回應」的非同步流程
 - **背景任務處理**：使用 FastAPI BackgroundTasks，避免業務邏輯阻塞 ACK
 - **錯誤隔離**：後台例外不影響 webhook 成功回應，防止 LINE 平台重送
 
@@ -86,9 +86,17 @@ graph TB
 - **依賴反轉**：FastAPI 依賴注入機制，便於測試與模組替換
 - **型別安全設計**：全專案 type hints 覆蓋，Pyright 靜態檢查
 
+### 🧪 pytest 單元測試體系
+- **完整測試覆蓋**：32+ 測試檔案涵蓋 core、line、weather、user 各領域模組
+- **測試環境隔離**：SQLite 記憶體資料庫 + fixtures 設計，確保測試獨立性
+- **非同步測試支援**：pytest-asyncio 完美適配 FastAPI 非同步特性
+- **自動化覆蓋率**：pytest-cov 整合，自動生成覆蓋率報告並上傳 Codecov
+- **嚴格品質控制**：`--strict-config --strict-markers` 確保測試可靠性
+
 ### 🛠️ 現代化開發工具鏈
 - **uv 套件管理**：替代 pip + venv，統一 `uv run` 指令執行
 - **Ruff 靜態檢查與格式化**：整合 linting + formatting，取代 black + isort + flake8
+- **pre-commit hooks**：Git commit 前自動執行程式碼檢查，包含格式化、語法檢查、大檔案檢測等 15+ 檢查項目
 - **多重安全掃描**：Bandit（靜態安全）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）
 
 ### 🔄 完整 CI 流水線
@@ -100,9 +108,9 @@ graph TB
 - **Codecov 整合**：測試覆蓋率自動上傳與 PR 報告
 
 ### 📦 容器化與部署
-- **多環境 Docker Compose**：開發、測試、生產環境配置繼承
+- **多環境 Docker Compose**：開發、測試、生產環境設定繼承
 - **Alembic 資料庫遷移**：版本化 schema 管理，支援向前向後遷移
-- **健康檢查機制**：容器與應用層級的多重健康監控
+- **健康檢查機制**：容器與應用程式層級的多重健康監控
 
 ---
 
