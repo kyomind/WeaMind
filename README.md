@@ -63,13 +63,13 @@ graph TB
     WEB -->|非阻塞| BG
     BG -->|選擇性鎖定| REDIS
     BG <-->|資料讀寫| DB
-    BG -->|用戶回應<br/>< 3秒| LINE
-    DATA -->|每6小時<br/>ETL更新| DB
+        BG -->|回應用戶<br/>< 3 秒| LINE
+    DATA -->|每 6 小時<br/>ETL 更新| DB
 ```
 
 ### 🚀 Fast ACK Webhook 架構
 - **數十毫秒 ACK**：Webhook Handler 收到請求後立即驗證並回應，避免平台重送
-- **3 秒內用戶回應**：採用「快速 ACK→背景處理→用戶回應」的非同步流程
+- **3 秒內回應用戶**：採用「快速 ACK→背景處理→回應用戶」的非同步流程
 - **背景任務處理**：使用 FastAPI BackgroundTasks，避免業務邏輯阻塞 ACK
 - **錯誤隔離**：後台例外不影響 webhook 成功回應，防止 LINE 平台重送
 
