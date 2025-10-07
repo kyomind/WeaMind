@@ -51,7 +51,7 @@ graph TB
     LINE[LINE Platform]
     WEB[FastAPI LINE Bot App]
     BG[Background Tasks]
-    REDIS[(Redis<br/>分散式鎖定)]
+    REDIS[(Redis<br/>分散式鎖)]
     DB[(PostgreSQL<br/>主資料庫)]
     DATA[weamind-data<br/>微服務]
 
@@ -61,12 +61,6 @@ graph TB
     BG <-->|鎖定機制| REDIS
     BG <-->|資料讀寫| DB
     DATA -->|每6小時<br/>ETL更新| DB
-
-    style WEB fill:#e1f5fe
-    style BG fill:#f3e5f5
-    style REDIS fill:#ffebee
-    style DB fill:#e8f5e8
-    style DATA fill:#fff3e0
 ```
 
 ### 🚀 Fast ACK Webhook 架構
