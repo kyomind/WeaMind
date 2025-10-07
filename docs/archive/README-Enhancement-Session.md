@@ -34,7 +34,7 @@ graph TB
 
 #### 3. 技術亮點章節結構
 - 🚀 Fast ACK Webhook 架構
-- 🔒 Redis 分散式並行控制
+- 🔒 Redis 分散式鎖
 - 🗺️ 智慧位置解析引擎
 - 🏗️ Domain-Driven Design 架構
 - 🛠️ 現代化開發工具鏈

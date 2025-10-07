@@ -75,7 +75,7 @@ graph TB
 - **背景任務處理**：使用 FastAPI BackgroundTasks，避免業務邏輯阻塞 ACK
 - **錯誤隔離**：後台例外不影響 webhook 成功回應，防止 LINE 平台重送
 
-### 🔒 Redis 分散式並行控制
+### 🔒 Redis 分散式鎖
 - **固定 TTL 設計**：2 秒自動釋放鎖，簡化實作並防護快速點擊
 - **Fail-Open 策略**：Redis 服務異常時允許請求通過，優先保證服務可用性
 - **選擇性鎖定**：僅對 Rich Menu PostBack 等高風險操作加鎖，文字輸入無鎖
