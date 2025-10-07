@@ -85,6 +85,8 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
 - **Alembic 資料庫遷移**：版本化 schema 管理，支援向前向後遷移
 - **健康檢查機制**：容器與應用層級的多重健康監控
 
+---
+
 詳細技術架構請參考：
-- [`docs/Architecture-Code.md`](docs/Architecture-Code.md) - 完整程式碼架構說明
+- [專案架構](docs/Architecture-Code.md) - 完整程式碼架構說明
 - [DeepWiki 技術文件](https://deepwiki.com/kyomind/WeaMind) - 互動式技術探索
