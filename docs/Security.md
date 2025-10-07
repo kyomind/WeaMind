@@ -75,12 +75,6 @@ make security-audit
 - `security-reports/bandit-report.json`：Bandit 掃描結果
 - `security-reports/pip-audit-report.json`：pip-audit 掃描結果
 
-## 相關文件
-
-詳細的使用指南和實作說明請參考：
-- [實作重點總結](./security-scan/implementation-highlights.md)
-- [Makefile 指令完整使用說明](./security-scan/makefile-commands-guide.md)
-
 ## 維護指南
 
 ### 更新忽略清單
