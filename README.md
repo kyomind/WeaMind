@@ -73,7 +73,6 @@ graph TB
 - **數十毫秒 ACK**：Webhook Handler 收到請求後立即驗證並回應 LINE Platform，避免平台重送
 - **2 秒內回應用戶**：採用「快速 ACK→背景處理→回應用戶」的非同步流程
 - **背景任務處理**：使用 FastAPI BackgroundTasks，避免業務邏輯阻塞 ACK
-- **錯誤隔離**：後台例外不影響 webhook 成功回應，防止 LINE 平台重送
 
 ### 🔒 Redis 分散式鎖
 - **防重複點擊保護**：2 秒鎖定機制，避免用戶快速連點造成重複處理
