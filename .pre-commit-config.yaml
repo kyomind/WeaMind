@@ -1,7 +1,7 @@
 # See https://pre-commit.com for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-merge-conflict
       - id: debug-statements
@@ -15,7 +15,7 @@ repos:
       - id: end-of-file-fixer
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.9
+    rev: v0.14.5
     hooks:
       - id: ruff
         args:
@@ -23,7 +23,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.5
+    rev: 0.9.10
     hooks:
       - id: uv-lock
 
@@ -42,7 +42,7 @@ repos:
           )$
 
   - repo: https://github.com/PyCQA/bandit
-    rev: 1.8.6
+    rev: 1.9.1
     hooks:
       - id: bandit
         args: ['-c', 'bandit.yaml', '-r', 'app']
