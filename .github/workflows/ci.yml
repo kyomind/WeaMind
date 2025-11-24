@@ -17,7 +17,7 @@ jobs:
       image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
     steps:
-      - uses: actions/checkout@v5  # Official GitHub action, keep version tag
+      - uses: actions/checkout@v6  # Official GitHub action, keep version tag
 
       - name: Install dependencies
         # Ensure pyproject.toml / lockfile include pytest-cov, coverage and other dev deps
@@ -59,7 +59,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5  # Official GitHub action, keep version tag
+      - uses: actions/checkout@v6  # Official GitHub action, keep version tag
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.7.1 - Third-party action, pinned to commit SHA
