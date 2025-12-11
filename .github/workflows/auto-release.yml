@@ -7,7 +7,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5  # Official GitHub action, keep version tag
+      - uses: actions/checkout@v6  # Official GitHub action, keep version tag
         with:
           # Fetch complete git history for GitHub to correctly compare versions
           fetch-depth: 0
