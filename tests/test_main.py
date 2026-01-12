@@ -27,6 +27,13 @@ class TestMainApplication:
         assert response.status_code == 200
         assert response.json() == {"message": "Welcome to WeaMind API"}
 
+    def test_health_endpoint(self, client: TestClient) -> None:
+        """Test the health check endpoint returns ok status."""
+        response = client.get("/health")
+
+        assert response.status_code == 200
+        assert response.json() == {"status": "ok"}
+
     def test_app_has_registered_routers(self) -> None:
         """Test that the app has registered all expected routers."""
         import app.main
