@@ -59,6 +59,17 @@ async def root() -> dict:
     return {"message": "Welcome to WeaMind API"}
 
 
+@app.get("/health")
+async def health() -> dict:
+    """
+    Health check endpoint for Kubernetes liveness and readiness probes.
+
+    Returns:
+        dict: Service health status
+    """
+    return {"status": "ok"}
+
+
 # Register routers from modules
 app.include_router(user_router, tags=["user"])  # no prefix because the domain is api.kyomind.tw
 app.include_router(line_router, tags=["line"])
