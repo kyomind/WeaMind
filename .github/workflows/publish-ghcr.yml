@@ -1,0 +1,63 @@
+name: Publish to GHCR
+
+# 觸發條件：等待 CI workflow 完成後才執行
+on:
+  workflow_run:
+    workflows: ["CI"]  # 必須與 ci.yml 中的 name 完全一致（包含大小寫）
+    types: [completed]  # CI 執行完畢時觸發（不論成功或失敗）
+    branches: [main]    # 只監聽 main 分支的 CI
+
+# 權限設定：最小權限原則
+permissions:
+  contents: read      # 讀取 repo 內容（checkout 程式碼用）
+  packages: write     # 寫入 GHCR（push image 用）
+
+jobs:
+  build-and-push:
+    # 防護條件：只有當 CI 成功、事件為 push 且分支是 main 時才執行
+    # 這樣可以避免 CI 失敗或 PR CI 觸發時推送壞版本到 GHCR
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：取得程式碼
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # 使用觸發 CI 的那個 commit SHA，確保版本一致
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      # 第二步：設定 Docker Buildx（支援多平台 build 與快取）
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.7.1
+
+      # 第三步：登入 GHCR
+      - name: Login to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io                         # GitHub Container Registry
+          username: ${{ github.actor }}             # 觸發 workflow 的使用者名稱（自動）
+          password: ${{ secrets.GITHUB_TOKEN }}     # GitHub 自動提供的 token（不需手動建立）
+
+      # 第四步：計算 tag 名稱
+      - name: Compute tags
+        id: meta  # 設定 id，讓後續步驟可以用 steps.meta.outputs.xxx 取值
+        run: |
+          # 取 commit SHA 前 7 碼（例如：ab788e3）
+          SHORT_SHA="${GITHUB_SHA::7}"
+          # 輸出到 GITHUB_OUTPUT，供下一步使用
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+
+      # 第五步：Build 並 Push image 到 GHCR
+      - name: Build and push
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        with:
+          context: .              # build context 為當前目錄
+          file: ./Dockerfile      # Dockerfile 位置
+          push: true              # build 完後立即 push（若為 false 則只 build 不 push）
+          tags: |                 # 同時推送兩個 tag
+            ghcr.io/${{ github.repository_owner }}/weamind:latest                      # latest = 永遠指向最新版
+            ghcr.io/${{ github.repository_owner }}/weamind:sha-${{ steps.meta.outputs.short_sha }}  # sha tag = 可追溯版本
+          # 使用 GitHub Actions 內建快取，加速 build
+          cache-from: type=gha    # 從 GitHub Actions cache 讀取
+          cache-to: type=gha,mode=max  # 寫入 cache（mode=max 快取所有 layers）

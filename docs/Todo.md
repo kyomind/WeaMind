@@ -37,6 +37,7 @@
 - [x] 34.Processing Lock: 實作 Redis 分散式鎖防止重複處理，採用選擇性鎖策略與風險導向設計 2025-09-13
 - [x] 35.Fast ACK for LINE Webhook: 實作快速回應機制，將處理邏輯移至背景執行，解決併發時段 Invalid reply token 錯誤與 redelivery 問題 2025-09-14
 - [x] 36.新增 `/health endpoint` 到 FastAPI，簡單返回 `{"status": "ok"}`，用於 K8s 健康檢查 2026-01-12
+- [ ] 37.實作 GitHub Actions 自動發布 Docker image 到 GHCR，支援 latest 與 SHA tag，為容器化部署建立自動化發版流程 2026-01-13
 
 ## 說明
 
