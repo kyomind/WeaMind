@@ -56,6 +56,7 @@ jobs:
           context: .              # build context 為當前目錄
           file: ./Dockerfile      # Dockerfile 位置
           push: true              # build 完後立即 push（若為 false 則只 build 不 push）
+          platforms: linux/amd64,linux/arm64  # 支援 x86_64 和 ARM64（Apple Silicon）
           tags: |
             ghcr.io/${{ github.repository_owner }}/weamind:latest
             ghcr.io/${{ github.repository_owner }}/weamind:sha-${{ steps.meta.outputs.short_sha }}

@@ -52,6 +52,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          platforms: linux/amd64,linux/arm64  # 支援 x86_64 和 ARM64（Apple Silicon）
           tags: |
             ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.full }}
             ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.minor }}
