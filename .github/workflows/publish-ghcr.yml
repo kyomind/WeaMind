@@ -49,15 +49,16 @@ jobs:
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
 
       # 第五步：Build 並 Push image 到 GHCR
+      # 同時推送兩個 tag：latest（永遠指向最新版）和 sha-xxx（可追溯版本）
       - name: Build and push
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         with:
           context: .              # build context 為當前目錄
           file: ./Dockerfile      # Dockerfile 位置
           push: true              # build 完後立即 push（若為 false 則只 build 不 push）
-          tags: |                 # 同時推送兩個 tag
-            ghcr.io/${{ github.repository_owner }}/weamind:latest                      # latest = 永遠指向最新版
-            ghcr.io/${{ github.repository_owner }}/weamind:sha-${{ steps.meta.outputs.short_sha }}  # sha tag = 可追溯版本
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/weamind:latest
+            ghcr.io/${{ github.repository_owner }}/weamind:sha-${{ steps.meta.outputs.short_sha }}
           # 使用 GitHub Actions 內建快取，加速 build
           cache-from: type=gha    # 從 GitHub Actions cache 讀取
           cache-to: type=gha,mode=max  # 寫入 cache（mode=max 快取所有 layers）

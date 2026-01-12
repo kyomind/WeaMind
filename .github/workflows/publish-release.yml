@@ -45,6 +45,7 @@ jobs:
           echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
 
       # 第五步：Build 並 Push image（帶語義化版本號）
+      # 推送四個 tags：完整版本號、minor、major、latest
       - name: Build and push with version tags
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         with:
