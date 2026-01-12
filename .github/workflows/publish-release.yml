@@ -1,0 +1,60 @@
+name: Publish Release to GHCR
+
+# 觸發條件：當建立 v* 格式的 tag 時（例如 v1.0.7）
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：取得程式碼（包含完整 git history）
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      # 第二步：設定 Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.7.1
+
+      # 第三步：登入 GHCR
+      - name: Login to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 第四步：解析版本號（從 git tag 中提取）
+      - name: Extract version from tag
+        id: version
+        run: |
+          # 假設 tag 是 v1.0.7，提取各層級版本號
+          VERSION=${GITHUB_REF#refs/tags/v}  # 移除 refs/tags/v，得到 1.0.7
+          MAJOR=$(echo $VERSION | cut -d. -f1)  # 1
+          MINOR=$(echo $VERSION | cut -d. -f1-2)  # 1.0
+          echo "full=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          echo "minor=$MINOR" >> "$GITHUB_OUTPUT"
+
+      # 第五步：Build 並 Push image（帶語義化版本號）
+      - name: Build and push with version tags
+        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.full }}
+            ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.minor }}
+            ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.major }}
+            ghcr.io/${{ github.repository_owner }}/weamind:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
