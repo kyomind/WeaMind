@@ -14,9 +14,9 @@ permissions:
 
 jobs:
   build-and-push:
-    # 防護條件：只有當 CI 成功且分支是 main 時才執行
-    # 這樣可以避免 CI 失敗時推送壞版本到 GHCR
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    # 防護條件：只有當 CI 成功、事件為 push 且分支是 main 時才執行
+    # 這樣可以避免 CI 失敗或 PR CI 觸發時推送壞版本到 GHCR
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
     runs-on: ubuntu-latest
 
     steps:
