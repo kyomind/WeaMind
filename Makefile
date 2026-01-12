@@ -21,8 +21,10 @@ down:
 
 deploy:
 	@echo "🚀 開始部署..."
-	@echo "📦 建立並啟動容器..."
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+	@echo "📥 拉取最新 image..."
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml pull app
+	@echo "📦 啟動容器..."
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 	@echo "⏳ 等待資料庫服務啟動..."
 	@until docker compose exec db pg_isready -U wea_bot -d weamind -q; do \
 		echo "等待資料庫準備中..."; \

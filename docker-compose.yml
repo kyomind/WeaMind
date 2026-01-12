@@ -1,7 +1,6 @@
 services:
   app:
-    image: wea-image
-    build: .
+    image: ghcr.io/kyomind/weamind:latest
     env_file:
       - .env
     depends_on:
