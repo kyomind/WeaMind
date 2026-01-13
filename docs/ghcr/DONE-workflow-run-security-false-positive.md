@@ -232,6 +232,114 @@ def process(data):
 
 ## 處理建議
 
+### ⚠️ 不要採用的方案：GitHub Copilot Autofix 建議
+
+GitHub UI 上的 Copilot Autofix 功能可能會建議將：
+
+```yaml
+# 原始實現（正確）
+ref: ${{ github.event.workflow_run.head_sha }}
+```
+
+改為：
+
+```yaml
+# Copilot 建議（錯誤）
+ref: main
+```
+
+**❌ 這個建議不應該採用**，理由如下：
+
+#### 問題 1：失去版本一致性
+
+**原始設計的運作流程**：
+```
+T1: Push commit abc123 to main
+T2: CI workflow 驗證 commit abc123（lint, test, security scan）
+T3: CI 成功
+T4: publish-ghcr.yml 觸發，checkout commit abc123
+T5: Build & Push image（image 內容 = 已驗證的 abc123）
+✅ 版本一致性：CI 驗證什麼，就 build 什麼
+```
+
+**採用 Copilot 建議後的問題**：
+```
+T1: Push commit abc123 to main
+T2: CI workflow 驗證 commit abc123
+T3: 你又 push commit def456 to main（開發其他功能）
+T4: abc123 的 CI 成功
+T5: publish-ghcr.yml 觸發，checkout main（現在指向 def456）
+T6: Build & Push image（image 內容 = 未經 CI 驗證的 def456）
+❌ 嚴重問題：推送了未經驗證的程式碼！
+```
+
+#### 問題 2：競態條件（Race Condition）
+
+在快速連續 push 的場景下：
+
+```
+開發者操作：
+- 10:00:00 → push commit A
+- 10:00:30 → push commit B
+- 10:01:00 → push commit C
+
+CI 執行順序：
+- 10:00:05 → CI for A 開始
+- 10:00:35 → CI for B 開始
+- 10:01:05 → CI for C 開始
+
+publish-ghcr.yml 執行：
+- 10:02:00 → A 的 CI 成功，觸發 publish
+  - checkout main（現在是 commit C）
+  - 推送 image tag: sha-A（內容卻是 C）❌
+
+- 10:02:30 → B 的 CI 成功，觸發 publish
+  - checkout main（現在是 commit C）
+  - 推送 image tag: sha-B（內容卻是 C）❌
+
+- 10:03:00 → C 的 CI 成功，觸發 publish
+  - checkout main（現在是 commit C）
+  - 推送 image tag: sha-C（內容是 C）✓
+```
+
+**結果**：`sha-A` 和 `sha-B` 的 tag 都指向 commit C 的內容，完全混亂！
+
+#### 問題 3：語義錯誤與可追溯性破壞
+
+```bash
+# image tag 的語義承諾
+ghcr.io/kyomind/weamind:sha-abc123
+# 預期：這個 image 包含 commit abc123 的程式碼
+
+# 使用 ref: main 後的實際情況
+# 實際：這個 image 可能包含任何 commit 的程式碼（取決於執行時 main 指向哪裡）
+
+# 這會導致：
+- 回滾失敗：拉取 sha-abc123 期望回到 abc123 狀態，實際上是其他版本
+- Debug 困難：無法確定特定 image 的實際內容
+- 信任崩潰：tag 名稱失去意義
+```
+
+#### 為什麼 Copilot 會提出這個建議？
+
+1. **靜態分析局限**：Copilot 看到「使用 `head_sha` 可能不安全」，建議用固定的 `main`
+2. **只解決表面問題**：這確實能消除 CodeQL 警告（因為不再使用動態 SHA）
+3. **未考慮業務邏輯**：沒有理解版本一致性的重要性
+
+#### 正確的做法
+
+**保持原始實現**：
+```yaml
+ref: ${{ github.event.workflow_run.head_sha }}
+```
+
+這是安全的，因為：
+- ✅ `if` 條件已經排除了 PR（`event == 'push'`）
+- ✅ 只處理 main 分支（`head_branch == 'main'`）
+- ✅ 確保版本一致性（CI 驗證的就是 build 的）
+
+**消除警告的方式**：關閉為 False Positive（見下方選項 1）
+
 ### 選項 1：關閉為 False Positive ✅ **推薦**
 
 在 GitHub Security → Code scanning alerts → Alert #51：
@@ -246,6 +354,7 @@ Security measures:
 3. `conclusion == 'success'` - Requires CI validation
 
 The checkout is safe as it only runs for trusted main branch commits.
+Using head_sha ensures version consistency between CI validation and image build.
 ```
 
 **Dismiss as**：`Won't fix` 或 `False positive`
