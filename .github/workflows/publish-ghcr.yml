@@ -51,7 +51,7 @@ jobs:
       # 第五步：Build 並 Push image 到 GHCR
       # 同時推送兩個 tag：latest（永遠指向最新版）和 sha-xxx（可追溯版本）
       - name: Build and push
-        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .              # build context 為當前目錄
           file: ./Dockerfile      # Dockerfile 位置
