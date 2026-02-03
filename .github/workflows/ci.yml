@@ -23,6 +23,9 @@ jobs:
         # Ensure pyproject.toml / lockfile include pytest-cov, coverage and other dev deps
         run: uv sync --locked
 
+      - name: Upgrade pip for security scan
+        run: uv run python -m pip install --upgrade pip
+
       - name: Install git and other tools
         run: apt-get update && apt-get install -y git curl gnupg libatomic1
 
