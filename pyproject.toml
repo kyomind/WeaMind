@@ -24,6 +24,7 @@ version = "1.1.1"
 dev = [
   "bandit>=1.8.0",
   "coverage>=7.9.1",
+  "pip>=26.0",
   "pip-audit>=2.7.0",
   "pre-commit>=4.2.0",
   "pyright>=1.1.401",
