@@ -7,7 +7,7 @@ set -e
 
 # 定義來源檔案和目標檔案
 SOURCE_FILE=".github/copilot-instructions.md"
-TARGET_FILES=("AGENTS.md" "GEMINI.md" "CLAUDE.md")
+TARGET_FILES=("AGENTS.md")
 
 # 檢查來源檔案是否存在
 if [[ ! -f "$SOURCE_FILE" ]]; then
