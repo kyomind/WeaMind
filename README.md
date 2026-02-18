@@ -23,13 +23,12 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
   - [地圖查詢](#4-地圖查詢)
   - [加入好友](#加入好友開始使用)
 - [開發者技術亮點](#開發者技術亮點)
-  - [Fast ACK Webhook 架構](#-fast-ack-webhook-架構)
-  - [Redis 分散式鎖](#-redis-分散式鎖)
-  - [Domain-Driven Design 架構](#-domain-driven-design-架構)
-  - [pytest 單元測試體系](#-pytest-單元測試體系)
-  - [現代化開發工具鏈](#-現代化開發工具鏈)
-  - [完整 CI Pipeline](#-完整-ci-pipeline)
-  - [容器化與部署](#-容器化與部署)
+  - [Fast ACK Webhook 架構](#fast-ack-webhook-架構)
+  - [Redis 分散式鎖](#redis-分散式鎖)
+  - [Domain-Driven Design 架構](#domain-driven-design-架構)
+  - [pytest 單元測試體系](#pytest-單元測試體系)
+  - [現代化開發工具](#現代化開發工具)
+  - [CI Pipeline](#ci-pipeline)
 
 ## 使用說明
 
@@ -107,26 +106,21 @@ graph TB
 - **獨立測試環境**：SQLite 記憶體資料庫 + fixtures，每個測試獨立運行不互相干擾
 - **Codecov 監控**：每次 PR 自動檢查覆蓋率變化，防止新功能降低測試覆蓋率
 
-### 🛠️ 現代化開發工具鏈
-- **統一環境管理**：uv 套件管理，統一 `uv run` 指令執行，消除環境差異
-- **完整程式碼品質檢查**：Ruff 靜態檢查與格式化，確保程式碼一致性
-- **自動化程式碼檢查**：pre-commit hooks 於 commit 前自動執行品質檢查
-- **多重安全掃描**：Bandit（靜態安全）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）
+### 現代化開發工具
+- **uv 套件管理**：統一的 Python 套件與虛擬環境管理，所有指令使用 `uv run` 執行
+- **Ruff 檢查與格式化**：取代 Pylint、Black、isort 的全方位工具
+- **Pyright 型別檢查**：100% Type Hints 覆蓋，確保型別安全
+- **pre-commit 自動化**：Git commit 前自動執行格式化與檢查
+- **安全掃描工具**：Bandit（靜態安全分析）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）
 
-### 🔄 完整 CI Pipeline
-- **多層級程式碼品質檢查**：Ruff → Pyright → Bandit → pip-audit → pytest 依序執行
-- **容器化驗證**：每次 PR 自動驗證 Docker image 完整性
-- **三軌安全分析**：主 CI 流程 + CodeQL + SonarCloud 多維度安全與品質監控
-- **自動化發布**：Git tag 觸發自動版本發布與 release notes 生成
-
-### 📦 容器化與部署
-- **多層快取 Docker 設計**：分層快取機制（依賴層 + 應用層），大幅加速重建時間
-- **自動化部署流程**：Makefile 整合資料庫健康檢查、自動遷移、錯誤處理的完整部署機制
-- **多環境配置繼承**：dev/prod 環境透過 Docker Compose 組合實現環境隔離與配置複用
+### CI Pipeline
+- **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程
+- **Image 建置與推送**：CI 成功後自動推送 image 到 GHCR（支援 amd64/arm64）
+- **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）
+- **自動發布機制**：Git tag 觸發版本發布與 release notes 生成
 
 ---
 
-詳細技術架構與決策邏輯請參考：
-- [技術決策與實踐經驗](#) - 為什麼這樣設計、踩坑紀錄（撰寫中）
-- [專案架構](docs/Architecture-Code.md) - 完整程式碼架構說明
+進一步了解：
+- [WeaMind 專案介紹：技術選型與架構](https://blog.kyomind.tw/weamind)（撰寫中）
 - [DeepWiki 技術文件](https://deepwiki.com/kyomind/WeaMind) - 互動式技術探索
