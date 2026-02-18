@@ -6,7 +6,9 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
-A smart LINE bot for Taiwan weather updates. See [DeepWiki](https://deepwiki.com/kyomind/WeaMind) for details.
+A smart LINE Bot for Taiwan weather updates.
+
+> **WeaMind on Kubernetes**：[weamind-infra](https://github.com/kyomind/weamind-infra) - WeaMind 的 Kubernetes (K3s) 部署與架構
 
 WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，提供即時台灣天氣資訊。
 
@@ -28,6 +30,7 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
   - [現代化開發工具鏈](#-現代化開發工具鏈)
   - [完整 CI Pipeline](#-完整-ci-pipeline)
   - [容器化與部署](#-容器化與部署)
+
 ## 使用說明
 
 加入 WeaMind 為好友後，點擊聊天視窗下方的「功能選單」即可開始使用。
@@ -35,28 +38,28 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
 ![WeaMind](https://img.kyomind.tw/2352352we-min-20250929-222126.png)
 
 ### 1. 智慧文字搜尋
-- 直接輸入「二級行政區」名稱，比如「`大安區`」、「`水上`」、「`中壢`」等，將進行地名的模糊比對。
-- 系統會自動識別並回傳該地區的天氣資訊。
+- 直接輸入「二級行政區」名稱，例如「`大安區`」、「`水上`」、「`中壢`」，就能快速查詢。
+- 系統會自動識別地點並回傳天氣資訊。
 
 ### 2. 設定住家、公司，一鍵查詢天氣
 - 透過「`設定地點`」功能，預先設定常用地址。
-- 點擊「`查住家`」或「`查公司`」立即取得該地區的完整天氣資訊。
+- 點擊「`查住家`」或「`查公司`」即可立即查詢天氣。
 
 ### 3. 快速重複查詢
-- 「`最近查過`」會記錄您最近查詢過的 **5 個地點**（不含住家與公司）。
-- 點擊後重新查詢，無需重複輸入地址。
+- 「`最近查過`」會記錄您最近查詢的 **5 個地點**（不含住家與公司）。
+- 點擊即可重新查詢，無需重複輸入。
 
 ### 4. 地圖查詢
-- 點擊「`地圖查詢`」會開啟 LINE 地圖介面。
-- 直接在地圖上選擇位置，系統會自動取得該地點資訊並查詢當地天氣。
-- 不限於目前所在位置，你可以查詢**任意地點**的天氣。
+- 點擊「`地圖查詢`」開啟 LINE 地圖介面。
+- 在地圖上選擇任意位置，系統會自動查詢該地點的天氣。
+- 不限於目前所在位置，可查詢**任何地點**的天氣。
 
 ## 加入好友，開始使用
 
 1. 掃描下方 QR Code（推薦）或搜尋 LINE ID `@370ndhmf` 加入 WeaMind。
-2. 使用功能選單開始查詢天氣資訊。
+2. 點擊功能選單即可開始查詢。
 
-立即體驗智慧天氣查詢，讓天氣資訊隨手可得！
+立即體驗智慧天氣查詢！
 
 ![WeaMind QR Code](https://img.kyomind.tw/wea-qrcode-min-20250929-223022.png)
 
@@ -125,6 +128,7 @@ graph TB
 
 ---
 
-詳細技術架構請參考：
+詳細技術架構與決策邏輯請參考：
+- [技術決策與實踐經驗](#) - 為什麼這樣設計、踩坑紀錄（撰寫中）
 - [專案架構](docs/Architecture-Code.md) - 完整程式碼架構說明
 - [DeepWiki 技術文件](https://deepwiki.com/kyomind/WeaMind) - 互動式技術探索
