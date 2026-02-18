@@ -88,26 +88,24 @@ graph TB
     DATA -->|每 6 小時<br/>ETL 更新| DB
 ```
 
-### 🚀 Fast ACK Webhook 架構
+### Fast ACK Webhook 架構
 - **數十毫秒 ACK**：Webhook Handler 收到請求後立即驗證並回應 LINE Platform，避免平台重送
-- **2 秒內回應用戶**：採用「快速 ACK→背景處理→回應用戶」的非同步流程
-- **背景任務處理**：使用 FastAPI BackgroundTasks，避免業務邏輯阻塞 ACK
+- **2 秒內回應**：快速 ACK → 背景處理 → 回應用戶
+- **非阻塞設計**：使用 FastAPI `BackgroundTasks` 處理業務邏輯，不阻塞 webhook 回應
 
-### 🔒 Redis 分散式鎖
-- **防重複點擊保護**：2 秒鎖定機制，避免用戶快速連點造成重複處理
-- **服務優先策略**：Redis 異常時自動降級，確保核心服務不中斷
-- **精準鎖定範圍**：僅對按鈕操作加鎖，一般文字查詢保持快速回應
+### Redis 分散式鎖
+- **2 秒鎖定機制**：避免用戶快速連點造成重複處理
+- **異常降級策略**：Redis 異常時核心服務繼續運作
+- **選擇性加鎖**：僅對按鈕操作加鎖，文字查詢不受影響
 
-### 🏗️ Domain-Driven Design 架構
-- **清晰領域邊界**：`core`（基礎設施）、`user`（使用者管理）、`line`（LINE Bot）、`weather`（天氣服務）
-- **分層模組化設計**：按業務領域劃分模組，架構清晰易擴展，適合團隊協作開發
-- **100% Type Hints 覆蓋**：以 Pyright basic 標準，達成完整型別安全
+### Domain-Driven Design 架構
+- **領域模組劃分**：`core`（基礎設施）、`user`（使用者管理）、`line`（LINE Bot）、`weather`（天氣服務）
+- **分層架構實踐**：每個領域模組包含 `router.py`、`service.py`、`models.py` 實現三層分離
 
-### 🧪 pytest 單元測試體系
-- **94% 測試覆蓋率**：高覆蓋率確保程式碼品質與穩定性
-- **32+ 測試檔案**：涵蓋 core、line、weather、user 各領域模組的完整測試
-- **測試環境隔離**：SQLite 記憶體資料庫 + fixtures 設計，確保測試獨立性
-- **自動化覆蓋率**：pytest-cov 整合，自動生成覆蓋率報告並上傳 Codecov
+### pytest 單元測試體系
+- **94% 測試覆蓋率**：32+ 測試檔案涵蓋 core、line、weather、user 各模組
+- **獨立測試環境**：SQLite 記憶體資料庫 + fixtures，每個測試獨立運行不互相干擾
+- **Codecov 監控**：每次 PR 自動檢查覆蓋率變化，防止新功能降低測試覆蓋率
 
 ### 🛠️ 現代化開發工具鏈
 - **統一環境管理**：uv 套件管理，統一 `uv run` 指令執行，消除環境差異
