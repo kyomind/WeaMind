@@ -95,6 +95,7 @@
         "Pydantic",
         "pyflow",
         "pyjwt",
+        "Pylint",
         "pypa",
         "pypackages",
         "pypirc",
