@@ -8,7 +8,7 @@
 
 A smart LINE Bot for Taiwan weather updates.
 
-> **WeaMind on Kubernetes**：[weamind-infra](https://github.com/kyomind/weamind-infra) - WeaMind 的 Kubernetes (K3s) 部署與架構
+> 本專案的 K8s 部署：[weamind-infra](https://github.com/kyomind/weamind-infra)
 
 WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，提供即時台灣天氣資訊。
 
@@ -122,5 +122,5 @@ graph TB
 ---
 
 進一步了解：
-- [WeaMind 專案介紹：技術選型與架構](https://blog.kyomind.tw/weamind)（撰寫中）
-- [DeepWiki 技術文件](https://deepwiki.com/kyomind/WeaMind) - 互動式技術探索
+- 文章〈[WeaMind 專案介紹：技術選型與架構](https://blog.kyomind.tw/weamind)〉（撰寫中）
+- [DeepWiki 技術文件](https://deepwiki.com/kyomind/WeaMind)
