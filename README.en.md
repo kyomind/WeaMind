@@ -12,7 +12,7 @@
 
 A production-grade LINE Bot delivering real-time Taiwan weather data via an intelligently designed FastAPI backend.
 
-> Kubernetes deployment: [weamind-infra](https://github.com/kyomind/weamind-infra/blob/main/README.en.md)
+> Kubernetes deployment: [weamind-infra](https://github.com/kyomind/weamind-infra)
 
 ## Features
 
