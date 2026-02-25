@@ -10,16 +10,16 @@
 
 > 📖 [中文版](README.md)
 
-A production-grade LINE Bot delivering real-time Taiwan weather data via an intelligently designed FastAPI backend.
+A production-grade LINE chatbot for real-time Taiwan weather queries, built with FastAPI.
 
 > Kubernetes deployment: [weamind-infra](https://github.com/kyomind/weamind-infra)
 
 ## Features
 
-- **Smart Text Search** — Query any district by name (e.g. `大安區`, `中壢`); the system resolves the location automatically.
-- **Saved Locations** — Pre-configure home and work addresses for one-tap weather lookups.
-- **Recent Queries** — Instantly re-query any of the last 5 searched locations.
-- **Map Query** — Pick any point on a map to retrieve its weather, not limited to current location.
+- **Smart Text Search** — Type any district name (e.g. `大安區`, `中壢`) and get instant results; no menus needed.
+- **Saved Locations** — Set a home and work address for one-tap weather lookups.
+- **Recent Queries** — Quickly revisit any of your last 5 searched locations.
+- **Map Query** — Tap anywhere on a map to check the weather — not just your current location.
 
 ---
 
@@ -47,36 +47,36 @@ graph TB
 ```
 
 ### Fast ACK Webhook Architecture
-- **Sub-50ms acknowledgement**: The webhook handler immediately validates and acknowledges LINE Platform upon receiving a request, preventing platform-side retries.
-- **Under-2-second end-to-end reply**: Fast ACK → background processing → user response, all within 2 seconds.
-- **Non-blocking design**: Business logic is handled via FastAPI `BackgroundTasks`, completely decoupled from the webhook response path.
+- **Sub-50ms acknowledgement** (measured ~15–30ms in production): validates and responds to LINE Platform immediately on receipt, preventing platform-side retries.
+- **End-to-end reply under 2 seconds**: request flows through fast ACK → background task → push reply.
+- **Non-blocking design**: all business logic runs in FastAPI `BackgroundTasks`, keeping the webhook handler free.
 
 ### Redis Distributed Lock
-- **2-second idempotency window**: Prevents duplicate processing caused by rapid repeated button taps.
-- **Graceful degradation**: Core service continues to operate normally when Redis is unavailable.
-- **Selective locking**: Applied only to button interactions; text queries are unaffected.
+- **2-second deduplication window**: drops repeated processing from rapid button taps.
+- **Graceful degradation**: core functionality stays available when Redis is down.
+- **Selective locking**: locks apply only to button actions; free-text queries are never blocked.
 
 ### Domain-Driven Design (DDD) Architecture
-- **Domain modules**: `core` (infrastructure), `user` (user management), `line` (LINE Bot), `weather` (weather service).
-- **Layered structure**: Each domain module contains `router.py`, `service.py`, and `models.py`, enforcing a clear three-layer separation.
+- **Four domain modules**: `core` (infrastructure), `user`, `line` (LINE Bot), `weather` — each with a clear bounded context.
+- **Layered structure**: every module follows a `router → service → model` pattern, maintaining clean separation of concerns.
 
 ### Test Suite
-- **94% code coverage**: 32+ test files covering all domain modules — `core`, `line`, `weather`, and `user`.
-- **Isolated test environment**: In-memory SQLite + pytest fixtures; each test runs independently with no shared state.
-- **Codecov integration**: Every PR triggers an automated coverage diff report, guarding against regressions.
+- **94% code coverage** across 32+ test files spanning all domain modules.
+- **Fully isolated tests**: each test gets a fresh in-memory SQLite database via pytest fixtures — no shared state.
+- **Codecov on every PR**: coverage diffs are reported automatically, catching regressions before merge.
 
 ### Modern Toolchain
-- **uv**: Unified Python package and virtual environment management; all commands run via `uv run`.
-- **Ruff**: Replaces Pylint, Black, and isort as the single linting and formatting tool.
-- **Pyright**: 100% type hint coverage enforced via static type checking.
-- **pre-commit hooks**: Formatting and linting checks run automatically before every commit.
-- **Security scanning**: Bandit (static analysis), pip-audit (CVE checks), detect-secrets (secret detection).
+- **uv**: one tool for packages and virtual environments; everything runs via `uv run`.
+- **Ruff**: a single tool replacing Pylint, Black, and isort.
+- **Pyright**: strict static type checking with 100% type hint coverage.
+- **pre-commit hooks**: linting and formatting enforced at commit time.
+- **Security scanning**: Bandit, pip-audit, and detect-secrets cover static analysis, CVE checks, and secret detection.
 
 ### CI Pipeline
-- **Automated quality gate**: Every push runs Ruff → Pyright → Bandit → pip-audit → pytest + Codecov in sequence.
-- **Multi-arch image build**: On CI success, Docker images are built for `amd64`/`arm64` and pushed to GHCR.
-- **Triple security scanning**: Main CI + CodeQL (code security analysis) + SonarCloud (technical debt monitoring).
-- **Automated releases**: Follows [Semantic Versioning](https://semver.org/); Git tags trigger version releases with auto-generated release notes.
+- **Full quality gate on every push**: Ruff → Pyright → Bandit → pip-audit → pytest + Codecov.
+- **Multi-arch Docker builds**: `amd64` and `arm64` images pushed to GHCR on CI success.
+- **Triple security scanning**: main CI pipeline + CodeQL + SonarCloud.
+- **Automated releases**: follows [Semantic Versioning](https://semver.org/); tags trigger releases with auto-generated notes.
 
 ---
 
