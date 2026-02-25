@@ -6,6 +6,10 @@
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
+# WeaMind
+
+> 📖 [English Version](README.en.md)
+
 A smart LINE Bot for Taiwan weather updates.
 
 > 本專案的 K8s 部署：[weamind-infra](https://github.com/kyomind/weamind-infra)
@@ -117,7 +121,7 @@ graph TB
 - **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程
 - **Image 建置與推送**：CI 成功後自動推送 image 到 GHCR（支援 amd64/arm64）
 - **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）
-- **自動發布機制**：Git tag 觸發版本發布與 release notes 生成
+- **自動發布機制**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 觸發版本發布與 release notes 生成
 
 ---
 
