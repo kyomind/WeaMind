@@ -92,36 +92,36 @@ graph TB
 ```
 
 ### Fast ACK Webhook 架構
-- **數十毫秒 ACK**：Webhook Handler 收到請求後立即驗證並回應 LINE Platform，避免平台重送
-- **2 秒內回應**：快速 ACK → 背景處理 → 回應用戶
-- **非阻塞設計**：使用 FastAPI `BackgroundTasks` 處理業務邏輯，不阻塞 webhook 回應
+- **數十毫秒 ACK**：Webhook Handler 收到請求後立即驗證並回應 LINE Platform，避免平台重送。
+- **2 秒內回應**：快速 ACK → 背景處理 → 回應用戶。
+- **非阻塞設計**：使用 FastAPI `BackgroundTasks` 處理業務邏輯，不阻塞 webhook 回應。
 
 ### Redis 分散式鎖
-- **2 秒鎖定機制**：避免用戶快速連點造成重複處理
-- **異常降級策略**：Redis 異常時核心服務繼續運作
-- **選擇性加鎖**：僅對按鈕操作加鎖，文字查詢不受影響
+- **2 秒鎖定機制**：避免用戶快速連點造成重複處理。
+- **異常降級策略**：Redis 異常時核心服務繼續運作。
+- **選擇性加鎖**：僅對按鈕操作加鎖，文字查詢不受影響。
 
 ### Domain-Driven Design 架構
-- **領域模組劃分**：`core`（基礎設施）、`user`（使用者管理）、`line`（LINE Bot）、`weather`（天氣服務）
-- **分層架構實踐**：每個領域模組包含 `router.py`、`service.py`、`models.py` 實現三層分離
+- **領域模組劃分**：`core`（基礎設施）、`user`（使用者管理）、`line`（LINE Bot）、`weather`（天氣服務）。
+- **分層架構實踐**：每個領域模組包含 `router.py`、`service.py`、`models.py` 實現三層分離。
 
 ### pytest 單元測試體系
-- **94% 測試覆蓋率**：32+ 測試檔案涵蓋 core、line、weather、user 各模組
-- **獨立測試環境**：SQLite 記憶體資料庫 + fixtures，每個測試獨立運行不互相干擾
-- **Codecov 監控**：每次 PR 自動檢查覆蓋率變化，防止新功能降低測試覆蓋率
+- **94% 測試覆蓋率**：32+ 測試檔案涵蓋 core、line、weather、user 各模組。
+- **獨立測試環境**：SQLite 記憶體資料庫 + fixtures，每個測試獨立運行不互相干擾。
+- **Codecov 監控**：每次 PR 自動檢查覆蓋率變化，防止新功能降低測試覆蓋率。
 
 ### 現代化開發工具
-- **uv 套件管理**：統一的 Python 套件與虛擬環境管理，所有指令使用 `uv run` 執行
-- **Ruff 檢查與格式化**：取代 Pylint、Black、isort 的全方位工具
-- **Pyright 型別檢查**：100% Type Hints 覆蓋，確保型別安全
-- **pre-commit 自動化**：Git commit 前自動執行格式化與檢查
-- **安全掃描工具**：Bandit（靜態安全分析）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）
+- **uv 套件管理**：統一的 Python 套件與虛擬環境管理，所有指令使用 `uv run` 執行。
+- **Ruff 檢查與格式化**：取代 Pylint、Black、isort 的全方位工具。
+- **Pyright 型別檢查**：100% Type Hints 覆蓋，確保型別安全。
+- **pre-commit 自動化**：Git commit 前自動執行格式化與檢查。
+- **安全掃描工具**：Bandit（靜態安全分析）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）。
 
 ### CI Pipeline
-- **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程
-- **Image 建置與推送**：CI 成功後自動推送 image 到 GHCR（支援 amd64/arm64）
-- **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）
-- **自動發布機制**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 觸發版本發布與 release notes 生成
+- **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程。
+- **Image 建置與推送**：CI 成功後自動推送 image 到 GHCR（支援 amd64/arm64）。
+- **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）。
+- **自動發布機制**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 觸發版本發布與 release notes 生成。
 
 ---
 
