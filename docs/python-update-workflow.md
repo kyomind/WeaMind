@@ -15,25 +15,25 @@ UV 需要先更新才能知道最新的 Python 版本。
 ### 2. 檢查可用的 Python 版本
 
 ```bash
-uv python list | grep "3.14"
+uv python list | grep "3.12"
 ```
 
-這會顯示所有 Python 3.14.x 版本，包括：
+這會顯示所有 Python 3.12.x 版本，包括：
 - 已安裝的版本
 - 可下載的新版本（標示為 `<download available>`）
 
 ### 3. 安裝新版本（如果有）
 
-假設發現 3.14.3 可用：
+假設發現 3.12.13 可用：
 
 ```bash
-uv python install 3.14.3
+uv python install 3.12.13
 ```
 
 ### 4. 移除舊版本（可選）
 
 ```bash
-uv python uninstall 3.14.2
+uv python uninstall 3.12.12
 ```
 
 ### 5. 重建虛擬環境
@@ -43,7 +43,7 @@ rm -rf .venv
 uv sync
 ```
 
-由於 `.python-version` 檔案寫的是 `3.14`，UV 會自動使用最新的 3.14.x 版本。
+由於 `.python-version` 檔案寫的是 `3.12`，UV 會自動使用最新的 3.12.x 版本。
 
 ### 6. 驗證版本
 
@@ -55,16 +55,16 @@ uv run python --version
 
 ```bash
 # 一次性檢查所有資訊
-uv --version && echo "---" && uv python list | grep "3.14" && echo "---" && uv run python --version
+uv --version && echo "---" && uv python list | grep "3.12" && echo "---" && uv run python --version
 ```
 
 ## 版本檔案說明
 
-- `.python-version`: 寫 `3.14` 表示使用最新的 3.14.x patch 版本
+- `.python-version`: 寫 `3.12` 表示使用最新的 3.12.x patch 版本
 - `pyproject.toml`: 定義專案依賴和 Python 版本要求
 
 ## 注意事項
 
 - 更新不是自動的，需要手動執行上述流程
-- patch 版本（如 3.14.2 → 3.14.3）通常只包含 bug 修復，很安全
-- minor 版本（如 3.14 → 3.15）可能有破壞性變更，需謹慎
+- patch 版本（如 3.12.12 → 3.12.13）通常只包含 bug 修復，很安全
+- minor 版本（如 3.12 → 3.13）可能有破壞性變更，需謹慎
