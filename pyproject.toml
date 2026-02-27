@@ -129,6 +129,9 @@ testpaths = ["tests"]
 exclude = [
   "migrations",
   ".venv",
+  "**/node_modules",
+  "**/__pycache__",
+  "**/.*",
 ]
 typeCheckingMode = "basic"
 venv = ".venv"
