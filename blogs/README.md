@@ -6,9 +6,11 @@
 
 記錄 WeaMind 專案開發過程中的關鍵技術實作和經驗分享。
 
-| 文章標題                                                                                          | 摘要                                                                                      | 發文日期   |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------- |
-| [Pyright 上手指南：Python 型別檢查的新選擇](https://blog.kyomind.tw/pyright/)                     | 介紹 Pyright 的優勢、安裝方式以及如何在 VS Code 中使用，並比較 Mypy 和 Pyright 的主要差異 | 2025-05-30 |
-| [GitHub Actions 入門：自動化 Lint、Format 與 Type Check](https://blog.kyomind.tw/github-actions/) | 介紹 CI，與如何使用 GitHub Actions 實作 CI 流程，並討論真實需求對學習 CI 工具的重要性     | 2025-07-06 |
-| [uv 容器化實作：使用官方 image 建立 Dockerfile](https://blog.kyomind.tw/uv-dockerfile/)           | 以 uv 官方 image 為基礎，打造 Python 專案的 Dockerfile，並說明不同方案的實踐與常見問題    | 2025-07-19 |
-| [用 Side Project 學 CI：WeaMind 的 CI 實作策略](https://blog.kyomind.tw/weamind-ci/)              | 完整介紹 WeaMind 專案的 CI 設計與實作，涵蓋 7 個自動化項目，從基礎到進階的 CI 實踐分享    | 2025-08-31 |
+> **類型說明**：`App` 為應用層文章，對應 [WeaMind](https://github.com/kyomind/WeaMind) 主專案；`Infra` 為基礎設施層文章，對應 [weamind-infra](https://github.com/kyomind/weamind-infra) 專案。
+
+| 文章標題                                                                                          | 摘要                                                                                      | 發文日期   | 類型 |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------- | ---- |
+| [Pyright 上手指南：Python 型別檢查的新選擇](https://blog.kyomind.tw/pyright/)                     | 介紹 Pyright 的優勢、安裝方式以及如何在 VS Code 中使用，並比較 Mypy 和 Pyright 的主要差異 | 2025-05-30 | App  |
+| [GitHub Actions 入門：自動化 Lint、Format 與 Type Check](https://blog.kyomind.tw/github-actions/) | 介紹 CI，與如何使用 GitHub Actions 實作 CI 流程，並討論真實需求對學習 CI 工具的重要性     | 2025-07-06 | App  |
+| [uv 容器化實作：使用官方 image 建立 Dockerfile](https://blog.kyomind.tw/uv-dockerfile/)           | 以 uv 官方 image 為基礎，打造 Python 專案的 Dockerfile，並說明不同方案的實踐與常見問題    | 2025-07-19 | App  |
+| [用 Side Project 學 CI：WeaMind 的 CI 實作策略](https://blog.kyomind.tw/weamind-ci/)              | 完整介紹 WeaMind 專案的 CI 設計與實作，涵蓋 7 個自動化項目，從基礎到進階的 CI 實踐分享    | 2025-08-31 | App  |
