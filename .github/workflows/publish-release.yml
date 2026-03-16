@@ -47,7 +47,7 @@ jobs:
       # 第五步：Build 並 Push image（帶語義化版本號）
       # 推送四個 tags：完整版本號、minor、major、latest
       - name: Build and push with version tags
-        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
           file: ./Dockerfile
