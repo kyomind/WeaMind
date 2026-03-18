@@ -126,5 +126,5 @@ graph TB
 ---
 
 進一步了解：
-- 文章〈[WeaMind 專案介紹：技術選型與架構](https://blog.kyomind.tw/weamind)〉（撰寫中）
+- 文章介紹〈[WeaMind 專案解析：從單機 LINE Bot 到 K8s 叢集](https://blog.kyomind.tw/weamind)〉
 - [DeepWiki 技術文件](https://deepwiki.com/kyomind/WeaMind)
