@@ -76,7 +76,7 @@ graph TB
 - **Full quality gate on every push**: Ruff → Pyright → Bandit → pip-audit → pytest + Codecov.
 - **Multi-arch Docker builds**: `amd64` and `arm64` images pushed to [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind) on CI success.
 - **Triple security scanning**: main CI pipeline + CodeQL + SonarCloud.
-- **Automated releases**: follows [Semantic Versioning](https://semver.org/); tags trigger releases with auto-generated notes.
+- **Automated releases**: follows [Semantic Versioning](https://semver.org/); tags trigger [releases](https://github.com/kyomind/WeaMind/releases) with auto-generated notes.
 
 ---
 

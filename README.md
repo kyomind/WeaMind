@@ -121,7 +121,7 @@ graph TB
 - **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程。
 - **Image 建置與推送**：CI 成功後自動推送 image 到 [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind)（支援 amd64/arm64）。
 - **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）。
-- **自動發布機制**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 觸發版本發布與 release notes 生成。
+- **自動發布機制**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 觸發 [releases](https://github.com/kyomind/WeaMind/releases) 與 release notes 生成。
 
 ---
 
