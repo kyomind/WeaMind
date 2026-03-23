@@ -54,3 +54,8 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
 - **Testing**: Always use `runTests` tool for better integration with VS Code test explorer
 - **Test Failures**: Use `test_failure` tool to get detailed failure information
 - **File Errors**: Use `get_errors` tool for compile/lint errors in specific files
+
+## AGENTS.md as the project main prompt
+
+- Treat `AGENTS.md` as the project's sole main prompt.
+- When main instruction-related changes are needed, edit `AGENTS.md` directly.

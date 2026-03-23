@@ -86,7 +86,6 @@
 │   ├── export_branch_docs.sh
 │   ├── gen_tree.sh
 │   ├── rich_menu_manager.py
-│   ├── sync_instructions.sh
 │   ├── update_liff_version.sh
 │   ├── worktree_add.sh
 │   ├── worktree_clean.sh
