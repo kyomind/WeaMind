@@ -1,5 +1,4 @@
 ---
-mode: 'agent'
 description: 'Python docstring style guide for function documentation'
 ---
 

@@ -1,5 +1,3 @@
----
-mode: 'agent'
 description: 'Rich Menu 管理和上傳指南'
 ---
 

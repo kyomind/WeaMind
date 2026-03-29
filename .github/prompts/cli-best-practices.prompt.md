@@ -1,5 +1,4 @@
 ---
-mode: 'agent'
 description: 'CLI Output and Tool Usage Best Practices'
 ---
 

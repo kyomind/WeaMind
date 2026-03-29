@@ -1,5 +1,4 @@
 ---
-mode: 'agent'
 description: 'Automatically collect all cSpell errors and batch add to dictionary'
 ---
 
