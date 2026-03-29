@@ -161,5 +161,8 @@
         "zoneinfo"
     ],
     "python-envs.defaultEnvManager": "ms-python.python:venv",
-    "python-envs.pythonProjects": []
+    "python-envs.pythonProjects": [],
+    "chat.tools.terminal.autoApprove": {
+        "gh": true
+    }
 }
