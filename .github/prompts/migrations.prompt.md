@@ -1,3 +1,7 @@
+---
+description: "Instructions for working on migration files"
+---
+
 # Migrations Instructions
 
 ## Overview

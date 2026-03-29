@@ -1,3 +1,7 @@
+---
+description: "Guide for pinning GitHub Actions by SHA"
+---
+
 # GitHub Action SHA Value Query Guide
 
 ## Background

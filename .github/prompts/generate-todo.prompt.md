@@ -1,3 +1,7 @@
+---
+description: "Generate the next urgent project todo item"
+---
+
 # Generate the next todo items for the project
 
 ## Role
