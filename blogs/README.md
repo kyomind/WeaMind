@@ -15,3 +15,4 @@
 | [uv 容器化實作：使用官方 image 建立 Dockerfile](https://blog.kyomind.tw/uv-dockerfile/)           | 以 uv 官方 image 為基礎，打造 Python 專案的 Dockerfile，並說明不同方案的實踐與常見問題                | 2025-07-19 | App  |
 | [用 Side Project 學 CI：WeaMind 的 CI 實作策略](https://blog.kyomind.tw/weamind-ci/)              | 完整介紹 WeaMind 專案的 CI 設計與實作，涵蓋 7 個自動化項目，從基礎到進階的 CI 實踐分享                | 2025-08-31 | App  |
 | [WeaMind 專案解析：從單機 LINE Bot 到 K8s 叢集](https://blog.kyomind.tw/weamind/)                 | 從應用層與基礎設施層兩個面向全面介紹 WeaMind 專案，涵蓋 Bot 技術設計、工程品質追求與 K3s 叢集部署實踐 | 2026-03-16 | App  |
+| [K3s 是什麼？為什麼我選擇用 K3s 部署 WeaMind](https://blog.kyomind.tw/k3s-for-weamind/)          | 說明 K3s 在 Kubernetes 學習與自建叢集中的定位，以及我為何根據 WeaMind 的需求選擇它作為部署方案       | 2026-03-29 | Infra |
