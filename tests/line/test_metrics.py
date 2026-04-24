@@ -2,6 +2,8 @@
 
 from unittest.mock import Mock, patch
 
+import pytest
+
 from app.line.metrics import (
     extract_event_types_from_body,
     line_webhook_event_duration_seconds,
@@ -124,7 +126,7 @@ class TestLineMetrics:
         assert received_metric._value.get() == received_before + 1
         assert success_metric._value.get() == success_before + 1
         assert error_metric._value.get() == error_before + 1
-        assert duration_metric._sum.get() == duration_sum_before + 0.005
+        assert duration_metric._sum.get() == pytest.approx(duration_sum_before + 0.005)
         assert duration_metric._buckets[0].get() == duration_bucket_before + 1
 
     def test_process_webhook_events_records_per_event_metrics(self) -> None:
