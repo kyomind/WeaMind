@@ -1,8 +1,11 @@
 """Service layer for LINE Bot operations using official SDK."""
 
 import logging
+import time
+from typing import Protocol, cast
 
 from linebot.v3 import WebhookHandler
+from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import (
     ApiClient,
     MessageAction,
@@ -24,6 +27,7 @@ from linebot.v3.webhooks import (
 from app.core.config import settings
 from app.core.database import get_session
 from app.core.processing_lock import processing_lock_service
+from app.line import metrics as line_metrics
 from app.user.service import (
     create_user_if_not_exists,
     deactivate_user,
@@ -72,13 +76,123 @@ __all__ = [
     "send_liff_location_setting_response",
     "send_location_not_set_response",
     "send_other_menu_quick_reply",
+    "process_webhook_events",
     "webhook_handler",
 ]
 
 logger = logging.getLogger(__name__)
 
+
+class _ParsedWebhookPayload(Protocol):
+    """
+    Minimal payload protocol used by the webhook metrics wrapper.
+
+    The LINE SDK parser returns a richer payload object, but the metrics-aware
+    dispatch path only needs access to the parsed event list.
+    """
+
+    events: list[object]
+
+
 # Configure LINE Bot SDK
 webhook_handler = WebhookHandler(settings.LINE_CHANNEL_SECRET)
+
+
+def _resolve_event_handler(event: object) -> object | None:
+    """
+    Resolve the registered LINE SDK handler for a parsed event object.
+
+    This mirrors the LINE SDK's internal dispatch logic so the project can wrap
+    each event invocation with metrics without rewriting the existing handlers.
+
+    Args:
+        event: Parsed LINE SDK event object.
+
+    Returns:
+        The registered handler callable for the event, or the SDK default
+        handler when no specific registration exists.
+    """
+    handler = None
+
+    if isinstance(event, MessageEvent):
+        message = getattr(event, "message", None)
+        handler_key = webhook_handler._WebhookHandler__get_handler_key(  # type: ignore[attr-defined]
+            event.__class__,
+            message.__class__,
+        )
+        handler = webhook_handler._handlers.get(handler_key)
+
+    if handler is None:
+        handler_key = webhook_handler._WebhookHandler__get_handler_key(  # type: ignore[attr-defined]
+            event.__class__
+        )
+        handler = webhook_handler._handlers.get(handler_key)
+
+    if handler is None:
+        return webhook_handler._default
+    return handler
+
+
+def process_webhook_events(
+    body_text: str,
+    signature: str,
+    fallback_event_types: list[str] | None = None,
+) -> None:
+    """
+    Parse and dispatch webhook events while recording event-level metrics.
+
+    The router records only the received counter. This function owns the
+    per-event success, error, and duration metrics by wrapping the LINE SDK's
+    dispatch flow at the event boundary.
+
+    Args:
+        body_text: Raw webhook request body decoded as UTF-8 text.
+        signature: Verified LINE signature header value.
+        fallback_event_types: Pre-classified event_type labels from the router,
+            used when parsing fails before runtime event objects exist.
+
+    Raises:
+        InvalidSignatureError: If the payload cannot be validated by the LINE
+            SDK parser.
+        Exception: Re-raises handler errors after recording metrics for the
+            failing event.
+    """
+    parse_start_time = time.perf_counter()
+    try:
+        payload = cast(
+            _ParsedWebhookPayload,
+            webhook_handler.parser.parse(body_text, signature, as_payload=True),
+        )
+    except InvalidSignatureError:
+        event_types = fallback_event_types or ["unknown"]
+        line_metrics.record_webhook_error(event_types, "signature_error")
+        line_metrics.record_webhook_duration(event_types, time.perf_counter() - parse_start_time)
+        raise
+    except Exception:
+        event_types = fallback_event_types or ["unknown"]
+        line_metrics.record_webhook_error(event_types, "handler_error")
+        line_metrics.record_webhook_duration(event_types, time.perf_counter() - parse_start_time)
+        raise
+
+    for event in payload.events:
+        event_type = line_metrics.normalize_runtime_event_type(event)
+        start_time = time.perf_counter()
+        try:
+            handler = _resolve_event_handler(event)
+            if handler is None:
+                logger.info("No handler registered for LINE event")
+                continue
+
+            webhook_handler._WebhookHandler__invoke_func(handler, event, payload)  # type: ignore[attr-defined]
+            line_metrics.record_webhook_success([event_type])
+        except InvalidSignatureError:
+            line_metrics.record_webhook_error([event_type], "signature_error")
+            raise
+        except Exception:
+            line_metrics.record_webhook_error([event_type], "handler_error")
+            raise
+        finally:
+            line_metrics.record_webhook_duration([event_type], time.perf_counter() - start_time)
 
 
 @webhook_handler.add(MessageEvent, message=TextMessageContent)
