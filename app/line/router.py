@@ -10,7 +10,8 @@ from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
 from linebot.v3.exceptions import InvalidSignatureError
 
 from app.core.config import settings
-from app.line.service import webhook_handler
+from app.line import metrics as line_metrics
+from app.line.service import process_webhook_events
 
 logger = logging.getLogger(__name__)
 
@@ -24,23 +25,30 @@ async def line_webhook(
     background_tasks: BackgroundTasks,
 ) -> dict:
     """
-    Receive LINE webhook, validate basics quickly, ACK immediately, and defer processing.
+        Receive a LINE webhook, validate it quickly, and defer event processing.
+
+        This route owns only the synchronous boundary concerns: content type
+        validation, signature verification, request-body decoding, and the received
+        metric. Event-level success, error, and duration metrics are delegated to
+        the service-layer dispatch path so they can be recorded per event instead of
+        per request.
 
     Behavior:
     - Validate content type and signature synchronously (cheap and secure)
     - Immediately return 200 OK (fast ACK)
-    - Schedule the actual handling in a background task
+        - Record the received webhook event types before background work starts
+        - Schedule the actual handling in a background task
 
     Args:
-      request: FastAPI request object
-      x_line_signature: The LINE signature header
-      background_tasks: FastAPI background task scheduler
+                request: FastAPI request object.
+                x_line_signature: The LINE signature header.
+                background_tasks: FastAPI background task scheduler.
 
     Returns:
-      dict: Success message (ACK)
+                Success message returned to LINE as the fast ACK payload.
 
     Raises:
-      HTTPException: If content type or signature verification fails
+                HTTPException: If content type or signature verification fails.
     """
     # 1) Validate content type (cheap)
     content_type = request.headers.get("content-type", "")
@@ -66,12 +74,23 @@ async def line_webhook(
 
     # 4) Log reception (avoid logging full body for security)
     body_as_text: str = body.decode("utf-8")
+    event_types = line_metrics.extract_event_types_from_body(body_as_text)
+    line_metrics.record_webhook_received(event_types)
     logger.info(f"Received LINE webhook: length={len(body_as_text)} bytes")
 
     # 5) Schedule actual handling; any exceptions are logged without impacting ACK
-    def _process_webhook(body_text: str, signature: str) -> None:
+    def _process_webhook(body_text: str, signature: str, current_event_types: list[str]) -> None:
+        """
+        Process a verified webhook request inside the background task boundary.
+
+        Args:
+            body_text: Raw webhook request body decoded as UTF-8 text.
+            signature: Verified LINE signature header value.
+            current_event_types: Event types classified at the router boundary,
+                reused as fallback metric labels if parsing fails later.
+        """
         try:
-            webhook_handler.handle(body_text, signature)
+            process_webhook_events(body_text, signature, current_event_types)
             logger.info("LINE webhook completed")
         except InvalidSignatureError:
             # Should not happen since we verified already, but keep for safety
@@ -79,7 +98,7 @@ async def line_webhook(
         except Exception:
             logger.exception("Error processing webhook in background")
 
-    background_tasks.add_task(_process_webhook, body_as_text, x_line_signature)
+    background_tasks.add_task(_process_webhook, body_as_text, x_line_signature, event_types)
 
     # 6) Fast ACK
     return {"message": "OK"}

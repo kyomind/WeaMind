@@ -2,12 +2,13 @@
 
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.core.admin_divisions import initialize_admin_divisions
 from app.core.config import settings, setup_logging
+from app.line import metrics as line_metrics
 from app.line.router import router as line_router
 from app.user.router import router as user_router
 
@@ -68,6 +69,12 @@ async def health() -> dict:
         dict: Service health status
     """
     return {"status": "ok"}
+
+
+@app.get("/metrics")
+async def metrics() -> Response:
+    """Expose Prometheus metrics for scraping."""
+    return line_metrics.metrics_response()
 
 
 # Register routers from modules
