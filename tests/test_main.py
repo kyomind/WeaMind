@@ -34,6 +34,17 @@ class TestMainApplication:
         assert response.status_code == 200
         assert response.json() == {"status": "ok"}
 
+    def test_metrics_endpoint(self, client: TestClient) -> None:
+        """Test the metrics endpoint exposes Prometheus-formatted metrics."""
+        response = client.get("/metrics")
+
+        assert response.status_code == 200
+        assert "text/plain" in response.headers["content-type"]
+        assert "line_webhook_events_total" in response.text
+        assert "line_webhook_events_success_total" in response.text
+        assert "line_webhook_events_error_total" in response.text
+        assert "line_webhook_event_duration_seconds" in response.text
+
     def test_app_has_registered_routers(self) -> None:
         """Test that the app has registered all expected routers."""
         import app.main

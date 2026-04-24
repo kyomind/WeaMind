@@ -1,5 +1,6 @@
 """Test LINE webhook endpoint functionality."""
 
+import json
 from collections.abc import Callable
 from unittest.mock import patch
 
@@ -26,14 +27,23 @@ class TestLineWebhook:
         body = b'{"invalid": "json"}'
         signature = generate_line_signature(body)
 
-        response = client.post(
-            "/line/webhook",
-            content=body,
-            headers={"X-Line-Signature": signature, "Content-Type": "application/json"},
-        )
+        with patch("app.line.router.line_metrics.record_webhook_received") as mock_received:
+            with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
+                with patch(
+                    "app.line.service.line_metrics.record_webhook_duration"
+                ) as mock_duration:
+                    response = client.post(
+                        "/line/webhook",
+                        content=body,
+                        headers={"X-Line-Signature": signature, "Content-Type": "application/json"},
+                    )
+
         # Invalid webhook data should return 200 to stop LINE from retrying
         assert response.status_code == 200
         assert response.json() == {"message": "OK"}
+        mock_received.assert_called_once_with(["unknown"])
+        mock_error.assert_called_once_with(["unknown"], "handler_error")
+        mock_duration.assert_called_once()
 
     def test_webhook_processing_success(
         self, client: TestClient, generate_line_signature: Callable[[bytes], str]
@@ -46,15 +56,23 @@ class TestLineWebhook:
         )
         signature = generate_line_signature(body)
 
-        # Mock the webhook handler to not raise any exceptions
-        with patch("app.line.service.webhook_handler.handle"):
-            response = client.post(
-                "/line/webhook",
-                content=body,
-                headers={"X-Line-Signature": signature, "Content-Type": "application/json"},
-            )
-            assert response.status_code == 200
-            assert response.json() == {"message": "OK"}
+        with patch("app.line.router.process_webhook_events") as mock_process_webhook_events:
+            with patch("app.line.router.line_metrics.record_webhook_received") as mock_received:
+                response = client.post(
+                    "/line/webhook",
+                    content=body,
+                    headers={
+                        "X-Line-Signature": signature,
+                        "Content-Type": "application/json",
+                    },
+                )
+
+        assert response.status_code == 200
+        assert response.json() == {"message": "OK"}
+        mock_received.assert_called_once_with(["message_text"])
+        mock_process_webhook_events.assert_called_once_with(
+            body.decode(), signature, ["message_text"]
+        )
 
     def test_webhook_invalid_signature(self, client: TestClient) -> None:
         """Test webhook with invalid signature."""
@@ -83,3 +101,21 @@ class TestLineWebhook:
             )
             assert response.status_code == 400
             assert response.json()["detail"] == "Signature verification error"
+
+    def test_webhook_records_follow_event_type(
+        self, client: TestClient, generate_line_signature: Callable[[bytes], str]
+    ) -> None:
+        """Test webhook metrics classify a follow event correctly."""
+        body = json.dumps({"events": [{"type": "follow", "replyToken": "test_token"}]}).encode()
+        signature = generate_line_signature(body)
+
+        with patch("app.line.router.process_webhook_events"):
+            with patch("app.line.router.line_metrics.record_webhook_received") as mock_received:
+                response = client.post(
+                    "/line/webhook",
+                    content=body,
+                    headers={"X-Line-Signature": signature, "Content-Type": "application/json"},
+                )
+
+        assert response.status_code == 200
+        mock_received.assert_called_once_with(["follow"])
