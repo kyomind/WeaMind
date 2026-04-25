@@ -17,23 +17,14 @@ WeaMind 使用多層安全檢查來確保程式碼和依賴的安全性。
 
 基於風險評估，以下弱點已被標記為忽略：
 
-### GHSA-xqrq-4mgf-ff32 (future v1.0.0)
-- **風險等級**：低
-- **描述**：Python-Future 模組會自動導入同目錄下的 test.py 檔案
+### GHSA-58qw-9mgm-455v (pip <= 26.0.1)
+- **風險等級**：中
+- **描述**：pip 對同時可被判讀為 tar 與 ZIP 的封包存在解析衝突，可能導致安裝內容與檔名暗示不一致。
 - **忽略原因**：
-  - 這是間接依賴，由 line-bot-sdk 引入
-  - 我們的部署環境不包含可執行的 test.py 檔案
-  - 攻擊者需要先取得檔案寫入權限才能利用此漏洞
-  - 風險在控制範圍內
-
-### GHSA-4xh5-x5gv-qwph (pip v25.2)
-- **風險等級**：低
-- **描述**：pip 在解壓惡意 sdist 時可能發生路徑穿越攻擊
-- **忽略原因**：
-  - 這是 uv 工具內建的 pip 版本
-  - 我們使用 uv.lock 鎖定依賴，不直接從不信任的來源安裝套件
-  - 生產環境使用 Docker 容器隔離
-  - 攻擊需要安裝特製的惡意套件，不適用於我們的使用場景
+  - GitHub Advisory 目前尚未提供 `first_patched_version`
+  - 專案已鎖定到目前可用的新版 pip
+  - `uv.lock` 鎖定依賴來源，CI 不從任意未知來源安裝套件
+  - 已新增定期檢查，當 advisory withdrawn 或出現修正版時會提醒移除 ignore
 
 ## 安全掃描流程
 
@@ -85,7 +76,7 @@ make security-audit
 3. 在此文件中記錄忽略原因
 
 ### 定期檢查
-建議每季度重新評估已忽略的弱點，確保風險仍在可接受範圍內。
+GitHub Actions 每週執行 `Check pip-audit ignores`，檢查已忽略的 GHSA 是否已 withdrawn 或出現 `first_patched_version`。若已可處理，workflow 會失敗並提示升級依賴後移除 ignore。
 
 ## 最佳實踐
 
