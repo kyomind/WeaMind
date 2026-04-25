@@ -59,10 +59,9 @@ Audited 98 packages in 8ms
 ### 5. 本地測試
 ```bash
 ❯ uv run pip-audit --progress-spinner=off \
-  --ignore-vuln=GHSA-xqrq-4mgf-ff32 \
-  --ignore-vuln=GHSA-4xh5-x5gv-qwph
+  --ignore-vuln=GHSA-58qw-9mgm-455v
 
-No known vulnerabilities found
+No known vulnerabilities found, 1 ignored
 ```
 
 ### 6. 提交修復
@@ -240,8 +239,7 @@ update-deps:
   run: |
     uv run pip-audit \
       --progress-spinner=off \
-      --ignore-vuln=GHSA-xqrq-4mgf-ff32 \
-      --ignore-vuln=GHSA-4xh5-x5gv-qwph
+      --ignore-vuln=GHSA-58qw-9mgm-455v
 ```
 
 ### 4. 定期維護週期

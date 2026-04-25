@@ -1,0 +1,22 @@
+name: Check pip-audit ignores
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-pip-audit-ignores:
+    name: Check pip-audit ignores
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6  # Official GitHub action, keep version tag
+
+      - name: Check ignored advisories
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_pip_audit_ignores.py

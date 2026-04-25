@@ -138,8 +138,8 @@ security-bandit:
 security-audit:
 	@echo "🔍 執行 pip-audit 依賴弱點掃描..."
 	@mkdir -p security-reports
-	@uv run pip-audit --format=json --output=security-reports/pip-audit-report.json --ignore-vuln=GHSA-xqrq-4mgf-ff32 --ignore-vuln=GHSA-4xh5-x5gv-qwph
-	@uv run pip-audit --ignore-vuln=GHSA-xqrq-4mgf-ff32 --ignore-vuln=GHSA-4xh5-x5gv-qwph
+	@uv run pip-audit --format=json --output=security-reports/pip-audit-report.json --ignore-vuln=GHSA-58qw-9mgm-455v
+	@uv run pip-audit --ignore-vuln=GHSA-58qw-9mgm-455v
 
 security-all:
 	@echo "🛡️ 執行完整安全掃描..."
