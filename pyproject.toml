@@ -1,6 +1,6 @@
 [project]
 dependencies = [
-  "alembic>=1.16.1",
+  "alembic>=1.18.4",
   "fastapi>=0.115.12",
   "httpx>=0.28.1",
   "line-bot-sdk>=3.17.1",
@@ -11,7 +11,7 @@ dependencies = [
   "cryptography>=45.0.7",
   "sqlalchemy>=2.0.40",
   "uvicorn[standard]>=0.34.2",
-  "redis[hiredis]>=6.4.0",
+  "redis[hiredis]>=7.4.0",
   "starlette>=0.47.2",
   "urllib3>=2.6.0",
 ]
@@ -24,7 +24,7 @@ version = "1.2.0"
 [dependency-groups]
 dev = [
   "bandit>=1.8.0",
-  "coverage>=7.9.1",
+  "coverage>=7.13.5",
   "pip>=26.0",
   "pip-audit>=2.7.0",
   "pre-commit>=4.2.0",
