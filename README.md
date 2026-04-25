@@ -128,4 +128,4 @@ graph TB
 進一步了解：
 - 專案介紹：[WeaMind 專案解析：從單機 LINE Bot 到 K8s 叢集](https://blog.kyomind.tw/weamind)
 - 系列文章：[WeaMind 系列文章目錄](https://github.com/kyomind/WeaMind/blob/main/blogs/README.md)
-- 開發者文件：[DeepWiki](https://deepwiki.com/kyomind/WeaMind)
+- 開發者文件：[WeaMind DeepWiki](https://deepwiki.com/kyomind/WeaMind)

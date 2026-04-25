@@ -1,4 +1,4 @@
-# WeaMind 系列文章索引
+# WeaMind 系列文章目錄
 
 [![Blog](https://img.shields.io/badge/Blog-Code%20and%20Me-forestgreen)](https://blog.kyomind.tw)
 [![Author](https://img.shields.io/badge/Author-Kyo%20Huang-blue)](https://blog.kyomind.tw/about)
