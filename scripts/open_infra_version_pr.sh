@@ -42,6 +42,8 @@ gh repo clone "$TARGET_REPO" "$temp_dir/weamind-infra" -- --branch "$DEFAULT_BRA
 
 cd "$temp_dir/weamind-infra"
 
+gh auth setup-git
+
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
