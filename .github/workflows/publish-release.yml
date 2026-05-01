@@ -3,7 +3,7 @@ name: Publish Release to GHCR
 # 觸發條件：當建立 v* 格式的 tag 時（例如 v1.0.7）
 on:
   push:
-    tags: ['v*']
+    tags: [ "v*" ]
 
 permissions:
   contents: read
@@ -52,10 +52,15 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64  # 支援 x86_64 和 ARM64（Apple Silicon）
+          platforms: linux/amd64,linux/arm64 # 支援 x86_64 和 ARM64（Apple Silicon）
           tags: |
             ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.full }}
             ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.minor }}
             ghcr.io/${{ github.repository_owner }}/weamind:${{ steps.version.outputs.major }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Open infra version PR
+        env:
+          GH_TOKEN: ${{ secrets.WEAMIND_INFRA_PR_TOKEN }}
+        run: bash ./scripts/open_infra_version_pr.sh "${{ steps.version.outputs.full }}"
