@@ -72,11 +72,11 @@ graph TB
 - **pre-commit hooks**: linting and formatting enforced at commit time.
 - **Security scanning**: Bandit, pip-audit, and detect-secrets cover static analysis, CVE checks, and secret detection.
 
-### CI Pipeline
+### CI/CD Pipeline
 - **Full quality gate on every push**: Ruff → Pyright → Bandit → pip-audit → pytest + Codecov.
-- **Multi-arch Docker builds**: `amd64` and `arm64` images pushed to [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind) on CI success.
+- **Image build and publishing**: after CI succeeds on `main`, multi-arch images are published to [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind) with both `latest` and traceable `sha-*` tags.
 - **Triple security scanning**: main CI pipeline + CodeQL + SonarCloud.
-- **Automated releases**: follows [Semantic Versioning](https://semver.org/); tags trigger [releases](https://github.com/kyomind/WeaMind/releases) with auto-generated notes.
+- **Release-driven CD flow**: follows [Semantic Versioning](https://semver.org/); release tags publish versioned images and automatically open a version update PR against [weamind-infra](https://github.com/kyomind/weamind-infra), completing the app repo's delivery responsibilities in CD.
 
 ---
 

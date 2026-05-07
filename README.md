@@ -32,7 +32,7 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
   - [Domain-Driven Design 架構](#domain-driven-design-架構)
   - [pytest 單元測試體系](#pytest-單元測試體系)
   - [現代化開發工具](#現代化開發工具)
-  - [CI Pipeline](#ci-pipeline)
+  - [CI/CD Pipeline](#cicd-pipeline)
 
 ## 使用說明
 
@@ -117,11 +117,11 @@ graph TB
 - **pre-commit 自動化**：Git commit 前自動執行格式化與檢查。
 - **安全掃描工具**：Bandit（靜態安全分析）、pip-audit（CVE 檢查）、detect-secrets（敏感資料防護）。
 
-### CI Pipeline
+### CI/CD Pipeline
 - **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程。
-- **Image 建置與推送**：CI 成功後自動推送 image 到 [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind)（支援 amd64/arm64）。
+- **Image 建置與發布**：main 分支在 CI 成功後自動發布 image 到 [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind)（支援 amd64/arm64），提供 `latest` 與可追溯的 `sha-*` tags。
 - **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）。
-- **自動發布機制**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 觸發 [releases](https://github.com/kyomind/WeaMind/releases) 與 release notes 生成。
+- **Release 驅動的 CD 流程**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 會自動發布正式版 image，並對 [weamind-infra](https://github.com/kyomind/weamind-infra) 建立版本更新 PR，完成 app repo 在 CD 中應負責的交付流程。
 
 ---
 
