@@ -65,12 +65,12 @@ make security-audit
 5. 在控制台顯示掃描摘要
 
 **忽略的弱點**：
-- `GHSA-58qw-9mgm-455v`：pip 目前尚無修正版的中風險問題
+- 目前沒有忽略中的 pip-audit 弱點。
 
 **輸出範例**：
 ```
 🔍 執行 pip-audit 依賴弱點掃描...
-No known vulnerabilities found, 1 ignored
+No known vulnerabilities found
 ```
 
 **報告檔案**：
@@ -248,7 +248,7 @@ uv run pre-commit run --hook-stage pre-push bandit
   run: uv run bandit -c bandit.yaml -r app
 
 - name: Dependency vulnerability scan (pip-audit)
-  run: uv run pip-audit --progress-spinner=off --ignore-vuln=GHSA-58qw-9mgm-455v
+  run: uv run pip-audit --progress-spinner=off
 ```
 
 ### 本機 pre-commit hook

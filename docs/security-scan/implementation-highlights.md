@@ -38,7 +38,7 @@ WeaMind 是一個智慧天氣 LINE Bot，本次實作為專案加入了完整的
 ```yaml
 # 已評估並合理忽略的低風險弱點
 ignored_vulnerabilities:
-  - GHSA-58qw-9mgm-455v  # pip - upstream 尚無修正版，定期檢查退場條件
+  []
 ```
 
 ### 3. 自動化流程整合

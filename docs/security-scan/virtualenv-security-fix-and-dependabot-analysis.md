@@ -58,10 +58,9 @@ Audited 98 packages in 8ms
 
 ### 5. 本地測試
 ```bash
-❯ uv run pip-audit --progress-spinner=off \
-  --ignore-vuln=GHSA-58qw-9mgm-455v
+❯ uv run pip-audit --progress-spinner=off
 
-No known vulnerabilities found, 1 ignored
+No known vulnerabilities found
 ```
 
 ### 6. 提交修復
@@ -236,10 +235,7 @@ update-deps:
 
 ```yaml
 - name: Dependency vulnerability scan (pip-audit)
-  run: |
-    uv run pip-audit \
-      --progress-spinner=off \
-      --ignore-vuln=GHSA-58qw-9mgm-455v
+  run: uv run pip-audit --progress-spinner=off
 ```
 
 ### 4. 定期維護週期

@@ -39,7 +39,7 @@ jobs:
         run: uv run bandit -c bandit.yaml -r app
 
       - name: Dependency vulnerability scan (pip-audit)
-        run: uv run pip-audit --progress-spinner=off --ignore-vuln=GHSA-58qw-9mgm-455v
+        run: uv run pip-audit --progress-spinner=off
 
       - name: Run unit tests with coverage
         # Run tests and generate coverage.xml with pytest-cov
