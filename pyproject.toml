@@ -12,8 +12,8 @@ dependencies = [
   "sqlalchemy>=2.0.40",
   "uvicorn[standard]>=0.34.2",
   "redis[hiredis]>=7.4.0",
-  "starlette>=0.47.2",
-  "urllib3>=2.6.0",
+  "starlette>=1.0.1",
+  "urllib3>=2.7.0",
 ]
 description = "Your smart LINE assistant for instant weather updates."
 name = "WeaMind"

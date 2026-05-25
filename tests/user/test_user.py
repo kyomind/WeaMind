@@ -400,7 +400,7 @@ class TestUserRouterAdditional:
         }
         response = client.post("/users/locations", json=payload)
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestUserQueryHistory:
