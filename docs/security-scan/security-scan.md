@@ -67,7 +67,22 @@ make security-audit
 3. 在此文件中記錄忽略原因
 
 ### 定期檢查
-GitHub Actions 每週執行 `Check pip-audit ignores`，檢查已忽略的 GHSA 是否已 withdrawn 或出現 `first_patched_version`。若已可處理，workflow 會失敗並提示升級依賴後移除 ignore。
+GitHub Actions 每週執行 `Check pip-audit ignores`，避免暫時性的安全例外永久留在 repo 中。
+
+- **執行時間**：每週一 03:00 UTC（台灣時間每週一 11:00），也可從 GitHub Actions 手動執行。
+- **執行內容**：workflow 會執行 `python3 scripts/check_pip_audit_ignores.py`。
+- **掃描範圍**：script 會 repo-wide 掃描文字檔中的 `--ignore-vuln=GHSA-...`，但會跳過 `.git`、`.venv`、cache、coverage 與 `security-reports/` 等目錄。
+- **判斷方式**：對每個被 ignore 的 GHSA，script 會查 GitHub Advisory API，確認 advisory 是否已 withdrawn，或是否已出現 `first_patched_version`。
+- **成功代表**：沒有找到 GHSA ignore，或找到的 ignore 目前仍沒有可處理的修正版，也沒有 withdrawn。
+- **失敗代表**：至少一個 ignore 可能已經可以移除。這不是 production 故障，而是維護提醒。
+
+這個檢查不會自動修改檔案、升級依賴或開 PR。當 workflow 失敗時，依照 failed log 中列出的 GHSA 與檔案位置處理：
+
+1. 查明受影響套件與修正版。
+2. 更新 `pyproject.toml` 與 `uv.lock`，必要時執行 `uv lock --upgrade-package <package>`。
+3. 移除 `Makefile`、`.github/workflows/ci.yml` 與相關文件中的 `--ignore-vuln=GHSA-...`。
+4. 執行 `uv run pip-audit --progress-spinner=off`。
+5. 執行 `python3 scripts/check_pip_audit_ignores.py`，確認沒有 stale ignore。
 
 ## 最佳實踐
 

@@ -32,6 +32,7 @@ Prefer practical maintenance: read the evidence, make the smallest useful change
 - Treat old failed runs as context only when a newer commit or rerun supersedes them.
 - Do not merge PRs, rerun workflows, dismiss alerts, or close items unless the evidence makes that action safe.
 - If the evidence does not show a clear root cause or safe next action, stop and ask for more information.
+- Dependabot PRs run with restricted secret access. A CI failure on a Dependabot PR may be caused by missing tokens, such as `secrets.CODECOV_TOKEN`, rather than by the dependency update itself. Read the failed log before treating the PR as unsafe.
 
 ## Snapshot
 
@@ -54,6 +55,7 @@ Classify each item by the action it needs:
 - safe Dependabot GitHub Actions PR
 - dependency PR that needs lockfile or constraint repair
 - GitHub Actions failure with a reproducible root cause
+- Dependabot PR blocked by restricted token or secret access
 - CodeQL or security alert that needs a code, dependency, or workflow fix
 - transient or stale item that should be rerun, refreshed, or left alone
 - blocked item that needs user input
@@ -74,6 +76,8 @@ gh pr checks <pr-number> --repo kyomind/WeaMind
 Python dependency PRs must keep `pyproject.toml` and `uv.lock` consistent because CI uses `uv sync --locked`. Do not merge a pyproject-only bump with an outdated lockfile. If the fix is safe, repair the lockfile and rerun the relevant checks.
 
 GitHub Actions PRs are usually safe when they only update action versions, the changed workflow still matches this repo's pinning/comment conventions, and fresh checks pass.
+
+If a Dependabot PR fails CI, inspect the failed job log before changing files. If the first real error is missing secret or token access, such as Codecov upload failing because `CODECOV_TOKEN` is unavailable to the bot, classify the PR as blocked by bot permissions. Do not patch unrelated code for that failure.
 
 If the branch is stale, refresh it before trusting checks:
 
