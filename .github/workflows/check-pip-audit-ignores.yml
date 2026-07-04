@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6  # Official GitHub action, keep version tag
+      - uses: actions/checkout@v7  # Official GitHub action, keep version tag
 
       - name: Check ignored advisories
         env:

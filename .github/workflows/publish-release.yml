@@ -16,7 +16,7 @@ jobs:
     steps:
       # 第一步：取得程式碼（包含完整 git history）
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

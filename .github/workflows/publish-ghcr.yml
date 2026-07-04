@@ -22,7 +22,7 @@ jobs:
     steps:
       # 第一步：取得程式碼
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # 使用觸發 CI 的那個 commit SHA，確保版本一致
           ref: ${{ github.event.workflow_run.head_sha }}
