@@ -24,8 +24,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          # 使用觸發 CI 的那個 commit SHA，確保版本一致
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # Checkout trusted branch, then verify it still points to the CI-passed commit.
+          ref: main
+
+      - name: Verify published commit
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          CHECKED_OUT_SHA="$(git rev-parse HEAD)"
+          if [ "$CHECKED_OUT_SHA" != "$HEAD_SHA" ]; then
+            echo "main moved after CI completed; skip publishing stale commit."
+            echo "checked_out_sha=$CHECKED_OUT_SHA"
+            echo "workflow_run_head_sha=$HEAD_SHA"
+            exit 1
+          fi
 
       # 第二步：設定 Docker Buildx（支援多平台 build 與快取）
       - name: Set up Docker Buildx
