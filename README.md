@@ -106,7 +106,7 @@ graph TB
 - **分層架構實踐**：每個領域模組包含 `router.py`、`service.py`、`models.py` 實現三層分離。
 
 ### pytest 單元測試體系
-- **94% 測試覆蓋率**：32+ 測試檔案涵蓋 core、line、weather、user 各模組。
+- **95% 測試覆蓋率**：32+ 測試檔案涵蓋 core、line、weather、user 各模組。
 - **獨立測試環境**：SQLite 記憶體資料庫 + fixtures，每個測試獨立運行不互相干擾。
 - **Codecov 監控**：每次 PR 自動檢查覆蓋率變化，防止新功能降低測試覆蓋率。
 

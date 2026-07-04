@@ -61,7 +61,7 @@ graph TB
 - **Layered structure**: every module follows a `router → service → model` pattern, maintaining clean separation of concerns.
 
 ### Test Suite
-- **94% code coverage** across 32+ test files spanning all domain modules.
+- **95% code coverage** across 32+ test files spanning all domain modules.
 - **Fully isolated tests**: each test gets a fresh in-memory SQLite database via pytest fixtures — no shared state.
 - **Codecov on every PR**: coverage diffs are reported automatically, catching regressions before merge.
 
