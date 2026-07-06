@@ -74,7 +74,7 @@ graph TB
 
 ### CI/CD Pipeline
 - **Full quality gate on every push**: Ruff → Pyright → Bandit → pip-audit → pytest + Codecov.
-- **Image build and publishing**: after CI succeeds on `main`, multi-arch images are published to [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind) with both `latest` and traceable `sha-*` tags.
+- **Image build and publishing**: after CI succeeds on `main`, the multi-arch `latest` image is published to [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind); release workflows publish semantic version tags such as `1.2.2`, `1.2`, and `1`.
 - **Triple security scanning**: main CI pipeline + CodeQL + SonarCloud.
 - **Release-driven CD flow**: follows [Semantic Versioning](https://semver.org/); release tags publish versioned images and automatically open a version update PR against [weamind-infra](https://github.com/kyomind/weamind-infra), completing the app repo's delivery responsibilities in CD.
 
