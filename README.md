@@ -119,7 +119,7 @@ graph TB
 
 ### CI/CD Pipeline
 - **自動化品質檢查**：每次 push 執行 Ruff → Pyright → Bandit → pip-audit → pytest + Codecov 完整流程。
-- **Image 建置與發布**：main 分支在 CI 成功後自動發布 image 到 [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind)（支援 amd64/arm64），提供 `latest` 與可追溯的 `sha-*` tags。
+- **Image 建置與發布**：main 分支在 CI 成功後自動發布 `latest` image 到 [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind)（支援 amd64/arm64）；正式版則由 release workflow 發布語意化版本 tags，例如 `1.2.2`、`1.2`、`1`。
 - **三重安全掃描**：主 CI 流程 + CodeQL（程式碼安全掃描）+ SonarCloud（技術債與品質監控）。
 - **Release 驅動的 CD 流程**：遵循 [Semantic Versioning](https://semver.org/)，Git tag 會自動發布正式版 image，並對 [weamind-infra](https://github.com/kyomind/weamind-infra) 建立版本更新 PR，完成 app repo 在 CD 中應負責的交付流程。
 
