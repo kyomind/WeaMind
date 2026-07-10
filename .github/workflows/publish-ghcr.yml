@@ -28,6 +28,7 @@ jobs:
           ref: main
 
       - name: Verify published commit
+        id: verify-commit
         env:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
@@ -36,15 +37,19 @@ jobs:
             echo "main moved after CI completed; skip publishing stale commit."
             echo "checked_out_sha=$CHECKED_OUT_SHA"
             echo "workflow_run_head_sha=$HEAD_SHA"
-            exit 1
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "should_publish=true" >> "$GITHUB_OUTPUT"
 
       # 第二步：設定 Docker Buildx（支援多平台 build 與快取）
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v3.7.1
+        if: ${{ steps.verify-commit.outputs.should_publish == 'true' }}
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       # 第三步：登入 GHCR
       - name: Login to GHCR
+        if: ${{ steps.verify-commit.outputs.should_publish == 'true' }}
         uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
         with:
           registry: ghcr.io                         # GitHub Container Registry
@@ -54,6 +59,7 @@ jobs:
       # 第四步：Build 並 Push image 到 GHCR
       # 只推送 latest；語意化版本 tags 由 publish-release.yml 負責
       - name: Build and push
+        if: ${{ steps.verify-commit.outputs.should_publish == 'true' }}
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .              # build context 為當前目錄

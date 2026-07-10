@@ -22,7 +22,7 @@ jobs:
 
       # 第二步：設定 Docker Buildx
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v3.7.1
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
 
       # 第三步：登入 GHCR
       - name: Login to GHCR
