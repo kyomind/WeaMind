@@ -63,7 +63,7 @@ jobs:
       - uses: actions/checkout@v7  # Official GitHub action, keep version tag
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v3.7.1 - Third-party action, pinned to commit SHA
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0 - Third-party action, pinned to commit SHA
 
       - name: Build Docker image (validation only)
         run: |
