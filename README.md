@@ -8,11 +8,11 @@
 
 # WeaMind
 
-> 📖 [English Version](README.en.md)
+> A smart LINE Bot for Taiwan weather updates.
 
-A smart LINE Bot for Taiwan weather updates.
-
-> 本專案的 K8s 部署：[weamind-infra](https://github.com/kyomind/weamind-infra)
+| 📖 English | 🚀 K8s 部署 | 📝 系列文章介紹 |
+| --- | --- | --- |
+| [README.en.md](README.en.md) | [weamind-infra](https://github.com/kyomind/weamind-infra) | [blogs/](blogs/README.md) |
 
 WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，提供即時台灣天氣資訊。
 

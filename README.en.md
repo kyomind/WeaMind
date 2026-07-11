@@ -8,11 +8,11 @@
 
 # WeaMind
 
-> 📖 [中文版](README.md)
+> A production-grade LINE chatbot for real-time Taiwan weather queries, built with FastAPI.
 
-A production-grade LINE chatbot for real-time Taiwan weather queries, built with FastAPI.
-
-> Kubernetes deployment: [weamind-infra](https://github.com/kyomind/weamind-infra)
+| 📖 中文版 | 🚀 K8s Deployment | 📝 Blog Posts |
+| --- | --- | --- |
+| [README.md](README.md) | [weamind-infra](https://github.com/kyomind/weamind-infra) | [blogs/](blogs/README.md) |
 
 ## Features
 
