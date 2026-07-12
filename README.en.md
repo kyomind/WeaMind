@@ -10,9 +10,9 @@
 
 > A production-grade LINE chatbot for real-time Taiwan weather queries, built with FastAPI.
 
-| 📖 中文版 | 🚀 K8s Deployment | 📝 Blog Posts |
+| 📖 中文版 | 🚀 K8s Deployment | 📝 Blog Series |
 | --- | --- | --- |
-| [README.md](README.md) | [weamind-infra](https://github.com/kyomind/weamind-infra) | [blogs/](blogs/README.md) |
+| [README.md](README.md) | [weamind-infra](https://github.com/kyomind/weamind-infra) | [Posts](https://blog.kyomind.tw/weamind-series/) |
 
 ## Features
 
