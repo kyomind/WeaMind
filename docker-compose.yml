@@ -19,7 +19,7 @@ services:
     networks:
       - wea-net
   redis:
-    image: redis:8.2.1-bookworm
+    image: redis:8.2.8-bookworm
     networks:
       - wea-net
 
