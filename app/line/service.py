@@ -25,7 +25,7 @@ from linebot.v3.webhooks import (
 )
 
 from app.core.config import settings
-from app.core.database import get_session
+from app.core.database import SessionLocal
 from app.core.processing_lock import processing_lock_service
 from app.line import metrics as line_metrics
 from app.user.service import (
@@ -34,7 +34,7 @@ from app.user.service import (
     get_user_by_line_id,
     record_user_query,
 )
-from app.weather.service import LocationParseError, LocationService, WeatherService
+from app.weather.service import LocationParseError, WeatherService
 
 from .messaging import (
     configuration,
@@ -218,48 +218,44 @@ def handle_message_event(event: MessageEvent) -> None:
         logger.warning(f"Unexpected message type: {type(message)}")
         return
 
-    # Get database session
-    session = next(get_session())
-
     # Initialize variables to ensure they're always defined
     needs_quick_reply = False
 
-    try:
-        # Parse as location input
-        locations, response_message = LocationService.parse_location_input(session, message.text)
+    # Background handlers own an explicit Session lifetime instead of consuming
+    # the FastAPI dependency generator.
+    with SessionLocal() as session:
+        try:
+            query_result = WeatherService.handle_text_weather_query(session, message.text)
+            locations = query_result.locations
+            response_message = query_result.response_message
 
-        # Check if Quick Reply is needed (2-3 locations found)
-        needs_quick_reply = 2 <= len(locations) <= 3
+            # Check if Quick Reply is needed (2-3 locations found)
+            needs_quick_reply = 2 <= len(locations) <= 3
 
-        # For single location match, get actual weather data
-        if len(locations) == 1:
-            response_message = WeatherService.handle_text_weather_query(session, message.text)
+            selected_location = query_result.selected_location
+            if selected_location:
+                # Get user for recording query history
+                user_id = getattr(event.source, "user_id", None) if event.source else None
+                if user_id:
+                    user = get_user_by_line_id(session, user_id)
+                    if user:
+                        record_user_query(session, user.id, selected_location.id)
+                        logger.info("Recorded query history for user")
 
-            # Get user for recording query history
-            user_id = getattr(event.source, "user_id", None) if event.source else None
-            if user_id:
-                user = get_user_by_line_id(session, user_id)
-                if user:
-                    record_user_query(session, user.id, locations[0].id)
-                    logger.info("Recorded query history for user")
+            # Log the parsing result
+            logger.info(
+                f"Location parsing result: {len(locations)} locations found for '{message.text}'"
+            )
 
-        # Log the parsing result
-        logger.info(
-            f"Location parsing result: {len(locations)} locations found for '{message.text}'"
-        )
+        except LocationParseError as e:
+            # Handle location parsing errors with user-friendly messages
+            response_message = e.message
+            logger.info(f"Location parsing error for '{e.input_text}': {e.message}")
 
-    except LocationParseError as e:
-        # Handle location parsing errors with user-friendly messages
-        response_message = e.message
-        logger.info(f"Location parsing error for '{e.input_text}': {e.message}")
-
-    except Exception:
-        # For unexpected errors, provide generic error message
-        logger.exception(f"Unexpected error parsing location input: {message.text}")
-        response_message = "系統暫時有點忙，請稍後再試一次。"
-
-    finally:
-        session.close()
+        except Exception:
+            # For unexpected errors, provide generic error message
+            logger.exception(f"Unexpected error parsing location input: {message.text}")
+            response_message = "系統暫時有點忙，請稍後再試一次。"
 
     # Send response to user
     with ApiClient(configuration) as api_client:
@@ -329,40 +325,26 @@ def handle_location_message_event(event: MessageEvent) -> None:
     if address:
         logger.info("Location message includes address information")
 
-    # Get database session
-    session = next(get_session())
+    with SessionLocal() as session:
+        try:
+            # Resolve the Location once and reuse it for weather and Query History.
+            query_result = WeatherService.handle_location_weather_query(session, lat, lon, address)
+            response_message = query_result.response_message
 
-    try:
-        # Use WeatherService to handle location-based weather query with address verification
-        response_message = WeatherService.handle_location_weather_query(session, lat, lon, address)
-
-        # Record query for user history if location was found in Taiwan
-        user_id = getattr(event.source, "user_id", None) if event.source else None
-        if user_id:
-            # Use same logic as WeatherService.handle_location_weather_query
-            # Step 1: Address-first strategy (if available)
-            location = None
-            if address:
-                location = LocationService.extract_location_from_address(session, address)
-
-            # Step 2: GPS fallback (if address failed or not available)
-            if not location:
-                location = LocationService.find_nearest_location(session, lat, lon)
-
-            if location:
+            # Record query for user history if location was found in Taiwan
+            user_id = getattr(event.source, "user_id", None) if event.source else None
+            selected_location = query_result.selected_location
+            if user_id and selected_location:
                 user = get_user_by_line_id(session, user_id)
                 if user:
-                    record_user_query(session, user.id, location.id)
+                    record_user_query(session, user.id, selected_location.id)
                     logger.info("Recorded location query for user")
 
-        logger.info("Location query completed")
+            logger.info("Location query completed")
 
-    except Exception:
-        logger.exception("Error handling location message from user")
-        response_message = "系統暫時有點忙，請稍後再試一次。"
-
-    finally:
-        session.close()
+        except Exception:
+            logger.exception("Error handling location message from user")
+            response_message = "系統暫時有點忙，請稍後再試一次。"
 
     # Send response to user
     send_text_response(event.reply_token, response_message)
@@ -382,36 +364,32 @@ def handle_follow_event(event: FollowEvent) -> None:
             logger.warning("Follow event without user_id")
             return
 
-        # Get database session
-        session = next(get_session())  # Corrected call
-        try:
+        with SessionLocal() as session:
             # Create user if not exists or reactivate if inactive
             create_user_if_not_exists(session, user_id)
             logger.info("User followed - user record created/activated")
 
-            # Send welcome message if reply token exists
-            if event.reply_token:
-                with ApiClient(configuration) as api_client:
-                    messaging_api_client = MessagingApi(api_client)
-                    try:
-                        messaging_api_client.reply_message(
-                            ReplyMessageRequest(
-                                reply_token=event.reply_token,  # type: ignore[call-arg]
-                                messages=[
-                                    TextMessage(
-                                        text="Welcome! You can now start interacting with me.",
-                                        quick_reply=None,  # type: ignore[call-arg]
-                                        quote_token=None,  # type: ignore[call-arg]
-                                    )
-                                ],  # type: ignore
-                                notification_disabled=False,  # type: ignore[call-arg]
-                            )
+        # Release the database connection before waiting on the LINE API.
+        if event.reply_token:
+            with ApiClient(configuration) as api_client:
+                messaging_api_client = MessagingApi(api_client)
+                try:
+                    messaging_api_client.reply_message(
+                        ReplyMessageRequest(
+                            reply_token=event.reply_token,  # type: ignore[call-arg]
+                            messages=[
+                                TextMessage(
+                                    text="Welcome! You can now start interacting with me.",
+                                    quick_reply=None,  # type: ignore[call-arg]
+                                    quote_token=None,  # type: ignore[call-arg]
+                                )
+                            ],  # type: ignore
+                            notification_disabled=False,  # type: ignore[call-arg]
                         )
-                        logger.info("Welcome message sent to user")
-                    except Exception:
-                        logger.exception("Error sending welcome message to user")
-        finally:
-            session.close()
+                    )
+                    logger.info("Welcome message sent to user")
+                except Exception:
+                    logger.exception("Error sending welcome message to user")
 
     except Exception:
         logger.exception("Error handling follow event")
@@ -431,17 +409,13 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
             logger.warning("Unfollow event without user_id")
             return
 
-        # Get database session
-        session = next(get_session())  # Corrected call
-        try:
+        with SessionLocal() as session:
             # Deactivate user
             user = deactivate_user(session, user_id)
             if user:
                 logger.info("User unfollowed - user record deactivated")
             else:
                 logger.warning("Unfollow event for unknown user")
-        finally:
-            session.close()
 
     except Exception:
         logger.exception("Error handling unfollow event")

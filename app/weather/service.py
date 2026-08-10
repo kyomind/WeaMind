@@ -4,6 +4,7 @@ import logging
 import math
 import re
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta, timezone
 
 from sqlalchemy import func
@@ -13,6 +14,30 @@ from app.core.admin_divisions import is_valid_taiwan_division
 from app.weather.models import Location, Weather
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class WeatherQueryResult:
+    """
+    Represent the response and resolved Locations for a Weather Query.
+
+    The same resolved Locations drive the weather response, Quick Reply, and
+    Query History so callers never need to repeat Location resolution.
+
+    Attributes:
+        response_message: User-facing weather or location-selection message.
+        locations: Zero to three resolved candidate Locations.
+    """
+
+    response_message: str
+    locations: tuple[Location, ...]
+
+    @property
+    def selected_location(self) -> Location | None:
+        """Return the single resolved Location, if the query selected one."""
+        if len(self.locations) == 1:
+            return self.locations[0]
+        return None
 
 
 class LocationParseError(Exception):
@@ -431,56 +456,53 @@ class WeatherService:
         return "\n".join(lines)
 
     @staticmethod
-    def handle_text_weather_query(session: Session, text_input: str) -> str:
+    def handle_text_weather_query(session: Session, text_input: str) -> WeatherQueryResult:
         """
-        Handle weather query from text input with actual weather data retrieval.
+        Handle a text Weather Query with one Location resolution pass.
 
         Args:
-            session: Database session
-            text_input: User text input
+            session: Database session.
+            text_input: User text input.
 
         Returns:
-            str: Weather response message with forecast data
+            Weather Query Result containing the response and candidate Locations.
 
         Raises:
-            LocationParseError: If input format is invalid
+            LocationParseError: If the input format is invalid.
         """
-        # Parse location input
         locations, response_message = LocationService.parse_location_input(session, text_input)
+        resolved_locations = tuple(locations)
 
-        # If exactly one location found, get weather data
-        if len(locations) == 1:
-            location = locations[0]
+        if len(resolved_locations) == 1:
+            location = resolved_locations[0]
             weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
             if weather_data:
-                return WeatherService.format_weather_response(location, weather_data)
+                response_message = WeatherService.format_weather_response(location, weather_data)
             else:
-                return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+                response_message = (
+                    f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+                )
 
-        # For other cases (0, 2-3, or >3 locations), return original parsing response
-        return response_message
+        return WeatherQueryResult(
+            response_message=response_message,
+            locations=resolved_locations,
+        )
 
     @staticmethod
     def handle_location_weather_query(
         session: Session, lat: float, lon: float, address: str | None = None
-    ) -> str:
+    ) -> WeatherQueryResult:
         """
-        Handle weather query from GPS coordinates with actual weather data retrieval.
-
-        Implementation of "address priority + GPS fallback" strategy:
-        1. If address is available, try to parse it first
-        2. If address parsing succeeds, use address result directly
-        3. If address parsing fails, fallback to GPS coordinates
-        4. If both fail, return "not in Taiwan" message
+        Handle a GPS Weather Query with address priority and GPS fallback.
 
         Args:
-            session: Database session
-            lat: Latitude in degrees
-            lon: Longitude in degrees
-            address: Optional address string from LINE location sharing
+            session: Database session.
+            lat: Latitude in degrees.
+            lon: Longitude in degrees.
+            address: Optional address string from LINE location sharing.
 
         Returns:
-            str: Weather response message with forecast data
+            Weather Query Result containing the response and resolved Location.
         """
         location = None
 
@@ -506,10 +528,19 @@ class WeatherService:
         if location:
             weather_data = WeatherService.get_weather_forecast_by_location(session, location.id)
             if weather_data:
-                return WeatherService.format_weather_response(location, weather_data)
+                response_message = WeatherService.format_weather_response(location, weather_data)
             else:
-                return f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+                response_message = (
+                    f"抱歉，目前無法取得 {location.full_name} 的天氣資料，請稍後再試。"
+                )
+            return WeatherQueryResult(
+                response_message=response_message,
+                locations=(location,),
+            )
 
         # Step 4: Both methods failed
         logger.warning("Both address parsing and GPS calculation failed")
-        return "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
+        return WeatherQueryResult(
+            response_message="抱歉，目前僅支援台灣地區的天氣查詢 🌏",
+            locations=(),
+        )

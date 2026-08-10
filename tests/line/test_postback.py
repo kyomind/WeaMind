@@ -23,6 +23,7 @@ from app.line.postback import (
 from app.line.service import handle_postback_event
 from app.user.models import User
 from app.weather.models import Location
+from app.weather.service import WeatherQueryResult
 
 
 class TestPostBackEventHandlers:
@@ -217,9 +218,9 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.postback.get_session") as mock_get_session:
+        with patch("app.line.postback.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             # Mock user with home location
             mock_user = Mock(spec=User)
@@ -229,28 +230,43 @@ class TestPostBackEventHandlers:
             mock_location.full_name = "台北市中正區"
             mock_user.home_location = mock_location
 
+            resolved_location = Mock(spec=Location)
+            resolved_location.id = 654
+
             with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
                 with patch(
                     "app.line.postback.WeatherService.handle_text_weather_query",
-                    return_value="台北市中正區的天氣...",
+                    return_value=WeatherQueryResult(
+                        response_message="台北市中正區的天氣...",
+                        locations=(resolved_location,),
+                    ),
                 ):
                     with patch("app.line.postback.send_text_response") as mock_send:
                         with patch("app.line.postback.record_user_query") as mock_record:
+
+                            def assert_session_closed_before_send(
+                                *_args: object, **_kwargs: object
+                            ) -> None:
+                                """Verify LINE sending starts after the Session scope ends."""
+                                mock_session_factory.return_value.__exit__.assert_called_once()
+
+                            mock_send.side_effect = assert_session_closed_before_send
                             handle_weather_postback(
                                 mock_event, "test_user_id", {"action": "weather", "type": "home"}
                             )
 
                             mock_send.assert_called_once_with("test_token", "台北市中正區的天氣...")
-                            mock_record.assert_called_once_with(mock_session, 123, 456)
+                            mock_record.assert_called_once_with(mock_session, 123, 654)
+                            mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_weather_postback_home_no_location(self) -> None:
         """Test home weather PostBack when user has no home location set."""
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.postback.get_session") as mock_get_session:
+        with patch("app.line.postback.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             # Mock user without home location
             mock_user = Mock(spec=User)
@@ -263,15 +279,16 @@ class TestPostBackEventHandlers:
                     )
 
                     mock_send.assert_called_once_with("test_token", "住家")
+                    mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_weather_postback_office_success(self) -> None:
         """Test successful office weather PostBack."""
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.postback.get_session") as mock_get_session:
+        with patch("app.line.postback.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             # Mock user with work location
             mock_user = Mock(spec=User)
@@ -284,7 +301,10 @@ class TestPostBackEventHandlers:
             with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
                 with patch(
                     "app.line.postback.WeatherService.handle_text_weather_query",
-                    return_value="新北市板橋區的天氣...",
+                    return_value=WeatherQueryResult(
+                        response_message="新北市板橋區的天氣...",
+                        locations=(mock_location,),
+                    ),
                 ):
                     with patch("app.line.postback.send_text_response") as mock_send:
                         with patch("app.line.postback.record_user_query") as mock_record:
@@ -300,9 +320,9 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.postback.get_session") as mock_get_session:
+        with patch("app.line.postback.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             # Mock auto-created user without home location
             mock_user = Mock()
@@ -347,9 +367,9 @@ class TestPostBackEventHandlers:
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
 
-        with patch("app.line.postback.get_session") as mock_get_session:
+        with patch("app.line.postback.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch("app.line.postback.get_user_by_line_id", side_effect=Exception("DB error")):
                 with patch("app.line.postback.send_error_response") as mock_send:
@@ -412,18 +432,23 @@ class TestPostBackEventHandlers:
         mock_event.source.user_id = "test_line_user_id"
 
         with (
-            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.SessionLocal") as mock_session_factory,
             patch("app.line.postback.get_user_by_line_id") as mock_get_user,
             patch("app.line.postback.get_recent_queries") as mock_get_recent,
             patch("app.line.postback.send_text_response") as mock_send,
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
             mock_user = Mock()
             mock_user.id = 1
             mock_get_user.return_value = mock_user
             mock_get_recent.return_value = []  # No recent queries
 
+            def assert_session_closed_before_send(*_args: object, **_kwargs: object) -> None:
+                """Verify the empty-history reply starts after the Session scope ends."""
+                mock_session_factory.return_value.__exit__.assert_called_once()
+
+            mock_send.side_effect = assert_session_closed_before_send
             handle_recent_queries_postback(mock_event)
 
             mock_send.assert_called_once_with(
@@ -438,14 +463,14 @@ class TestPostBackEventHandlers:
         mock_event.source.user_id = "test_line_user_id"
 
         with (
-            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.SessionLocal") as mock_session_factory,
             patch("app.line.postback.get_user_by_line_id") as mock_get_user,
             patch("app.line.postback.create_user_if_not_exists") as mock_create_user,
             patch("app.line.postback.get_recent_queries") as mock_get_recent,
             patch("app.line.postback.send_text_response") as mock_send,
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
             mock_get_user.return_value = None  # User not found initially
 
             # Mock auto-created user
@@ -477,14 +502,14 @@ class TestPostBackEventHandlers:
         mock_location2.full_name = "新北市板橋區"
 
         with (
-            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.SessionLocal") as mock_session_factory,
             patch("app.line.postback.get_user_by_line_id") as mock_get_user,
             patch("app.line.postback.get_recent_queries") as mock_get_recent,
             patch("app.line.postback.MessagingApi") as mock_messaging_api,
             patch("app.line.postback.ApiClient"),
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
             mock_user = Mock()
             mock_user.id = 1
             mock_get_user.return_value = mock_user
@@ -493,6 +518,11 @@ class TestPostBackEventHandlers:
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
 
+            def assert_session_closed_before_reply(*_args: object, **_kwargs: object) -> None:
+                """Verify the history reply starts after the Session scope ends."""
+                mock_session_factory.return_value.__exit__.assert_called_once()
+
+            mock_api_instance.reply_message.side_effect = assert_session_closed_before_reply
             handle_recent_queries_postback(mock_event)
 
             # Verify API was called with Quick Reply
@@ -525,7 +555,7 @@ class TestPostBackEventHandlers:
         mock_location.full_name = "台北市中正區"
 
         with (
-            patch("app.line.postback.get_session") as mock_get_session,
+            patch("app.line.postback.SessionLocal") as mock_session_factory,
             patch("app.line.postback.get_user_by_line_id") as mock_get_user,
             patch("app.line.postback.get_recent_queries") as mock_get_recent,
             patch(
@@ -535,7 +565,7 @@ class TestPostBackEventHandlers:
             patch("app.line.postback.ApiClient"),
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
             mock_user = Mock()
             mock_user.id = 1
             mock_get_user.return_value = mock_user
@@ -554,7 +584,7 @@ class TestPostBackEventHandlers:
         mock_event.source.user_id = "test_line_user_id"
 
         with (
-            patch("app.line.postback.get_session", side_effect=Exception("DB Error")),
+            patch("app.line.postback.SessionLocal", side_effect=Exception("DB Error")),
             patch("app.line.postback.send_error_response") as mock_send,
         ):
             handle_recent_queries_postback(mock_event)

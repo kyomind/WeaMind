@@ -150,13 +150,15 @@ class TestWeatherDataFetching:
         add_test_weather_data(session, location.id)
 
         # Test the complete flow
-        result = WeatherService.handle_text_weather_query(session, "臺北市中正區")
+        query_result = WeatherService.handle_text_weather_query(session, "臺北市中正區")
 
-        # Should return formatted weather data
-        assert "🗺️ 臺北市中正區" in result
-        assert "⛅" in result
-        assert "🌡️" in result
-        assert not result.startswith("找到了")  # New behavior - direct weather data
+        # Should return formatted weather data.
+        assert "🗺️ 臺北市中正區" in query_result.response_message
+        assert "⛅" in query_result.response_message
+        assert "🌡️" in query_result.response_message
+        assert not query_result.response_message.startswith("找到了")
+        assert query_result.selected_location is not None
+        assert query_result.selected_location.id == location.id
 
     def test_handle_text_weather_query_no_data(
         self, session: Session, create_location: Callable[..., Location]
@@ -167,7 +169,7 @@ class TestWeatherDataFetching:
         session.commit()
 
         # Create a test location without weather data using shared fixture
-        create_location(
+        location = create_location(
             geocode="6300200",  # Different geocode to avoid conflicts
             county="新北市",
             district="永和區",
@@ -177,7 +179,9 @@ class TestWeatherDataFetching:
         )
 
         # Test the query
-        result = WeatherService.handle_text_weather_query(session, "新北市永和區")
+        query_result = WeatherService.handle_text_weather_query(session, "新北市永和區")
 
-        # Should return error message
-        assert "抱歉，目前無法取得 新北市永和區 的天氣資料" in result
+        # Should return the error while preserving the selected Location.
+        assert "抱歉，目前無法取得 新北市永和區 的天氣資料" in query_result.response_message
+        assert query_result.selected_location is not None
+        assert query_result.selected_location.id == location.id

@@ -6,6 +6,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 from app.line.service import handle_message_event
 from app.weather.models import Location
+from app.weather.service import WeatherQueryResult
 
 
 class TestQuickReplyFeature:
@@ -25,17 +26,16 @@ class TestQuickReplyFeature:
         mock_location2 = Mock(spec=Location)
         mock_location2.full_name = "臺南市永和區"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch(
-                "app.line.service.LocationService.parse_location_input"
-            ) as mock_parse_location:
-                # Mock returning 2 locations (triggers Quick Reply)
-                mock_parse_location.return_value = (
-                    [mock_location1, mock_location2],
-                    "找到多個符合的地點，請選擇：",
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query:
+                mock_weather_query.return_value = WeatherQueryResult(
+                    response_message="找到多個符合的地點，請選擇：",
+                    locations=(mock_location1, mock_location2),
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:
@@ -74,17 +74,16 @@ class TestQuickReplyFeature:
         mock_location = Mock(spec=Location)
         mock_location.full_name = "臺北市中山區"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch(
-                "app.line.service.LocationService.parse_location_input"
-            ) as mock_parse_location:
-                # Mock returning 1 location (no Quick Reply)
-                mock_parse_location.return_value = (
-                    [mock_location],
-                    "找到了 臺北市中山區，正在查詢天氣...",
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query:
+                mock_weather_query.return_value = WeatherQueryResult(
+                    response_message="找到了 臺北市中山區，正在查詢天氣...",
+                    locations=(mock_location,),
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:
@@ -119,17 +118,16 @@ class TestQuickReplyFeature:
         mock_location3 = Mock(spec=Location)
         mock_location3.full_name = "台中市中山路"
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch(
-                "app.line.service.LocationService.parse_location_input"
-            ) as mock_parse_location:
-                # Mock returning 3 locations (triggers Quick Reply)
-                mock_parse_location.return_value = (
-                    [mock_location1, mock_location2, mock_location3],
-                    "找到多個符合的地點，請選擇：",
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query:
+                mock_weather_query.return_value = WeatherQueryResult(
+                    response_message="找到多個符合的地點，請選擇：",
+                    locations=(mock_location1, mock_location2, mock_location3),
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:
@@ -149,30 +147,24 @@ class TestQuickReplyFeature:
                         assert message.quick_reply is not None
                         assert len(message.quick_reply.items) == 3
 
-    def test_handle_message_event_four_locations_no_quick_reply(self) -> None:
-        """Test message handling with four locations (>3) doesn't create Quick Reply."""
+    def test_handle_message_event_too_many_matches_no_quick_reply(self) -> None:
+        """Test message handling with too many matches doesn't create Quick Reply."""
         mock_event = Mock(spec=MessageEvent)
         mock_event.reply_token = "test_reply_token"
         mock_message = Mock(spec=TextMessageContent)
         mock_message.text = "中正"
         mock_event.message = mock_message
 
-        # Mock 4 locations - should not trigger Quick Reply
-        mock_locations = [Mock(spec=Location) for _ in range(4)]
-        for i, location in enumerate(mock_locations):
-            location.full_name = f"地點{i + 1}"
-
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch(
-                "app.line.service.LocationService.parse_location_input"
-            ) as mock_parse_location:
-                # Mock returning 4 locations (no Quick Reply)
-                mock_parse_location.return_value = (
-                    mock_locations,
-                    "找到太多符合的地點，請提供更具體的資訊",
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query:
+                mock_weather_query.return_value = WeatherQueryResult(
+                    response_message="找到太多符合的地點，請提供更具體的資訊",
+                    locations=(),
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:
@@ -198,17 +190,16 @@ class TestQuickReplyFeature:
         mock_message.text = "不存在的地點"
         mock_event.message = mock_message
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch(
-                "app.line.service.LocationService.parse_location_input"
-            ) as mock_parse_location:
-                # Mock returning 0 locations (no Quick Reply)
-                mock_parse_location.return_value = (
-                    [],
-                    "找不到符合的地點",
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query:
+                mock_weather_query.return_value = WeatherQueryResult(
+                    response_message="找不到符合的地點",
+                    locations=(),
                 )
 
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:

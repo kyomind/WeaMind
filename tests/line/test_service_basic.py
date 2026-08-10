@@ -22,6 +22,7 @@ from app.line.service import (
     send_liff_location_setting_response,
 )
 from app.weather.models import Location
+from app.weather.service import WeatherQueryResult
 
 
 class TestLineService:
@@ -68,16 +69,20 @@ class TestLineService:
         mock_event = create_mock_message_event()
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("app.line.service.get_session") as mock_get_session:
+            with patch("app.line.service.SessionLocal") as mock_session_factory:
                 mock_session = mock_db_session
-                mock_get_session.return_value = iter([mock_session])
+                mock_session_factory.return_value.__enter__.return_value = mock_session
 
-                with patch("app.line.service.LocationService.parse_location_input") as mock_parse:
-                    mock_parse.return_value = ([], "Sorry, I don't understand.")
-
+                with patch(
+                    "app.line.service.WeatherService.handle_text_weather_query",
+                    return_value=WeatherQueryResult(
+                        response_message="Sorry, I don't understand.", locations=()
+                    ),
+                ):
                     with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
                         handle_message_event(mock_event)
                         mock_reply.assert_called_once()
+                        mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_message_event_api_error(
         self,
@@ -88,19 +93,23 @@ class TestLineService:
         mock_event = create_mock_message_event()
 
         with patch("app.core.config.settings.LINE_CHANNEL_ACCESS_TOKEN", "real_token"):
-            with patch("app.line.service.get_session") as mock_get_session:
+            with patch("app.line.service.SessionLocal") as mock_session_factory:
                 mock_session = mock_db_session
-                mock_get_session.return_value = iter([mock_session])
+                mock_session_factory.return_value.__enter__.return_value = mock_session
 
-                with patch("app.line.service.LocationService.parse_location_input") as mock_parse:
-                    mock_parse.return_value = ([], "Sorry, I don't understand.")
-
+                with patch(
+                    "app.line.service.WeatherService.handle_text_weather_query",
+                    return_value=WeatherQueryResult(
+                        response_message="Sorry, I don't understand.", locations=()
+                    ),
+                ):
                     with patch(
                         "app.line.service.MessagingApi.reply_message",
                         side_effect=Exception("API Error"),
                     ):
                         # Should not raise exception, just log error
                         handle_message_event(mock_event)
+                        mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_default_event(self) -> None:
         """Test handling default events."""
@@ -118,9 +127,9 @@ class TestLineService:
         """Test successful follow event handling."""
         mock_event = create_mock_follow_event()
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = mock_db_session
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -128,11 +137,19 @@ class TestLineService:
                 mock_create_user.return_value = mock_user
 
                 with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
+
+                    def assert_session_closed_before_reply(
+                        *_args: object, **_kwargs: object
+                    ) -> None:
+                        """Verify the LINE API call starts after the Session scope ends."""
+                        mock_session_factory.return_value.__exit__.assert_called_once()
+
+                    mock_reply.side_effect = assert_session_closed_before_reply
                     handle_follow_event(mock_event)
 
                     mock_create_user.assert_called_once_with(mock_session, "test_user_id")
                     mock_reply.assert_called_once()
-                    mock_session.close.assert_called_once()
+                    mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_follow_event_no_user_id(
         self, create_mock_follow_event: Callable[..., Mock]
@@ -153,9 +170,9 @@ class TestLineService:
         """Test follow event without reply token."""
         mock_event = create_mock_follow_event(reply_token=None)
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = mock_db_session
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -165,7 +182,7 @@ class TestLineService:
                 handle_follow_event(mock_event)
 
                 mock_create_user.assert_called_once_with(mock_session, "test_user_id")
-                mock_session.close.assert_called_once()
+                mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_follow_event_api_error(self) -> None:
         """Test follow event with messaging API error."""
@@ -175,9 +192,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
                 mock_user = Mock()
@@ -192,7 +209,7 @@ class TestLineService:
                     handle_follow_event(mock_event)
 
                     mock_create_user.assert_called_once_with(mock_session, "test_user_id")
-                    mock_session.close.assert_called_once()
+                    mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_unfollow_event_success(
         self,
@@ -202,9 +219,9 @@ class TestLineService:
         """Test successful unfollow event handling."""
         mock_event = create_mock_unfollow_event()
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = mock_db_session
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
                 mock_user = Mock()
@@ -214,7 +231,7 @@ class TestLineService:
                 handle_unfollow_event(mock_event)
 
                 mock_deactivate_user.assert_called_once_with(mock_session, "test_user_id")
-                mock_session.close.assert_called_once()
+                mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_unfollow_event_user_not_found(self) -> None:
         """Test unfollow event for unknown user."""
@@ -223,9 +240,9 @@ class TestLineService:
         mock_source.user_id = "test_user_id"
         mock_event.source = mock_source
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch("app.line.service.deactivate_user") as mock_deactivate_user:
                 mock_deactivate_user.return_value = None
@@ -233,7 +250,7 @@ class TestLineService:
                 handle_unfollow_event(mock_event)
 
                 mock_deactivate_user.assert_called_once_with(mock_session, "test_user_id")
-                mock_session.close.assert_called_once()
+                mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_unfollow_event_no_user_id(self) -> None:
         """Test unfollow event without user_id."""
@@ -252,12 +269,12 @@ class TestLineService:
         mock_message.text = "台北"
         mock_event.message = mock_message
 
-        with patch("app.line.service.get_session") as mock_get_session:
+        with patch("app.line.service.SessionLocal") as mock_session_factory:
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             with patch(
-                "app.line.service.LocationService.parse_location_input",
+                "app.line.service.WeatherService.handle_text_weather_query",
                 side_effect=Exception("Unexpected error"),
             ):
                 with patch("app.line.service.MessagingApi") as mock_messaging_api:
@@ -281,7 +298,7 @@ class TestLineService:
         mock_event = create_mock_follow_event()
 
         with patch(
-            "app.line.service.get_session",
+            "app.line.service.SessionLocal",
             side_effect=Exception("Database error"),
         ):
             # Should not raise exception, just log error
@@ -294,7 +311,7 @@ class TestLineService:
         mock_event = create_mock_unfollow_event()
 
         with patch(
-            "app.line.service.get_session",
+            "app.line.service.SessionLocal",
             side_effect=Exception("Database error"),
         ):
             # Should not raise exception, just log error
@@ -348,18 +365,22 @@ class TestLineService:
         mock_location.full_name = "臺北市中正區"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.LocationService.parse_location_input") as mock_parse,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
+            patch(
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query,
             patch("app.line.service.get_user_by_line_id") as mock_get_user,
             patch("app.line.service.record_user_query") as mock_record_query,
             patch("app.line.service.MessagingApi") as mock_messaging_api,
             patch("app.line.service.ApiClient"),
         ):
             mock_session = mock_db_session
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            # Single location triggers recording
-            mock_parse.return_value = ([mock_location], "天氣查詢結果")
+            # Single location triggers recording.
+            mock_weather_query.return_value = WeatherQueryResult(
+                response_message="天氣查詢結果", locations=(mock_location,)
+            )
 
             # Mock user found for recording
             mock_user = Mock()
@@ -387,18 +408,22 @@ class TestLineService:
         mock_location.full_name = "臺北市中正區"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.LocationService.parse_location_input") as mock_parse,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
+            patch(
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query,
             patch("app.line.service.get_user_by_line_id") as mock_get_user,
             patch("app.line.service.record_user_query") as mock_record_query,
             patch("app.line.service.MessagingApi") as mock_messaging_api,
             patch("app.line.service.ApiClient"),
         ):
             mock_session = mock_db_session
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            # Single location triggers recording attempt
-            mock_parse.return_value = ([mock_location], "天氣查詢結果")
+            # Single location triggers recording attempt.
+            mock_weather_query.return_value = WeatherQueryResult(
+                response_message="天氣查詢結果", locations=(mock_location,)
+            )
 
             # User not found - no recording
             mock_get_user.return_value = None
@@ -424,17 +449,21 @@ class TestLineService:
         mock_location.full_name = "臺北市中正區"
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
-            patch("app.line.service.LocationService.parse_location_input") as mock_parse,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
+            patch(
+                "app.line.service.WeatherService.handle_text_weather_query"
+            ) as mock_weather_query,
             patch("app.line.service.record_user_query") as mock_record_query,
             patch("app.line.service.MessagingApi") as mock_messaging_api,
             patch("app.line.service.ApiClient"),
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            # Single location triggers recording attempt
-            mock_parse.return_value = ([mock_location], "天氣查詢結果")
+            # Single location triggers recording attempt.
+            mock_weather_query.return_value = WeatherQueryResult(
+                response_message="天氣查詢結果", locations=(mock_location,)
+            )
 
             mock_api_instance = Mock()
             mock_messaging_api.return_value = mock_api_instance
@@ -457,23 +486,22 @@ class TestLocationMessageHandler:
         mock_event = create_mock_location_message_event()
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
             patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
-            patch("app.line.service.LocationService.find_nearest_location") as mock_find,
             patch("app.line.service.get_user_by_line_id") as mock_get_user,
             patch("app.line.service.record_user_query") as mock_record,
             patch("app.line.service.send_text_response") as mock_send,
         ):
             mock_session = mock_db_session
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            # Mock successful location query
-            mock_weather.return_value = "找到了 臺北市中正區，正在查詢天氣..."
-
-            # Mock location found for recording
-            mock_location = Mock()
+            # Reuse the location selected by the weather module for history.
+            mock_location = Mock(spec=Location)
             mock_location.id = 123
-            mock_find.return_value = mock_location
+            mock_weather.return_value = WeatherQueryResult(
+                response_message="找到了 臺北市中正區，正在查詢天氣...",
+                locations=(mock_location,),
+            )
 
             # Mock user for recording
             mock_user = Mock()
@@ -488,8 +516,9 @@ class TestLocationMessageHandler:
             # Should record query for user history
             mock_record.assert_called_once_with(mock_session, 456, 123)
 
-            # Should send response
+            # Should send response after leaving the database Session scope.
             mock_send.assert_called_once_with("test_token", "找到了 臺北市中正區，正在查詢天氣...")
+            mock_session_factory.return_value.__exit__.assert_called_once()
 
     def test_handle_location_message_event_with_address(self) -> None:
         """Test location message handling with address information."""
@@ -505,30 +534,23 @@ class TestLocationMessageHandler:
         mock_event.source = mock_source
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
             patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
-            patch("app.line.service.LocationService.find_nearest_location") as mock_find,
-            patch("app.line.service.LocationService.extract_location_from_address") as mock_extract,
             patch("app.line.service.get_user_by_line_id") as mock_get_user,
             patch("app.line.service.record_user_query") as mock_record,
             patch("app.line.service.send_text_response") as mock_send,
             patch("app.line.service.logger") as mock_logger,
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            # Mock successful location query
-            mock_weather.return_value = "找到了 臺北市信義區，正在查詢天氣..."
-
-            # Mock address location found for recording (address-first strategy)
-            mock_address_location = Mock()
+            # Reuse the address-priority location selected by the weather module.
+            mock_address_location = Mock(spec=Location)
             mock_address_location.id = 123
-            mock_extract.return_value = mock_address_location
-
-            # Mock GPS location (fallback, not used when address succeeds)
-            mock_gps_location = Mock()
-            mock_gps_location.id = 456
-            mock_find.return_value = mock_gps_location
+            mock_weather.return_value = WeatherQueryResult(
+                response_message="找到了 臺北市信義區，正在查詢天氣...",
+                locations=(mock_address_location,),
+            )
 
             # Mock user for recording
             mock_user = Mock()
@@ -581,15 +603,18 @@ class TestLocationMessageHandler:
         mock_event.source = None  # No source for this test
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
             patch("app.line.service.WeatherService.handle_location_weather_query") as mock_weather,
             patch("app.line.service.send_text_response") as mock_send,
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            # Mock location outside Taiwan response
-            mock_weather.return_value = "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
+            # Mock location outside Taiwan response.
+            mock_weather.return_value = WeatherQueryResult(
+                response_message="抱歉，目前僅支援台灣地區的天氣查詢 🌏",
+                locations=(),
+            )
 
             handle_location_message_event(mock_event)
 
@@ -609,7 +634,7 @@ class TestLocationMessageHandler:
         mock_event.message = mock_message
 
         with (
-            patch("app.line.service.get_session") as mock_get_session,
+            patch("app.line.service.SessionLocal") as mock_session_factory,
             patch(
                 "app.line.service.WeatherService.handle_location_weather_query",
                 side_effect=Exception("Database error"),
@@ -617,12 +642,13 @@ class TestLocationMessageHandler:
             patch("app.line.service.send_text_response") as mock_send,
         ):
             mock_session = Mock()
-            mock_get_session.return_value = iter([mock_session])
+            mock_session_factory.return_value.__enter__.return_value = mock_session
 
             handle_location_message_event(mock_event)
 
-            # Should send error response
+            # Should send error response and still close the Session scope.
             mock_send.assert_called_once_with("test_token", "系統暫時有點忙，請稍後再試一次。")
+            mock_session_factory.return_value.__exit__.assert_called_once()
 
 
 class TestCurrentLocationWeatherHandler:

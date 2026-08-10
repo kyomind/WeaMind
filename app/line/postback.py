@@ -17,7 +17,7 @@ from linebot.v3.messaging import (
 )
 from linebot.v3.webhooks import PostbackEvent
 
-from app.core.database import get_session
+from app.core.database import SessionLocal
 from app.line.messaging import (
     configuration,
     send_error_response,
@@ -106,31 +106,38 @@ def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, 
 
 def handle_user_location_weather(event: PostbackEvent, user_id: str, location_type: str) -> None:
     """Reply with preset location weather information for home or office."""
-    session = next(get_session())
-
     try:
-        user = get_user_by_line_id(session, user_id)
-        if not user:
-            user = create_user_if_not_exists(session, user_id)
-
         location_name = "住家" if location_type == "home" else "公司"
-        location = user.home_location if location_type == "home" else user.work_location
 
-        if not location:
+        with SessionLocal() as session:
+            user = get_user_by_line_id(session, user_id)
+            if not user:
+                user = create_user_if_not_exists(session, user_id)
+
+            location = user.home_location if location_type == "home" else user.work_location
+            if not location:
+                response_message = None
+            else:
+                query_result = WeatherService.handle_text_weather_query(session, location.full_name)
+                response_message = query_result.response_message
+
+                # Query History must use the Location that produced the response.
+                selected_location = query_result.selected_location
+                if selected_location:
+                    record_user_query(session, user.id, selected_location.id)
+                    logger.info(
+                        "Recorded home/work query for user",
+                        extra={"location_type": location_type},
+                    )
+
+        # Do not hold a database connection while calling the LINE API.
+        if response_message is None:
             send_location_not_set_response(event.reply_token, location_name)
-            return
-
-        # Record query for user history
-        record_user_query(session, user.id, location.id)
-        logger.info("Recorded home/work query for user", extra={"location_type": location_type})
-
-        response_message = WeatherService.handle_text_weather_query(session, location.full_name)
-        send_text_response(event.reply_token, response_message)
+        else:
+            send_text_response(event.reply_token, response_message)
     except Exception:
         logger.exception("Error handling preset location weather", extra={"type": location_type})
         send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
-    finally:
-        session.close()
 
 
 def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None:
@@ -155,60 +162,60 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
             send_error_response(event.reply_token, "用戶識別錯誤")
             return
 
-        session = next(get_session())
-        try:
+        with SessionLocal() as session:
             user = get_user_by_line_id(session, user_id)
             if not user:
                 user = create_user_if_not_exists(session, user_id)
 
             recent_locations = get_recent_queries(session, user.id, limit=5)
-            if not recent_locations:
-                send_text_response(
-                    event.reply_token,
-                    "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
-                )
-                return
+            recent_location_names = [location.full_name for location in recent_locations]
 
-            quick_reply_items = [
-                QuickReplyItem(
-                    type="action",
-                    imageUrl=None,
-                    action=MessageAction(
-                        type="message",
-                        label=location.full_name,
-                        text=location.full_name,
-                    ),
-                )
-                for location in recent_locations
-            ]
+        # Build and send LINE messages only after releasing the database connection.
+        if not recent_location_names:
+            send_text_response(
+                event.reply_token,
+                "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
+            )
+            return
 
-            quick_reply = QuickReply(items=quick_reply_items)
-            response_message = "最近查過的 5 個地點："
+        quick_reply_items = [
+            QuickReplyItem(
+                type="action",
+                imageUrl=None,
+                action=MessageAction(
+                    type="message",
+                    label=location_name,
+                    text=location_name,
+                ),
+            )
+            for location_name in recent_location_names
+        ]
 
-            with ApiClient(configuration) as api_client:
-                messaging_api_client = MessagingApi(api_client)
-                try:
-                    messaging_api_client.reply_message(
-                        ReplyMessageRequest(
-                            reply_token=event.reply_token,  # type: ignore[call-arg]
-                            messages=[
-                                TextMessage(
-                                    text=response_message,
-                                    quick_reply=quick_reply,  # type: ignore[call-arg]
-                                )
-                            ],
-                            notification_disabled=False,  # type: ignore[call-arg]
-                        )
+        quick_reply = QuickReply(items=quick_reply_items)
+        response_message = "最近查過的 5 個地點："
+
+        with ApiClient(configuration) as api_client:
+            messaging_api_client = MessagingApi(api_client)
+            try:
+                messaging_api_client.reply_message(
+                    ReplyMessageRequest(
+                        reply_token=event.reply_token,  # type: ignore[call-arg]
+                        messages=[
+                            TextMessage(
+                                text=response_message,
+                                quick_reply=quick_reply,  # type: ignore[call-arg]
+                            )
+                        ],
+                        notification_disabled=False,  # type: ignore[call-arg]
                     )
-                    logger.info(
-                        "Recent queries response sent",
-                        extra={"options": len(recent_locations)},
-                    )
-                except Exception:
-                    logger.exception("Error sending recent queries response")
-                    send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
-        finally:
-            session.close()
+                )
+                logger.info(
+                    "Recent queries response sent",
+                    extra={"options": len(recent_location_names)},
+                )
+            except Exception:
+                logger.exception("Error sending recent queries response")
+                send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
 
     except Exception:
         logger.exception("Error handling recent queries PostBack")
