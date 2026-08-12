@@ -1,7 +1,6 @@
 """Test cases for location service functionality."""
 
 from collections.abc import Callable
-from unittest.mock import patch
 
 import pytest
 from sqlalchemy.orm import Session
@@ -10,7 +9,6 @@ from app.weather.models import Location, Weather
 from app.weather.service import (
     LocationParseError,
     LocationService,
-    WeatherQueryResult,
     WeatherService,
 )
 
@@ -336,90 +334,6 @@ class TestLocationServiceGeographic:
 class TestWeatherService:
     """Test WeatherService functionality."""
 
-    def test_weather_query_result_multiple_locations_has_no_selection(self) -> None:
-        """Keep multiple candidate Locations distinct from a selected Location."""
-        first_location = Location(id=1, full_name="臺北市中正區")
-        second_location = Location(id=2, full_name="臺南市中西區")
-
-        query_result = WeatherQueryResult(
-            response_message="找到多個符合的地點，請選擇：",
-            locations=(first_location, second_location),
-        )
-
-        assert query_result.selected_location is None
-
-    def test_handle_location_weather_query_success(
-        self,
-        session: Session,
-        create_location: Callable[..., Location],
-        add_test_weather_data: Callable[[Session, int], list[Weather]],
-    ) -> None:
-        """Test successful location weather query with actual weather data."""
-        # Create a test location
-        location = create_location(
-            geocode="6300100",
-            county="臺北市",
-            district="中正區",
-            full_name="臺北市中正區",
-            latitude=25.0330,
-            longitude=121.5654,
-        )
-
-        # Add test weather data using shared fixture
-        add_test_weather_data(session, location.id)
-
-        query_result = WeatherService.handle_location_weather_query(session, 25.0340, 121.5660)
-
-        # Should return formatted weather data and the same selected location.
-        assert "🗺️ 臺北市中正區" in query_result.response_message
-        assert "⛅" in query_result.response_message
-        assert "🌡️" in query_result.response_message
-        assert query_result.selected_location is not None
-        assert query_result.selected_location.id == location.id
-
-    def test_handle_location_weather_query_outside_taiwan(self, session: Session) -> None:
-        """Test location weather query outside Taiwan."""
-        query_result = WeatherService.handle_location_weather_query(session, 35.6762, 139.6503)
-
-        assert query_result.response_message == "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
-        assert query_result.selected_location is None
-
-    def test_handle_text_weather_query_success(
-        self,
-        session: Session,
-        create_location: Callable[..., Location],
-        add_test_weather_data: Callable[[Session, int], list[Weather]],
-    ) -> None:
-        """Test successful text weather query with actual weather data."""
-        # Create test locations
-        location = create_location(
-            geocode="6300100",
-            county="臺北市",
-            district="中正區",
-            full_name="臺北市中正區",
-            latitude=25.0330,
-            longitude=121.5654,
-        )
-
-        # Add test weather data using shared fixture
-        add_test_weather_data(session, location.id)
-
-        with patch.object(
-            LocationService,
-            "parse_location_input",
-            wraps=LocationService.parse_location_input,
-        ) as mock_parse_location:
-            query_result = WeatherService.handle_text_weather_query(session, "臺北")
-
-        mock_parse_location.assert_called_once_with(session, "臺北")
-
-        # Should return formatted weather data and the same selected location.
-        assert "🗺️ 臺北市中正區" in query_result.response_message
-        assert "⛅" in query_result.response_message
-        assert "🌡️" in query_result.response_message
-        assert query_result.selected_location is not None
-        assert query_result.selected_location.id == location.id
-
     def test_weather_data_freshness_normal(
         self,
         session: Session,
@@ -487,35 +401,6 @@ class TestWeatherService:
 
         # Should return empty list (data too stale)
         assert len(weather_data) == 0
-
-    def test_weather_data_freshness_error_message(
-        self,
-        session: Session,
-        create_freshness_test_location: Callable[[Session], Location],
-        create_weather_data_with_fetchtime: Callable[..., list[Weather]],
-    ) -> None:
-        """Test error message when weather data is stale."""
-        from datetime import UTC, datetime, timedelta
-
-        # Create test location
-        location = create_freshness_test_location(session)
-
-        # Create stale weather data (8 hours ago fetched_at, but future time periods)
-        fetched_at = datetime.now(UTC) - timedelta(hours=8)
-        create_weather_data_with_fetchtime(
-            session, location.id, fetched_at, use_current_time_for_periods=True
-        )
-
-        # Query weather through text handler
-        query_result = WeatherService.handle_text_weather_query(session, "臺北市中正區")
-
-        # Should preserve the selected Location even when weather data is unavailable.
-        assert (
-            query_result.response_message
-            == "抱歉，目前無法取得 臺北市中正區 的天氣資料，請稍後再試。"
-        )
-        assert query_result.selected_location is not None
-        assert query_result.selected_location.id == location.id
 
 
 class TestLocationServiceAddressParsing:
@@ -606,163 +491,3 @@ class TestLocationServiceAddressParsing:
         # Test empty address
         result = LocationService.extract_location_from_address(session, "")
         assert result is None
-
-
-class TestWeatherServiceAddressIntegration:
-    """Test WeatherService with address verification integration."""
-
-    def test_handle_location_weather_query_with_address_verification(
-        self,
-        session: Session,
-        create_location: Callable[..., Location],
-        add_test_weather_data: Callable[[Session, int], list[Weather]],
-    ) -> None:
-        """Test location weather query with GPS and address verification."""
-        # Create test location
-        location = create_location(
-            geocode="6300100",
-            county="臺北市",
-            district="信義區",
-            full_name="臺北市信義區",
-            latitude=25.0330,
-            longitude=121.5654,
-        )
-
-        # Add test weather data using shared fixture
-        add_test_weather_data(session, location.id)
-
-        # Address success must not perform the GPS fallback.
-        with (
-            patch.object(
-                LocationService,
-                "extract_location_from_address",
-                wraps=LocationService.extract_location_from_address,
-            ) as mock_extract_location,
-            patch.object(
-                LocationService,
-                "find_nearest_location",
-                wraps=LocationService.find_nearest_location,
-            ) as mock_find_location,
-        ):
-            query_result = WeatherService.handle_location_weather_query(
-                session, 25.0340, 121.5660, "台北市信義區信義路五段7號"
-            )
-
-        mock_extract_location.assert_called_once_with(session, "台北市信義區信義路五段7號")
-        mock_find_location.assert_not_called()
-
-        # Should return formatted weather data and the address-selected Location.
-        assert "🗺️ 臺北市信義區" in query_result.response_message
-        assert "⛅" in query_result.response_message
-        assert "🌡️" in query_result.response_message
-        assert query_result.selected_location is not None
-        assert query_result.selected_location.id == location.id
-
-    def test_handle_location_weather_query_address_overrides_gps(
-        self,
-        session: Session,
-        create_location: Callable[..., Location],
-        add_test_weather_data: Callable[[Session, int], list[Weather]],
-    ) -> None:
-        """Test that address takes priority when GPS and address conflict."""
-        # Create test locations
-        _ = create_location(
-            geocode="6300100",
-            county="臺北市",
-            district="信義區",
-            full_name="臺北市信義區",
-            latitude=25.0330,
-            longitude=121.5654,
-        )
-        location2 = create_location(
-            geocode="6500100",
-            county="新北市",
-            district="永和區",
-            full_name="新北市永和區",
-            latitude=25.0100,
-            longitude=121.5150,
-        )
-
-        # Add test weather data for location2 (永和區) using shared fixture
-        add_test_weather_data(session, location2.id)
-
-        # GPS points to 信義區 but address says 永和區 - should use address
-        query_result = WeatherService.handle_location_weather_query(
-            session, 25.0340, 121.5660, "新北市永和區中正路123號"
-        )
-
-        # Should return formatted weather data for 永和區.
-        assert "🗺️ 新北市永和區" in query_result.response_message
-        assert "⛅" in query_result.response_message
-        assert "🌡️" in query_result.response_message
-        assert query_result.selected_location is not None
-        assert query_result.selected_location.id == location2.id
-
-    def test_handle_location_weather_query_gps_outside_address_inside(
-        self,
-        session: Session,
-        create_location: Callable[..., Location],
-        add_test_weather_data: Callable[[Session, int], list[Weather]],
-    ) -> None:
-        """Test GPS outside Taiwan but address indicates Taiwan location."""
-        # Create test location
-        location = create_location(
-            geocode="6300100",
-            county="臺北市",
-            district="信義區",
-            full_name="臺北市信義區",
-            latitude=25.0330,
-            longitude=121.5654,
-        )
-
-        # Add test weather data using shared fixture
-        add_test_weather_data(session, location.id)
-
-        # GPS outside Taiwan bounds but address is Taiwan - should use address
-        query_result = WeatherService.handle_location_weather_query(
-            session, 35.6762, 139.6503, "台北市信義區信義路五段7號"
-        )
-
-        # Should return formatted weather data from the address-selected Location.
-        assert "🗺️ 臺北市信義區" in query_result.response_message
-        assert "⛅" in query_result.response_message
-        assert "🌡️" in query_result.response_message
-        assert query_result.selected_location is not None
-        assert query_result.selected_location.id == location.id
-
-    def test_handle_location_weather_query_both_outside_taiwan(self, session: Session) -> None:
-        """Test both GPS and address outside Taiwan."""
-        # Address failure must perform exactly one GPS fallback.
-        with (
-            patch.object(
-                LocationService,
-                "extract_location_from_address",
-                wraps=LocationService.extract_location_from_address,
-            ) as mock_extract_location,
-            patch.object(
-                LocationService,
-                "find_nearest_location",
-                wraps=LocationService.find_nearest_location,
-            ) as mock_find_location,
-        ):
-            query_result = WeatherService.handle_location_weather_query(
-                session, 35.6762, 139.6503, "東京都新宿區西新宿123號"
-            )
-
-        mock_extract_location.assert_called_once_with(session, "東京都新宿區西新宿123號")
-        mock_find_location.assert_called_once_with(session, 35.6762, 139.6503)
-        assert query_result.response_message == "抱歉，目前僅支援台灣地區的天氣查詢 🌏"
-        assert query_result.selected_location is None
-
-    def test_extract_location_invalid_division(self, session: Session) -> None:
-        """Test extract location with invalid administrative division."""
-        # Invalid administrative division (not in valid Taiwan divisions)
-        result = LocationService.extract_location_from_address(session, "火星市外星區123號")
-        assert result is None
-
-    def test_extract_location_not_in_database(self, session: Session) -> None:
-        """Test extract location not found in database."""
-        # Mock a valid division that doesn't exist in database
-        with patch("app.weather.service.is_valid_taiwan_division", return_value=True):
-            result = LocationService.extract_location_from_address(session, "臺北市不存在區123號")
-            assert result is None

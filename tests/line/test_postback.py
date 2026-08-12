@@ -15,15 +15,13 @@ from app.line.postback import (
     handle_other_postback,
     handle_recent_queries_postback,
     handle_settings_postback,
-    handle_user_location_weather,
     handle_weather_postback,
     parse_postback_data,
     should_use_processing_lock,
 )
 from app.line.service import handle_postback_event
-from app.user.models import User
 from app.weather.models import Location
-from app.weather.service import WeatherQueryResult
+from app.weather.workflow import QueryOutcome, WeatherQueryResult
 
 
 class TestPostBackEventHandlers:
@@ -213,130 +211,22 @@ class TestPostBackEventHandlers:
 
             mock_handle.assert_called_once_with(mock_event, {"action": "other", "type": "menu"})
 
-    def test_handle_weather_postback_home_success(self) -> None:
-        """Test successful home weather PostBack."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-
-            # Mock user with home location
-            mock_user = Mock(spec=User)
-            mock_user.id = 123
-            mock_location = Mock()
-            mock_location.id = 456
-            mock_location.full_name = "台北市中正區"
-            mock_user.home_location = mock_location
-
-            resolved_location = Mock(spec=Location)
-            resolved_location.id = 654
-
-            with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
-                with patch(
-                    "app.line.postback.WeatherService.handle_text_weather_query",
-                    return_value=WeatherQueryResult(
-                        response_message="台北市中正區的天氣...",
-                        locations=(resolved_location,),
-                    ),
-                ):
-                    with patch("app.line.postback.send_text_response") as mock_send:
-                        with patch("app.line.postback.record_user_query") as mock_record:
-
-                            def assert_session_closed_before_send(
-                                *_args: object, **_kwargs: object
-                            ) -> None:
-                                """Verify LINE sending starts after the Session scope ends."""
-                                mock_session_factory.return_value.__exit__.assert_called_once()
-
-                            mock_send.side_effect = assert_session_closed_before_send
-                            handle_weather_postback(
-                                mock_event, "test_user_id", {"action": "weather", "type": "home"}
-                            )
-
-                            mock_send.assert_called_once_with("test_token", "台北市中正區的天氣...")
-                            mock_record.assert_called_once_with(mock_session, 123, 654)
-                            mock_session_factory.return_value.__exit__.assert_called_once()
-
-    def test_handle_weather_postback_home_no_location(self) -> None:
-        """Test home weather PostBack when user has no home location set."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-
-            # Mock user without home location
-            mock_user = Mock(spec=User)
-            mock_user.home_location = None
-
-            with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
-                with patch("app.line.postback.send_location_not_set_response") as mock_send:
-                    handle_weather_postback(
-                        mock_event, "test_user_id", {"action": "weather", "type": "home"}
-                    )
-
-                    mock_send.assert_called_once_with("test_token", "住家")
-                    mock_session_factory.return_value.__exit__.assert_called_once()
-
-    def test_handle_weather_postback_office_success(self) -> None:
-        """Test successful office weather PostBack."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-
-            # Mock user with work location
-            mock_user = Mock(spec=User)
-            mock_user.id = 789
-            mock_location = Mock()
-            mock_location.id = 101
-            mock_location.full_name = "新北市板橋區"
-            mock_user.work_location = mock_location
-
-            with patch("app.line.postback.get_user_by_line_id", return_value=mock_user):
-                with patch(
-                    "app.line.postback.WeatherService.handle_text_weather_query",
-                    return_value=WeatherQueryResult(
-                        response_message="新北市板橋區的天氣...",
-                        locations=(mock_location,),
-                    ),
-                ):
-                    with patch("app.line.postback.send_text_response") as mock_send:
-                        with patch("app.line.postback.record_user_query") as mock_record:
-                            handle_weather_postback(
-                                mock_event, "test_user_id", {"action": "weather", "type": "office"}
-                            )
-
-                            mock_send.assert_called_once_with("test_token", "新北市板橋區的天氣...")
-                            mock_record.assert_called_once_with(mock_session, 789, 101)
-
     def test_handle_weather_postback_user_not_found(self) -> None:
-        """Test weather PostBack when user not found - should auto-create user."""
+        """Prompt for setup when the preset workflow finds no Location."""
         mock_event = Mock(spec=PostbackEvent)
         mock_event.reply_token = "test_token"
+        result = WeatherQueryResult(QueryOutcome.PRESET_NOT_SET)
 
-        with patch("app.line.postback.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
+        with (
+            patch("app.line.postback.query_preset", return_value=result) as mock_query,
+            patch("app.line.postback.send_location_not_set_response") as mock_send,
+        ):
+            handle_weather_postback(
+                mock_event, "test_user_id", {"action": "weather", "type": "home"}
+            )
 
-            # Mock auto-created user without home location
-            mock_user = Mock()
-            mock_user.home_location = None
-            mock_user.work_location = None
-
-            with patch("app.line.postback.get_user_by_line_id", return_value=None):
-                with patch("app.line.postback.create_user_if_not_exists", return_value=mock_user):
-                    with patch("app.line.postback.send_location_not_set_response") as mock_send:
-                        handle_weather_postback(
-                            mock_event, "test_user_id", {"action": "weather", "type": "home"}
-                        )
-
-                        mock_send.assert_called_once_with("test_token", "住家")
+        mock_query.assert_called_once_with("test_user_id", "home")
+        mock_send.assert_called_once_with("test_token", "住家")
 
     def test_handle_weather_postback_current_location(self) -> None:
         """Test weather PostBack with current location."""
@@ -361,21 +251,6 @@ class TestPostBackEventHandlers:
             )
 
             mock_send.assert_called_once_with("test_token", "未知的地點類型")
-
-    def test_handle_user_location_weather_exception(self) -> None:
-        """Test user location weather with exception."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-
-            with patch("app.line.postback.get_user_by_line_id", side_effect=Exception("DB error")):
-                with patch("app.line.postback.send_error_response") as mock_send:
-                    handle_user_location_weather(mock_event, "test_user_id", "home")
-
-                    mock_send.assert_called_once_with("test_token", "查詢時發生錯誤，請稍後再試。")
 
     def test_handle_current_location_weather_request(self) -> None:
         """Test current location weather sends location request."""

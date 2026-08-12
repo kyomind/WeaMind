@@ -30,9 +30,10 @@ from app.user.service import (
     create_user_if_not_exists,
     get_recent_queries,
     get_user_by_line_id,
-    record_user_query,
 )
-from app.weather.service import WeatherService
+from app.weather.workflow import QueryOutcome, query_preset
+
+from .weather_presentation import format_weather_query
 
 logger = logging.getLogger(__name__)
 
@@ -109,29 +110,10 @@ def handle_user_location_weather(event: PostbackEvent, user_id: str, location_ty
     try:
         location_name = "住家" if location_type == "home" else "公司"
 
-        with SessionLocal() as session:
-            user = get_user_by_line_id(session, user_id)
-            if not user:
-                user = create_user_if_not_exists(session, user_id)
+        query_result = query_preset(user_id, location_type)
+        response_message = format_weather_query(query_result)
 
-            location = user.home_location if location_type == "home" else user.work_location
-            if not location:
-                response_message = None
-            else:
-                query_result = WeatherService.handle_text_weather_query(session, location.full_name)
-                response_message = query_result.response_message
-
-                # Query History must use the Location that produced the response.
-                selected_location = query_result.selected_location
-                if selected_location:
-                    record_user_query(session, user.id, selected_location.id)
-                    logger.info(
-                        "Recorded home/work query for user",
-                        extra={"location_type": location_type},
-                    )
-
-        # Do not hold a database connection while calling the LINE API.
-        if response_message is None:
+        if query_result.outcome == QueryOutcome.PRESET_NOT_SET:
             send_location_not_set_response(event.reply_token, location_name)
         else:
             send_text_response(event.reply_token, response_message)

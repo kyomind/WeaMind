@@ -28,13 +28,8 @@ from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.processing_lock import processing_lock_service
 from app.line import metrics as line_metrics
-from app.user.service import (
-    create_user_if_not_exists,
-    deactivate_user,
-    get_user_by_line_id,
-    record_user_query,
-)
-from app.weather.service import LocationParseError, WeatherService
+from app.user.service import create_user_if_not_exists, deactivate_user
+from app.weather.workflow import query_shared_location, query_text
 
 from .messaging import (
     configuration,
@@ -55,6 +50,7 @@ from .postback import (
     parse_postback_data,
     should_use_processing_lock,
 )
+from .weather_presentation import format_weather_query
 
 __all__ = [
     "handle_message_event",
@@ -218,44 +214,17 @@ def handle_message_event(event: MessageEvent) -> None:
         logger.warning(f"Unexpected message type: {type(message)}")
         return
 
-    # Initialize variables to ensure they're always defined
     needs_quick_reply = False
-
-    # Background handlers own an explicit Session lifetime instead of consuming
-    # the FastAPI dependency generator.
-    with SessionLocal() as session:
-        try:
-            query_result = WeatherService.handle_text_weather_query(session, message.text)
-            locations = query_result.locations
-            response_message = query_result.response_message
-
-            # Check if Quick Reply is needed (2-3 locations found)
-            needs_quick_reply = 2 <= len(locations) <= 3
-
-            selected_location = query_result.selected_location
-            if selected_location:
-                # Get user for recording query history
-                user_id = getattr(event.source, "user_id", None) if event.source else None
-                if user_id:
-                    user = get_user_by_line_id(session, user_id)
-                    if user:
-                        record_user_query(session, user.id, selected_location.id)
-                        logger.info("Recorded query history for user")
-
-            # Log the parsing result
-            logger.info(
-                f"Location parsing result: {len(locations)} locations found for '{message.text}'"
-            )
-
-        except LocationParseError as e:
-            # Handle location parsing errors with user-friendly messages
-            response_message = e.message
-            logger.info(f"Location parsing error for '{e.input_text}': {e.message}")
-
-        except Exception:
-            # For unexpected errors, provide generic error message
-            logger.exception(f"Unexpected error parsing location input: {message.text}")
-            response_message = "系統暫時有點忙，請稍後再試一次。"
+    locations = ()
+    try:
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        query_result = query_text(message.text, user_id)
+        locations = query_result.locations
+        response_message = format_weather_query(query_result)
+        needs_quick_reply = 2 <= len(locations) <= 3
+    except Exception:
+        logger.exception(f"Unexpected error parsing location input: {message.text}")
+        response_message = "系統暫時有點忙，請稍後再試一次。"
 
     # Send response to user
     with ApiClient(configuration) as api_client:
@@ -325,26 +294,14 @@ def handle_location_message_event(event: MessageEvent) -> None:
     if address:
         logger.info("Location message includes address information")
 
-    with SessionLocal() as session:
-        try:
-            # Resolve the Location once and reuse it for weather and Query History.
-            query_result = WeatherService.handle_location_weather_query(session, lat, lon, address)
-            response_message = query_result.response_message
-
-            # Record query for user history if location was found in Taiwan
-            user_id = getattr(event.source, "user_id", None) if event.source else None
-            selected_location = query_result.selected_location
-            if user_id and selected_location:
-                user = get_user_by_line_id(session, user_id)
-                if user:
-                    record_user_query(session, user.id, selected_location.id)
-                    logger.info("Recorded location query for user")
-
-            logger.info("Location query completed")
-
-        except Exception:
-            logger.exception("Error handling location message from user")
-            response_message = "系統暫時有點忙，請稍後再試一次。"
+    try:
+        user_id = getattr(event.source, "user_id", None) if event.source else None
+        query_result = query_shared_location(lat, lon, address, user_id)
+        response_message = format_weather_query(query_result)
+        logger.info("Location query completed")
+    except Exception:
+        logger.exception("Error handling location message from user")
+        response_message = "系統暫時有點忙，請稍後再試一次。"
 
     # Send response to user
     send_text_response(event.reply_token, response_message)
