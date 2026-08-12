@@ -6,15 +6,6 @@ from typing import Protocol, cast
 
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
-from linebot.v3.messaging import (
-    ApiClient,
-    MessageAction,
-    MessagingApi,
-    QuickReply,
-    QuickReplyItem,
-    ReplyMessageRequest,
-    TextMessage,
-)
 from linebot.v3.webhooks import (
     FollowEvent,
     LocationMessageContent,
@@ -32,12 +23,11 @@ from app.user.service import create_user_if_not_exists, deactivate_user
 from app.weather.workflow import query_shared_location, query_text
 
 from .messaging import (
-    configuration,
-    send_error_response,
-    send_liff_location_setting_response,
-    send_location_not_set_response,
-    send_other_menu_quick_reply,
-    send_text_response,
+    LineSdkReplyMessenger,
+    MessageChoice,
+    MessageChoicesRecipe,
+    ReplyMessenger,
+    TextRecipe,
 )
 from .postback import (
     dispatch_postback,
@@ -67,11 +57,6 @@ __all__ = [
     "handle_other_postback",
     "parse_postback_data",
     "should_use_processing_lock",
-    "send_text_response",
-    "send_error_response",
-    "send_liff_location_setting_response",
-    "send_location_not_set_response",
-    "send_other_menu_quick_reply",
     "process_webhook_events",
     "webhook_handler",
 ]
@@ -90,7 +75,9 @@ class _ParsedWebhookPayload(Protocol):
     events: list[object]
 
 
-# Configure LINE Bot SDK
+# The SDK requires fixed decorated callbacks, while core handlers receive the
+# messenger explicitly. Production wrappers below close over this immutable root.
+production_reply_messenger = LineSdkReplyMessenger(settings.LINE_CHANNEL_ACCESS_TOKEN)
 webhook_handler = WebhookHandler(settings.LINE_CHANNEL_SECRET)
 
 
@@ -191,8 +178,7 @@ def process_webhook_events(
             line_metrics.record_webhook_duration([event_type], time.perf_counter() - start_time)
 
 
-@webhook_handler.add(MessageEvent, message=TextMessageContent)
-def handle_message_event(event: MessageEvent) -> None:
+def handle_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None:
     """
     Handle text message events with location parsing functionality.
 
@@ -214,60 +200,29 @@ def handle_message_event(event: MessageEvent) -> None:
         logger.warning(f"Unexpected message type: {type(message)}")
         return
 
-    needs_quick_reply = False
-    locations = ()
     try:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         query_result = query_text(message.text, user_id)
-        locations = query_result.locations
         response_message = format_weather_query(query_result)
-        needs_quick_reply = 2 <= len(locations) <= 3
+        locations = query_result.locations
+        if 2 <= len(locations) <= 3:
+            recipe = MessageChoicesRecipe(
+                text=response_message,
+                choices=tuple(
+                    MessageChoice(label=location.full_name, text=location.full_name)
+                    for location in locations
+                ),
+            )
+        else:
+            recipe = TextRecipe(response_message)
     except Exception:
         logger.exception(f"Unexpected error parsing location input: {message.text}")
-        response_message = "系統暫時有點忙，請稍後再試一次。"
+        recipe = TextRecipe("系統暫時有點忙，請稍後再試一次。")
 
-    # Send response to user
-    with ApiClient(configuration) as api_client:
-        messaging_api_client = MessagingApi(api_client)
-        try:
-            # Create Quick Reply items if needed
-            quick_reply = None
-            if needs_quick_reply:
-                quick_reply_items = [
-                    QuickReplyItem(
-                        type="action",
-                        imageUrl=None,  # Optional for text-only quick reply
-                        action=MessageAction(
-                            type="message",
-                            label=location.full_name,
-                            text=location.full_name,
-                        ),
-                    )
-                    for location in locations
-                ]
-                quick_reply = QuickReply(items=quick_reply_items)
-
-            messaging_api_client.reply_message(
-                # NOTE: Pyright doesn't fully support Pydantic field aliases yet.
-                # Snake_case params work at runtime but static analysis only sees camelCase.
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,  # type: ignore[call-arg]
-                    messages=[
-                        TextMessage(
-                            text=response_message,
-                            quick_reply=quick_reply,  # type: ignore[call-arg]
-                        )
-                    ],  # type: ignore
-                    notification_disabled=False,  # type: ignore[call-arg]
-                )
-            )
-            logger.info("Response sent to user")
-        except Exception:
-            logger.exception("Error sending LINE message")
+    messenger.reply(event.reply_token, recipe)
 
 
-@webhook_handler.add(MessageEvent, message=LocationMessageContent)
-def handle_location_message_event(event: MessageEvent) -> None:
+def handle_location_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None:
     """
     Handle location message events from user location sharing.
 
@@ -303,12 +258,10 @@ def handle_location_message_event(event: MessageEvent) -> None:
         logger.exception("Error handling location message from user")
         response_message = "系統暫時有點忙，請稍後再試一次。"
 
-    # Send response to user
-    send_text_response(event.reply_token, response_message)
+    messenger.reply(event.reply_token, TextRecipe(response_message))
 
 
-@webhook_handler.add(FollowEvent)
-def handle_follow_event(event: FollowEvent) -> None:
+def handle_follow_event(event: FollowEvent, messenger: ReplyMessenger) -> None:
     """
     Handle follow events - create or reactivate user record.
 
@@ -328,25 +281,10 @@ def handle_follow_event(event: FollowEvent) -> None:
 
         # Release the database connection before waiting on the LINE API.
         if event.reply_token:
-            with ApiClient(configuration) as api_client:
-                messaging_api_client = MessagingApi(api_client)
-                try:
-                    messaging_api_client.reply_message(
-                        ReplyMessageRequest(
-                            reply_token=event.reply_token,  # type: ignore[call-arg]
-                            messages=[
-                                TextMessage(
-                                    text="Welcome! You can now start interacting with me.",
-                                    quick_reply=None,  # type: ignore[call-arg]
-                                    quote_token=None,  # type: ignore[call-arg]
-                                )
-                            ],  # type: ignore
-                            notification_disabled=False,  # type: ignore[call-arg]
-                        )
-                    )
-                    logger.info("Welcome message sent to user")
-                except Exception:
-                    logger.exception("Error sending welcome message to user")
+            messenger.reply(
+                event.reply_token,
+                TextRecipe("Welcome! You can now start interacting with me."),
+            )
 
     except Exception:
         logger.exception("Error handling follow event")
@@ -389,8 +327,7 @@ def handle_default_event(event: object) -> None:
     logger.info("Received unhandled event type")
 
 
-@webhook_handler.add(PostbackEvent)
-def handle_postback_event(event: PostbackEvent) -> None:
+def handle_postback_event(event: PostbackEvent, messenger: ReplyMessenger) -> None:
     """
     Handle PostBack events triggered from the LINE rich menu.
 
@@ -417,12 +354,36 @@ def handle_postback_event(event: PostbackEvent) -> None:
 
         if lock_key and settings.PROCESSING_LOCK_ENABLED:
             if not processing_lock_service.try_acquire_lock(lock_key):
-                send_text_response(event.reply_token, "操作太過頻繁，請放慢腳步 ☕️")
+                messenger.reply(event.reply_token, TextRecipe("操作太過頻繁，請放慢腳步 ☕️"))
                 return
 
-        dispatch_postback(event, user_id, postback_data)
+        dispatch_postback(event, user_id, postback_data, messenger)
 
     except Exception:
         logger.exception("Error handling PostBack event")
         if event.reply_token:
-            send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
+            messenger.reply(event.reply_token, TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+
+
+@webhook_handler.add(MessageEvent, message=TextMessageContent)
+def _handle_message_event_callback(event: MessageEvent) -> None:
+    """Compose the production messenger with the decorated text handler."""
+    handle_message_event(event, production_reply_messenger)
+
+
+@webhook_handler.add(MessageEvent, message=LocationMessageContent)
+def _handle_location_message_event_callback(event: MessageEvent) -> None:
+    """Compose the production messenger with the decorated location handler."""
+    handle_location_message_event(event, production_reply_messenger)
+
+
+@webhook_handler.add(FollowEvent)
+def _handle_follow_event_callback(event: FollowEvent) -> None:
+    """Compose the production messenger with the decorated follow handler."""
+    handle_follow_event(event, production_reply_messenger)
+
+
+@webhook_handler.add(PostbackEvent)
+def _handle_postback_event_callback(event: PostbackEvent) -> None:
+    """Compose the production messenger with the decorated PostBack handler."""
+    handle_postback_event(event, production_reply_messenger)

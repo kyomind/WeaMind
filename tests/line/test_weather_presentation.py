@@ -1,6 +1,6 @@
 """Test LINE presentation for structured Weather Query results."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -85,3 +85,37 @@ def test_format_forecast() -> None:
     assert format_weather_query(result) == (
         "🗺️ 臺北市松山區\n\n☀️ 08-11 🌡️30°💧10%\n\n08/12 08:00 更新"
     )
+
+
+def test_format_forecast_without_location_falls_back_to_busy_text() -> None:
+    """Fall back to the busy text when a forecast outcome carries no location."""
+    result = WeatherQueryResult(QueryOutcome.FORECAST)
+
+    assert format_weather_query(result) == "系統暫時有點忙，請稍後再試一次。"
+
+
+def test_format_forecast_inserts_blank_line_after_four_periods() -> None:
+    """Separate the first four forecast periods from the rest with a blank line."""
+    forecast = tuple(
+        ForecastData(
+            start_time=datetime(2026, 8, 12, index * 3),
+            end_time=datetime(2026, 8, 12, index * 3) + timedelta(hours=3),
+            fetched_at=datetime(2026, 8, 12, 0),
+            weather_emoji=None,
+            precipitation_probability=None,
+            max_temperature=30,
+        )
+        for index in range(5)
+    )
+    result = WeatherQueryResult(
+        QueryOutcome.FORECAST,
+        locations=(LocationData(1, "臺北市松山區"),),
+        forecast=forecast,
+    )
+
+    lines = format_weather_query(result).split("\n")
+
+    # Header, blank, 4 periods, blank separator, then the fifth period.
+    assert lines[6] == ""
+    assert lines[7].startswith("⛅")
+    assert sum(1 for line in lines if line.startswith("⛅")) == 5

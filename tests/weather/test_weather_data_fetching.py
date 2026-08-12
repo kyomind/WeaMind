@@ -3,7 +3,9 @@ Test cases for the new weather data fetching functionality.
 """
 
 from collections.abc import Callable
+from unittest.mock import Mock
 
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from app.weather.models import Location, Weather
@@ -39,3 +41,12 @@ class TestWeatherDataFetching:
         assert len(result) == 8
         assert all(weather.location_id == location.id for weather in result)
         assert result[0].start_time < result[-1].start_time  # Ordered by time
+
+    def test_get_weather_forecast_returns_empty_list_on_database_error(self) -> None:
+        """Contain database failures so a broken query never breaks the reply flow."""
+        broken_session = Mock(spec=Session)
+        broken_session.query.side_effect = SQLAlchemyError("connection lost")
+
+        result = WeatherService.get_weather_forecast_by_location(broken_session, 1)
+
+        assert result == []

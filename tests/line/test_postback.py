@@ -1,16 +1,24 @@
-"""Test PostBack event handlers for Rich Menu functionality."""
+"""Test PostBack handlers through the recipe-based messenger seam."""
 
 from unittest.mock import Mock, patch
 
+import pytest
 from linebot.v3.webhooks import PostbackEvent
 
+from app.core.config import settings
 from app.line.messaging import (
-    send_error_response,
-    send_location_not_set_response,
-    send_other_menu_quick_reply,
-    send_text_response,
+    InMemoryReplyMessenger,
+    LocationRequestRecipe,
+    MessageChoice,
+    MessageChoicesRecipe,
+    SendErrorCategory,
+    SentReply,
+    TextRecipe,
+    UriChoice,
+    UriChoicesRecipe,
 )
 from app.line.postback import (
+    dispatch_postback,
     handle_current_location_weather,
     handle_other_postback,
     handle_recent_queries_postback,
@@ -20,538 +28,474 @@ from app.line.postback import (
     should_use_processing_lock,
 )
 from app.line.service import handle_postback_event
-from app.weather.models import Location
 from app.weather.workflow import QueryOutcome, WeatherQueryResult
 
 
-class TestPostBackEventHandlers:
-    """Test PostBack event handlers for Rich Menu functionality."""
-
-    def test_parse_postback_data_success(self) -> None:
-        """Test successful PostBack data parsing."""
-        # Test weather action
-        result = parse_postback_data("action=weather&type=home")
-        assert result == {"action": "weather", "type": "home"}
-
-        # Test recent queries action
-        result = parse_postback_data("action=recent_queries")
-        assert result == {"action": "recent_queries"}
-
-    def test_parse_postback_data_empty(self) -> None:
-        """Test parsing empty PostBack data."""
-        result = parse_postback_data("")
-        assert result == {}
-
-    def test_parse_postback_data_invalid(self) -> None:
-        """Test parsing invalid PostBack data."""
-        result = parse_postback_data("invalid_format")
-        # Should return empty dictionary for invalid format
-        assert result == {}
-
-    def test_parse_postback_data_exception(self) -> None:
-        """Test parsing PostBack data with exception."""
-        with patch("app.line.postback.parse_qs", side_effect=Exception("Parse error")):
-            result = parse_postback_data("action=weather&type=home")
-            assert result == {}
-
-    def test_should_use_processing_lock_weather_actions(self) -> None:
-        """Test selective lock for weather PostBack actions."""
-        # Should use lock for home/office weather (actual queries)
-        assert should_use_processing_lock({"action": "weather", "type": "home"}) is True
-        assert should_use_processing_lock({"action": "weather", "type": "office"}) is True
-
-        # Should NOT use lock for current location (just shows map button)
-        assert should_use_processing_lock({"action": "weather", "type": "current"}) is False
-
-    def test_should_use_processing_lock_other_actions(self) -> None:
-        """Test selective lock for non-weather PostBack actions."""
-        # Should use lock for recent queries (database query)
-        assert should_use_processing_lock({"action": "recent_queries"}) is True
-
-        # Should NOT use lock for UI-only operations
-        assert should_use_processing_lock({"action": "settings", "type": "location"}) is False
-        assert should_use_processing_lock({"action": "other", "type": "menu"}) is False
-
-    def test_should_use_processing_lock_unknown_actions(self) -> None:
-        """Test selective lock for unknown PostBack actions."""
-        # Should NOT use lock for unknown actions (not conservative anymore)
-        assert should_use_processing_lock({"action": "unknown"}) is False
-        assert should_use_processing_lock({}) is False
-
-    def test_handle_postback_event_no_reply_token(self) -> None:
-        """Test PostBack event without reply token."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = None
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=weather&type=home"
-
-        # Should return early without processing
-        handle_postback_event(mock_event)
-        # No exception should be raised
-
-    def test_handle_postback_event_no_user_id(self) -> None:
-        """Test PostBack event without user ID."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=weather&type=home"
-        mock_event.source = None
-
-        # Should return early without processing
-        handle_postback_event(mock_event)
-        # No exception should be raised
-
-    def test_handle_postback_event_unknown_action(self) -> None:
-        """Test PostBack event with unknown action."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=unknown"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.postback.send_error_response") as mock_send:
-            handle_postback_event(mock_event)
-
-            mock_send.assert_called_once_with("test_token", "未知的操作")
-
-    def test_handle_postback_event_exception(self) -> None:
-        """Test PostBack event with exception."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=weather&type=home"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.service.parse_postback_data", side_effect=Exception("Parse error")):
-            with patch("app.line.service.send_error_response") as mock_send:
-                handle_postback_event(mock_event)
-
-                mock_send.assert_called_once_with("test_token", "系統暫時有點忙，請稍後再試一次。")
-
-    def test_handle_postback_event_exception_no_reply_token(self) -> None:
-        """Test PostBack event exception when reply_token is None."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = None  # This triggers the 341->exit branch
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=weather&type=home"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.service.parse_postback_data", side_effect=Exception("Parse error")):
-            # Should not call send_error_response since reply_token is None
-            handle_postback_event(mock_event)
-            # No exception should be raised, function should exit silently
-
-    def test_handle_postback_event_weather_action(self) -> None:
-        """Test PostBack event with weather action."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=weather&type=home"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.postback.handle_weather_postback") as mock_handle:
-            handle_postback_event(mock_event)
-
-            mock_handle.assert_called_once_with(
-                mock_event, "test_user_id", {"action": "weather", "type": "home"}
-            )
-
-    def test_handle_postback_event_settings_action(self) -> None:
-        """Test PostBack event with settings action."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=settings&type=location"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.postback.handle_settings_postback") as mock_handle:
-            handle_postback_event(mock_event)
-
-            mock_handle.assert_called_once_with(
-                mock_event, {"action": "settings", "type": "location"}
-            )
-
-    def test_handle_postback_event_recent_queries_action(self) -> None:
-        """Test PostBack event with recent queries action."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=recent_queries"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.postback.handle_recent_queries_postback") as mock_handle:
-            handle_postback_event(mock_event)
-
-            mock_handle.assert_called_once_with(mock_event)
-
-    def test_handle_postback_event_other_action(self) -> None:
-        """Test PostBack event with other action."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.postback = Mock()
-        mock_event.postback.data = "action=other&type=menu"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.postback.handle_other_postback") as mock_handle:
-            handle_postback_event(mock_event)
-
-            mock_handle.assert_called_once_with(mock_event, {"action": "other", "type": "menu"})
-
-    def test_handle_weather_postback_user_not_found(self) -> None:
-        """Prompt for setup when the preset workflow finds no Location."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        result = WeatherQueryResult(QueryOutcome.PRESET_NOT_SET)
-
-        with (
-            patch("app.line.postback.query_preset", return_value=result) as mock_query,
-            patch("app.line.postback.send_location_not_set_response") as mock_send,
-        ):
-            handle_weather_postback(
-                mock_event, "test_user_id", {"action": "weather", "type": "home"}
-            )
-
-        mock_query.assert_called_once_with("test_user_id", "home")
-        mock_send.assert_called_once_with("test_token", "住家")
-
-    def test_handle_weather_postback_current_location(self) -> None:
-        """Test weather PostBack with current location."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.handle_current_location_weather") as mock_handle:
-            handle_weather_postback(
-                mock_event, "test_user_id", {"action": "weather", "type": "current"}
-            )
-
-            mock_handle.assert_called_once_with(mock_event)
-
-    def test_handle_weather_postback_unknown_type(self) -> None:
-        """Test weather PostBack with unknown type."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.send_error_response") as mock_send:
-            handle_weather_postback(
-                mock_event, "test_user_id", {"action": "weather", "type": "unknown"}
-            )
-
-            mock_send.assert_called_once_with("test_token", "未知的地點類型")
-
-    def test_handle_current_location_weather_request(self) -> None:
-        """Test current location weather sends location request."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.MessagingApi") as mock_messaging_api:
-            mock_api_instance = Mock()
-            mock_messaging_api.return_value = mock_api_instance
-
-            with patch("app.line.postback.ApiClient"):
-                handle_current_location_weather(mock_event)
-
-                # Should send location request message with Quick Reply
-                mock_api_instance.reply_message.assert_called_once()
-                call_args = mock_api_instance.reply_message.call_args[0]
-                request = call_args[0]
-
-                # Check message content
-                message = request.messages[0]
-                assert message.text == "請點擊地圖上任意位置，將為您查詢該地天氣"
-
-                # Check Quick Reply contains location action
-                assert message.quick_reply is not None
-                assert len(message.quick_reply.items) == 1
-                assert message.quick_reply.items[0].action.type == "location"
-                assert message.quick_reply.items[0].action.label == "開啟地圖選擇"
-
-    def test_handle_settings_postback_location_type(self) -> None:
-        """Test settings PostBack with location type."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.send_liff_location_setting_response") as mock_send:
-            handle_settings_postback(mock_event, {"action": "settings", "type": "location"})
-
-            mock_send.assert_called_once_with("test_token")
-
-    def test_handle_settings_postback_unknown_type(self) -> None:
-        """Test settings PostBack with unknown type."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.send_error_response") as mock_send:
-            handle_settings_postback(mock_event, {"action": "settings", "type": "unknown"})
-
-            mock_send.assert_called_once_with("test_token", "未知的設定類型")
-
-    def test_handle_recent_queries_postback_no_history(self) -> None:
-        """Test recent queries PostBack when user has no query history."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.source = Mock()
-        mock_event.source.user_id = "test_line_user_id"
-
-        with (
-            patch("app.line.postback.SessionLocal") as mock_session_factory,
-            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
-            patch("app.line.postback.get_recent_queries") as mock_get_recent,
-            patch("app.line.postback.send_text_response") as mock_send,
-        ):
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-            mock_user = Mock()
-            mock_user.id = 1
-            mock_get_user.return_value = mock_user
-            mock_get_recent.return_value = []  # No recent queries
-
-            def assert_session_closed_before_send(*_args: object, **_kwargs: object) -> None:
-                """Verify the empty-history reply starts after the Session scope ends."""
-                mock_session_factory.return_value.__exit__.assert_called_once()
-
-            mock_send.side_effect = assert_session_closed_before_send
-            handle_recent_queries_postback(mock_event)
-
-            mock_send.assert_called_once_with(
-                "test_token", "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
-            )
-
-    def test_handle_recent_queries_postback_user_not_found(self) -> None:
-        """Test recent queries PostBack when user not found - should auto-create user."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.source = Mock()
-        mock_event.source.user_id = "test_line_user_id"
-
-        with (
-            patch("app.line.postback.SessionLocal") as mock_session_factory,
-            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
-            patch("app.line.postback.create_user_if_not_exists") as mock_create_user,
-            patch("app.line.postback.get_recent_queries") as mock_get_recent,
-            patch("app.line.postback.send_text_response") as mock_send,
-        ):
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-            mock_get_user.return_value = None  # User not found initially
-
-            # Mock auto-created user
-            mock_user = Mock()
-            mock_user.id = 1
-            mock_create_user.return_value = mock_user
-            mock_get_recent.return_value = []  # No recent queries for new user
-
-            handle_recent_queries_postback(mock_event)
-
-            # Verify user was auto-created
-            mock_create_user.assert_called_once_with(mock_session, "test_line_user_id")
-            # Verify appropriate message was sent for new user with no history
-            mock_send.assert_called_once_with(
-                "test_token", "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"
-            )
-
-    def test_handle_recent_queries_postback_with_history(self) -> None:
-        """Test recent queries PostBack with Quick Reply history."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.source = Mock()
-        mock_event.source.user_id = "test_line_user_id"
-
-        # Mock recent locations
-        mock_location1 = Mock(spec=Location)
-        mock_location1.full_name = "台北市中正區"
-        mock_location2 = Mock(spec=Location)
-        mock_location2.full_name = "新北市板橋區"
-
-        with (
-            patch("app.line.postback.SessionLocal") as mock_session_factory,
-            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
-            patch("app.line.postback.get_recent_queries") as mock_get_recent,
-            patch("app.line.postback.MessagingApi") as mock_messaging_api,
-            patch("app.line.postback.ApiClient"),
-        ):
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-            mock_user = Mock()
-            mock_user.id = 1
-            mock_get_user.return_value = mock_user
-            mock_get_recent.return_value = [mock_location1, mock_location2]
-
-            mock_api_instance = Mock()
-            mock_messaging_api.return_value = mock_api_instance
-
-            def assert_session_closed_before_reply(*_args: object, **_kwargs: object) -> None:
-                """Verify the history reply starts after the Session scope ends."""
-                mock_session_factory.return_value.__exit__.assert_called_once()
-
-            mock_api_instance.reply_message.side_effect = assert_session_closed_before_reply
-            handle_recent_queries_postback(mock_event)
-
-            # Verify API was called with Quick Reply
-            mock_api_instance.reply_message.assert_called_once()
-            call_args = mock_api_instance.reply_message.call_args[0]
-            request = call_args[0]
-            message = request.messages[0]
-            assert message.quick_reply is not None
-            assert len(message.quick_reply.items) == 2
-
-    def test_handle_recent_queries_postback_no_user_id(self) -> None:
-        """Test recent queries PostBack without user ID."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.source = None  # No user_id
-
-        with patch("app.line.postback.send_error_response") as mock_send:
-            handle_recent_queries_postback(mock_event)
-
-            mock_send.assert_called_once_with("test_token", "用戶識別錯誤")
-
-    def test_handle_recent_queries_postback_api_error(self) -> None:
-        """Test recent queries PostBack with API error."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.source = Mock()
-        mock_event.source.user_id = "test_line_user_id"
-
-        mock_location = Mock(spec=Location)
-        mock_location.full_name = "台北市中正區"
-
-        with (
-            patch("app.line.postback.SessionLocal") as mock_session_factory,
-            patch("app.line.postback.get_user_by_line_id") as mock_get_user,
-            patch("app.line.postback.get_recent_queries") as mock_get_recent,
-            patch(
-                "app.line.postback.MessagingApi.reply_message", side_effect=Exception("API Error")
+def _postback_event(
+    *,
+    reply_token: str | None = "test_token",
+    user_id: str | None = "test_user_id",
+    data: str = "action=unknown",
+) -> Mock:
+    """Create a minimal PostBack event double without SDK model construction."""
+    event = Mock(spec=PostbackEvent)
+    event.reply_token = reply_token
+    event.postback = Mock(data=data)
+    event.source = Mock(user_id=user_id) if user_id is not None else None
+    return event
+
+
+@pytest.mark.parametrize(
+    ("raw_data", "expected"),
+    [
+        ("action=weather&type=home", {"action": "weather", "type": "home"}),
+        ("action=recent_queries", {"action": "recent_queries"}),
+        ("", {}),
+        ("invalid_format", {}),
+    ],
+)
+def test_parse_postback_data(raw_data: str, expected: dict[str, str]) -> None:
+    """Parse valid query strings and reject values without assignments."""
+    assert parse_postback_data(raw_data) == expected
+
+
+def test_parse_postback_data_contains_parser_exception() -> None:
+    """Return an empty mapping when query parsing unexpectedly fails."""
+    with patch("app.line.postback.parse_qs", side_effect=RuntimeError("parse error")):
+        assert parse_postback_data("action=weather") == {}
+
+
+@pytest.mark.parametrize(
+    ("postback_data", "expected"),
+    [
+        ({"action": "weather", "type": "home"}, True),
+        ({"action": "weather", "type": "office"}, True),
+        ({"action": "recent_queries"}, True),
+        ({"action": "weather", "type": "current"}, False),
+        ({"action": "settings", "type": "location"}, False),
+        ({"action": "other", "type": "menu"}, False),
+        ({"action": "unknown"}, False),
+        ({}, False),
+    ],
+)
+def test_should_use_processing_lock(postback_data: dict[str, str], expected: bool) -> None:
+    """Use the processing lock only for database-backed query actions."""
+    assert should_use_processing_lock(postback_data) is expected
+
+
+def test_handle_postback_event_requires_reply_token() -> None:
+    """Ignore a PostBack event without a reply token."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_postback_event(_postback_event(reply_token=None), messenger)
+
+    assert messenger.sent_replies == []
+
+
+def test_handle_postback_event_requires_user_id() -> None:
+    """Ignore a PostBack event without a user identifier."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_postback_event(_postback_event(user_id=None), messenger)
+
+    assert messenger.sent_replies == []
+
+
+def test_handle_postback_event_unknown_action_replies_with_recipe() -> None:
+    """Reply with a stable text recipe for an unknown PostBack action."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_postback_event(_postback_event(), messenger)
+
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("未知的操作"))]
+
+
+def test_handle_postback_event_contains_dispatch_exception() -> None:
+    """Contain dispatch failures and send the generic error recipe."""
+    messenger = InMemoryReplyMessenger()
+    event = _postback_event()
+
+    with patch("app.line.service.dispatch_postback", side_effect=RuntimeError("boom")):
+        handle_postback_event(event, messenger)
+
+    assert messenger.sent_replies == [
+        SentReply("test_token", TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+    ]
+
+
+def test_handle_weather_postback_preset_not_set() -> None:
+    """Prompt for setup when the requested preset has not been configured."""
+    messenger = InMemoryReplyMessenger()
+    event = _postback_event()
+    query_result = WeatherQueryResult(QueryOutcome.PRESET_NOT_SET)
+
+    with patch("app.line.postback.query_preset", return_value=query_result) as query:
+        handle_weather_postback(
+            event,
+            "test_user_id",
+            {"action": "weather", "type": "home"},
+            messenger,
+        )
+
+    query.assert_called_once_with("test_user_id", "home")
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            TextRecipe("請先設定住家地址，點擊下方「設定地點」按鈕即可設定。"),
+        )
+    ]
+
+
+def test_handle_weather_postback_success() -> None:
+    """Reply with formatted weather when a preset query succeeds."""
+    messenger = InMemoryReplyMessenger()
+    event = _postback_event()
+    query_result = WeatherQueryResult(QueryOutcome.FORECAST)
+
+    with (
+        patch("app.line.postback.query_preset", return_value=query_result) as query,
+        patch("app.line.postback.format_weather_query", return_value="晴朗") as format_query,
+    ):
+        handle_weather_postback(
+            event,
+            "test_user_id",
+            {"action": "weather", "type": "office"},
+            messenger,
+        )
+
+    query.assert_called_once_with("test_user_id", "office")
+    format_query.assert_called_once_with(query_result)
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("晴朗"))]
+
+
+def test_handle_weather_postback_unknown_type() -> None:
+    """Reply with an error recipe for an unknown weather location type."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_weather_postback(
+        _postback_event(),
+        "test_user_id",
+        {"action": "weather", "type": "unknown"},
+        messenger,
+    )
+
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("未知的地點類型"))]
+
+
+def test_handle_current_location_weather_creates_location_recipe() -> None:
+    """Create a location-request recipe for current-location weather."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_current_location_weather(_postback_event(), messenger)
+
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            LocationRequestRecipe(
+                text="請點擊地圖上任意位置，將為您查詢該地天氣",
+                label="開啟地圖選擇",
             ),
-            patch("app.line.postback.send_error_response") as mock_send,
-            patch("app.line.postback.ApiClient"),
-        ):
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-            mock_user = Mock()
-            mock_user.id = 1
-            mock_get_user.return_value = mock_user
-            mock_get_recent.return_value = [mock_location]
+        )
+    ]
 
-            handle_recent_queries_postback(mock_event)
 
-            # Should send fallback error message
-            mock_send.assert_called_once_with("test_token", "查詢時發生錯誤，請稍後再試。")
+def test_handle_settings_postback_location_creates_text_recipe() -> None:
+    """Create the LIFF settings text without invoking a transport adapter."""
+    messenger = InMemoryReplyMessenger()
 
-    def test_handle_recent_queries_postback_general_exception(self) -> None:
-        """Test recent queries PostBack with general exception."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-        mock_event.source = Mock()
-        mock_event.source.user_id = "test_line_user_id"
+    handle_settings_postback(
+        _postback_event(), {"action": "settings", "type": "location"}, messenger
+    )
 
-        with (
-            patch("app.line.postback.SessionLocal", side_effect=Exception("DB Error")),
-            patch("app.line.postback.send_error_response") as mock_send,
-        ):
-            handle_recent_queries_postback(mock_event)
+    sent_recipe = messenger.sent_replies[0].recipe
+    assert isinstance(sent_recipe, TextRecipe)
+    assert "地點設定" in sent_recipe.text
+    assert settings.BASE_URL in sent_recipe.text
 
-            # Should send general error message
-            mock_send.assert_called_once_with("test_token", "系統暫時有點忙，請稍後再試一次。")
 
-    def test_send_text_response_success(self) -> None:
-        """Test successful text response sending."""
-        with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
-            mock_api_instance = Mock()
-            mock_messaging_api.return_value = mock_api_instance
+def test_handle_settings_postback_unknown_type() -> None:
+    """Reply with an error recipe for an unknown settings type."""
+    messenger = InMemoryReplyMessenger()
 
-            with patch("app.line.messaging.ApiClient"):
-                send_text_response("test_token", "Hello World")
+    handle_settings_postback(
+        _postback_event(), {"action": "settings", "type": "unknown"}, messenger
+    )
 
-                mock_api_instance.reply_message.assert_called_once()
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("未知的設定類型"))]
 
-    def test_send_text_response_no_reply_token(self) -> None:
-        """Test text response with no reply token."""
-        # Should return early without API call
-        send_text_response(None, "Hello World")
-        # No exception should be raised
 
-    def test_send_text_response_api_exception(self) -> None:
-        """Test text response with API exception."""
-        with patch(
-            "app.line.messaging.MessagingApi.reply_message", side_effect=Exception("API Error")
-        ):
-            with patch("app.line.messaging.ApiClient"):
-                # Should not raise exception, just log error
-                send_text_response("test_token", "Hello World")
+def test_handle_recent_queries_postback_no_history() -> None:
+    """Reply with guidance after releasing the session when history is empty."""
+    event = _postback_event()
+    messenger = InMemoryReplyMessenger()
 
-    def test_send_location_not_set_response(self) -> None:
-        """Test location not set response."""
-        with patch("app.line.messaging.send_text_response") as mock_send:
-            send_location_not_set_response("test_token", "住家")
+    with (
+        patch("app.line.postback.SessionLocal") as session_factory,
+        patch("app.line.postback.get_user_by_line_id") as get_user,
+        patch("app.line.postback.get_recent_queries", return_value=[]),
+    ):
+        user = Mock(id=1)
+        get_user.return_value = user
+        handle_recent_queries_postback(event, messenger)
 
-            expected_message = "請先設定住家地址，點擊下方「設定地點」按鈕即可設定。"
-            mock_send.assert_called_once_with("test_token", expected_message)
+    session_factory.return_value.__exit__.assert_called_once()
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            TextRecipe("您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"),
+        )
+    ]
 
-    def test_send_error_response(self) -> None:
-        """Test error response."""
-        with patch("app.line.messaging.send_text_response") as mock_send:
-            send_error_response("test_token", "錯誤訊息")
 
-            mock_send.assert_called_once_with("test_token", "錯誤訊息")
+def test_handle_recent_queries_postback_creates_user() -> None:
+    """Create a missing user before querying recent locations."""
+    event = _postback_event()
+    messenger = InMemoryReplyMessenger()
 
-    def test_handle_other_postback_menu(self) -> None:
-        """Test handling other PostBack with menu type."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_reply_token"
+    with (
+        patch("app.line.postback.SessionLocal") as session_factory,
+        patch("app.line.postback.get_user_by_line_id", return_value=None),
+        patch("app.line.postback.create_user_if_not_exists") as create_user,
+        patch("app.line.postback.get_recent_queries", return_value=[]),
+    ):
+        created_user = Mock(id=7)
+        create_user.return_value = created_user
+        handle_recent_queries_postback(event, messenger)
 
-        data = {"action": "other", "type": "menu"}
+    session = session_factory.return_value.__enter__.return_value
+    create_user.assert_called_once_with(session, "test_user_id")
 
-        with patch("app.line.postback.send_other_menu_quick_reply") as mock_send:
-            handle_other_postback(mock_event, data)
-            mock_send.assert_called_once_with("test_reply_token")
 
-    def test_handle_other_postback_unknown_type(self) -> None:
-        """Test handling other PostBack with unknown type."""
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_reply_token"
+def test_handle_recent_queries_postback_with_history() -> None:
+    """Translate recent location names into message choices."""
+    event = _postback_event()
+    messenger = InMemoryReplyMessenger()
+    recent_locations = [
+        Mock(full_name="臺北市中正區"),
+        Mock(full_name="新北市板橋區"),
+    ]
 
-        data = {"action": "other", "type": "unknown"}
+    with (
+        patch("app.line.postback.SessionLocal") as session_factory,
+        patch("app.line.postback.get_user_by_line_id", return_value=Mock(id=1)),
+        patch("app.line.postback.get_recent_queries", return_value=recent_locations),
+    ):
+        handle_recent_queries_postback(event, messenger)
 
-        with patch("app.line.postback.send_error_response") as mock_send:
-            handle_other_postback(mock_event, data)
-            mock_send.assert_called_once_with("test_reply_token", "未知的操作")
+    session_factory.return_value.__exit__.assert_called_once()
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            MessageChoicesRecipe(
+                text="最近查過的 5 個地點：",
+                choices=(
+                    MessageChoice("臺北市中正區", "臺北市中正區"),
+                    MessageChoice("新北市板橋區", "新北市板橋區"),
+                ),
+            ),
+        )
+    ]
 
-    def test_send_other_menu_no_reply_token(self) -> None:
-        """Test send other menu with no reply token."""
-        # Should return early without processing
-        send_other_menu_quick_reply(None)
 
-    def test_send_other_menu_success(self) -> None:
-        """Test successful other menu sending."""
-        with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
-            mock_api_instance = Mock()
-            mock_messaging_api.return_value = mock_api_instance
+def test_handle_recent_queries_does_not_retry_failed_reply() -> None:
+    """Do not consume a reply token twice after a failed history reply."""
+    event = _postback_event()
+    messenger = InMemoryReplyMessenger(failure_category=SendErrorCategory.TRANSPORT)
 
-            with patch("app.line.messaging.ApiClient"):
-                send_other_menu_quick_reply("test_token")
+    reply = Mock(side_effect=messenger.reply)
+    messenger_double = Mock(reply=reply)
+    with (
+        patch("app.line.postback.SessionLocal"),
+        patch("app.line.postback.get_user_by_line_id", return_value=Mock(id=1)),
+        patch(
+            "app.line.postback.get_recent_queries",
+            return_value=[Mock(full_name="臺北市中正區")],
+        ),
+    ):
+        handle_recent_queries_postback(event, messenger_double)
 
-                mock_api_instance.reply_message.assert_called_once()
+    reply.assert_called_once()
+    assert messenger.sent_replies == []
 
-    def test_send_other_menu_api_error(self) -> None:
-        """Test other menu sending with API error."""
-        with patch(
-            "app.line.messaging.MessagingApi.reply_message",
-            side_effect=Exception("API Error"),
-        ):
-            with patch("app.line.messaging.ApiClient"):
-                # Should not raise exception, just log error
-                send_other_menu_quick_reply("test_token")
+
+def test_handle_recent_queries_postback_contains_database_error() -> None:
+    """Contain database failures and send the generic error recipe."""
+    messenger = InMemoryReplyMessenger()
+
+    with patch("app.line.postback.SessionLocal", side_effect=RuntimeError("db error")):
+        handle_recent_queries_postback(_postback_event(), messenger)
+
+    assert messenger.sent_replies == [
+        SentReply("test_token", TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+    ]
+
+
+def test_handle_other_postback_menu_creates_uri_choices() -> None:
+    """Create stable URI choices for the other-information menu."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_other_postback(_postback_event(), {"action": "other", "type": "menu"}, messenger)
+
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            UriChoicesRecipe(
+                text="請選擇想了解的資訊：",
+                choices=(
+                    UriChoice(
+                        "🔄 更新",
+                        "https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md",
+                    ),
+                    UriChoice(
+                        "📖 使用說明",
+                        "https://github.com/kyomind/WeaMind/blob/main/README.md",
+                    ),
+                    UriChoice("ℹ️ 專案介紹", "https://api.kyomind.tw/static/about/index.html"),
+                ),
+            ),
+        )
+    ]
+
+
+def test_dispatch_postback_routes_weather_action() -> None:
+    """Route the weather action to a preset query and reply with its forecast text."""
+    messenger = InMemoryReplyMessenger()
+    query_result = WeatherQueryResult(QueryOutcome.FORECAST)
+
+    with (
+        patch("app.line.postback.query_preset", return_value=query_result) as query,
+        patch("app.line.postback.format_weather_query", return_value="晴朗"),
+    ):
+        dispatch_postback(
+            _postback_event(),
+            "test_user_id",
+            {"action": "weather", "type": "home"},
+            messenger,
+        )
+
+    query.assert_called_once_with("test_user_id", "home")
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("晴朗"))]
+
+
+def test_dispatch_postback_routes_settings_action() -> None:
+    """Route the settings action to the LIFF location-settings reply."""
+    messenger = InMemoryReplyMessenger()
+
+    dispatch_postback(
+        _postback_event(),
+        "test_user_id",
+        {"action": "settings", "type": "location"},
+        messenger,
+    )
+
+    sent_recipe = messenger.sent_replies[0].recipe
+    assert isinstance(sent_recipe, TextRecipe)
+    assert "地點設定" in sent_recipe.text
+
+
+def test_dispatch_postback_routes_recent_queries_action() -> None:
+    """Route the recent-queries action to the history handler."""
+    messenger = InMemoryReplyMessenger()
+
+    with (
+        patch("app.line.postback.SessionLocal"),
+        patch("app.line.postback.get_user_by_line_id", return_value=Mock(id=1)),
+        patch("app.line.postback.get_recent_queries", return_value=[]),
+    ):
+        dispatch_postback(
+            _postback_event(),
+            "test_user_id",
+            {"action": "recent_queries"},
+            messenger,
+        )
+
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            TextRecipe("您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"),
+        )
+    ]
+
+
+def test_dispatch_postback_routes_other_action() -> None:
+    """Route the other action to the information menu of URI choices."""
+    messenger = InMemoryReplyMessenger()
+
+    dispatch_postback(
+        _postback_event(),
+        "test_user_id",
+        {"action": "other", "type": "menu"},
+        messenger,
+    )
+
+    sent_recipe = messenger.sent_replies[0].recipe
+    assert isinstance(sent_recipe, UriChoicesRecipe)
+    assert sent_recipe.text == "請選擇想了解的資訊："
+
+
+def test_dispatch_postback_unknown_action() -> None:
+    """Reply with the unknown-operation text for an unroutable action."""
+    messenger = InMemoryReplyMessenger()
+
+    dispatch_postback(_postback_event(), "test_user_id", {"action": "nope"}, messenger)
+
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("未知的操作"))]
+
+
+def test_handle_weather_postback_current_type_requests_location() -> None:
+    """Route the current location type to the map location-request recipe."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_weather_postback(
+        _postback_event(),
+        "test_user_id",
+        {"action": "weather", "type": "current"},
+        messenger,
+    )
+
+    assert messenger.sent_replies == [
+        SentReply(
+            "test_token",
+            LocationRequestRecipe(
+                text="請點擊地圖上任意位置，將為您查詢該地天氣",
+                label="開啟地圖選擇",
+            ),
+        )
+    ]
+
+
+def test_handle_weather_postback_contains_query_error() -> None:
+    """Contain preset query failures and send the query-error recipe."""
+    messenger = InMemoryReplyMessenger()
+
+    with patch("app.line.postback.query_preset", side_effect=RuntimeError("query error")):
+        handle_weather_postback(
+            _postback_event(),
+            "test_user_id",
+            {"action": "weather", "type": "home"},
+            messenger,
+        )
+
+    assert messenger.sent_replies == [
+        SentReply("test_token", TextRecipe("查詢時發生錯誤，請稍後再試。"))
+    ]
+
+
+def test_handle_recent_queries_postback_requires_user_id() -> None:
+    """Reply with an identification error and skip the database without a user id."""
+    messenger = InMemoryReplyMessenger()
+
+    with patch("app.line.postback.SessionLocal") as session_factory:
+        handle_recent_queries_postback(_postback_event(user_id=None), messenger)
+
+    session_factory.assert_not_called()
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("用戶識別錯誤"))]
+
+
+def test_handle_other_postback_unknown_type() -> None:
+    """Reply with the unknown-operation text for an unknown other type."""
+    messenger = InMemoryReplyMessenger()
+
+    handle_other_postback(_postback_event(), {"action": "other", "type": "unknown"}, messenger)
+
+    assert messenger.sent_replies == [SentReply("test_token", TextRecipe("未知的操作"))]

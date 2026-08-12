@@ -1,30 +1,22 @@
-"""PostBack handling utilities for the LINE rich menu actions."""
+"""Handle LINE rich-menu PostBack actions through the reply messenger seam."""
 
 from __future__ import annotations
 
 import logging
 from urllib.parse import parse_qs
 
-from linebot.v3.messaging import (
-    ApiClient,
-    LocationAction,
-    MessageAction,
-    MessagingApi,
-    QuickReply,
-    QuickReplyItem,
-    ReplyMessageRequest,
-    TextMessage,
-)
 from linebot.v3.webhooks import PostbackEvent
 
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.line.messaging import (
-    configuration,
-    send_error_response,
-    send_liff_location_setting_response,
-    send_location_not_set_response,
-    send_other_menu_quick_reply,
-    send_text_response,
+    LocationRequestRecipe,
+    MessageChoice,
+    MessageChoicesRecipe,
+    ReplyMessenger,
+    TextRecipe,
+    UriChoice,
+    UriChoicesRecipe,
 )
 from app.user.service import (
     create_user_if_not_exists,
@@ -66,82 +58,111 @@ def should_use_processing_lock(postback_data: dict[str, str]) -> bool:
     return False
 
 
-def dispatch_postback(event: PostbackEvent, user_id: str, postback_data: dict[str, str]) -> None:
+def dispatch_postback(
+    event: PostbackEvent,
+    user_id: str,
+    postback_data: dict[str, str],
+    messenger: ReplyMessenger,
+) -> None:
     """Route a PostBack event to the appropriate handler."""
     action = postback_data.get("action")
 
     if action == "weather":
-        handle_weather_postback(event, user_id, postback_data)
+        handle_weather_postback(event, user_id, postback_data, messenger)
         return
 
     if action == "settings":
-        handle_settings_postback(event, postback_data)
+        handle_settings_postback(event, postback_data, messenger)
         return
 
     if action == "recent_queries":
-        handle_recent_queries_postback(event)
+        handle_recent_queries_postback(event, messenger)
         return
 
     if action == "other":
-        handle_other_postback(event, postback_data)
+        handle_other_postback(event, postback_data, messenger)
         return
 
     logger.warning("Unknown PostBack action", extra={"postback_data": postback_data})
-    send_error_response(event.reply_token, "未知的操作")
+    messenger.reply(event.reply_token, TextRecipe("未知的操作"))
 
 
-def handle_weather_postback(event: PostbackEvent, user_id: str, data: dict[str, str]) -> None:
-    """Handle weather-related PostBack operations (home, office, or current)."""
+def handle_weather_postback(
+    event: PostbackEvent,
+    user_id: str,
+    data: dict[str, str],
+    messenger: ReplyMessenger,
+) -> None:
+    """Handle weather-related PostBack operations for home, office, or current."""
     location_type = data.get("type")
 
     if location_type in {"home", "office"}:
-        handle_user_location_weather(event, user_id, location_type)
+        handle_user_location_weather(event, user_id, location_type, messenger)
         return
 
     if location_type == "current":
-        handle_current_location_weather(event)
+        handle_current_location_weather(event, messenger)
         return
 
-    send_error_response(event.reply_token, "未知的地點類型")
+    messenger.reply(event.reply_token, TextRecipe("未知的地點類型"))
 
 
-def handle_user_location_weather(event: PostbackEvent, user_id: str, location_type: str) -> None:
+def handle_user_location_weather(
+    event: PostbackEvent,
+    user_id: str,
+    location_type: str,
+    messenger: ReplyMessenger,
+) -> None:
     """Reply with preset location weather information for home or office."""
     try:
         location_name = "住家" if location_type == "home" else "公司"
-
         query_result = query_preset(user_id, location_type)
         response_message = format_weather_query(query_result)
 
         if query_result.outcome == QueryOutcome.PRESET_NOT_SET:
-            send_location_not_set_response(event.reply_token, location_name)
+            recipe = TextRecipe(f"請先設定{location_name}地址，點擊下方「設定地點」按鈕即可設定。")
         else:
-            send_text_response(event.reply_token, response_message)
+            recipe = TextRecipe(response_message)
+        messenger.reply(event.reply_token, recipe)
     except Exception:
         logger.exception("Error handling preset location weather", extra={"type": location_type})
-        send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
+        messenger.reply(event.reply_token, TextRecipe("查詢時發生錯誤，請稍後再試。"))
 
 
-def handle_settings_postback(event: PostbackEvent, data: dict[str, str]) -> None:
+def handle_settings_postback(
+    event: PostbackEvent,
+    data: dict[str, str],
+    messenger: ReplyMessenger,
+) -> None:
     """Handle settings-related PostBack operations."""
     settings_type = data.get("type")
 
     if settings_type == "location":
         logger.info("Location setting requested via PostBack")
-        send_liff_location_setting_response(event.reply_token)
+        liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
+        response_message = (
+            "地點設定\n\n"
+            "請點擊下方連結設定您的常用地點：\n"
+            f"{liff_url}\n\n"
+            "設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
+        )
+        messenger.reply(event.reply_token, TextRecipe(response_message))
         return
 
     logger.warning("Unknown settings PostBack type", extra={"type": settings_type})
-    send_error_response(event.reply_token, "未知的設定類型")
+    messenger.reply(event.reply_token, TextRecipe("未知的設定類型"))
 
 
-def handle_recent_queries_postback(event: PostbackEvent) -> None:
+def handle_recent_queries_postback(
+    event: PostbackEvent,
+    messenger: ReplyMessenger,
+) -> None:
     """Handle PostBack events requesting recent query history."""
     try:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("Recent queries PostBack event without user_id")
-            send_error_response(event.reply_token, "用戶識別錯誤")
+            messenger.reply(event.reply_token, TextRecipe("用戶識別錯誤"))
             return
 
         with SessionLocal() as session:
@@ -150,108 +171,76 @@ def handle_recent_queries_postback(event: PostbackEvent) -> None:
                 user = create_user_if_not_exists(session, user_id)
 
             recent_locations = get_recent_queries(session, user.id, limit=5)
-            recent_location_names = [location.full_name for location in recent_locations]
+            recent_location_names = tuple(location.full_name for location in recent_locations)
 
-        # Build and send LINE messages only after releasing the database connection.
+        # Build and send only after releasing the database connection.
         if not recent_location_names:
-            send_text_response(
+            messenger.reply(
                 event.reply_token,
-                "您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！",
+                TextRecipe("您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"),
             )
             return
 
-        quick_reply_items = [
-            QuickReplyItem(
-                type="action",
-                imageUrl=None,
-                action=MessageAction(
-                    type="message",
-                    label=location_name,
-                    text=location_name,
-                ),
-            )
-            for location_name in recent_location_names
-        ]
-
-        quick_reply = QuickReply(items=quick_reply_items)
-        response_message = "最近查過的 5 個地點："
-
-        with ApiClient(configuration) as api_client:
-            messaging_api_client = MessagingApi(api_client)
-            try:
-                messaging_api_client.reply_message(
-                    ReplyMessageRequest(
-                        reply_token=event.reply_token,  # type: ignore[call-arg]
-                        messages=[
-                            TextMessage(
-                                text=response_message,
-                                quick_reply=quick_reply,  # type: ignore[call-arg]
-                            )
-                        ],
-                        notification_disabled=False,  # type: ignore[call-arg]
-                    )
-                )
-                logger.info(
-                    "Recent queries response sent",
-                    extra={"options": len(recent_location_names)},
-                )
-            except Exception:
-                logger.exception("Error sending recent queries response")
-                send_error_response(event.reply_token, "查詢時發生錯誤，請稍後再試。")
-
-    except Exception:
-        logger.exception("Error handling recent queries PostBack")
-        send_error_response(event.reply_token, "系統暫時有點忙，請稍後再試一次。")
-
-
-def handle_current_location_weather(event: PostbackEvent) -> None:
-    """Prompt the user to share their current location for weather lookup."""
-    if not event.reply_token:
-        logger.warning("Cannot request location: reply_token is None")
-        return
-
-    message_text = "請點擊地圖上任意位置，將為您查詢該地天氣"
-
-    quick_reply_items = [
-        QuickReplyItem(
-            type="action",
-            imageUrl=None,
-            action=LocationAction(
-                type="location",
-                label="開啟地圖選擇",
+        recipe = MessageChoicesRecipe(
+            text="最近查過的 5 個地點：",
+            choices=tuple(
+                MessageChoice(label=location_name, text=location_name)
+                for location_name in recent_location_names
             ),
         )
-    ]
-    quick_reply = QuickReply(items=quick_reply_items)
-
-    with ApiClient(configuration) as api_client:
-        messaging_api_client = MessagingApi(api_client)
-        try:
-            messaging_api_client.reply_message(
-                ReplyMessageRequest(
-                    replyToken=event.reply_token,
-                    messages=[
-                        TextMessage(
-                            text=message_text,
-                            quoteToken=None,
-                            quickReply=quick_reply,
-                        )
-                    ],
-                    notificationDisabled=False,
-                )
-            )
-            logger.info("Location request sent successfully")
-        except Exception:
-            logger.exception("Error sending location request")
+        send_result = messenger.reply(event.reply_token, recipe)
+        if send_result.success:
+            logger.info("Recent queries response sent", extra={"options": len(recipe.choices)})
+        # Never spend a single-use reply token on a fallback after a failed send.
+    except Exception:
+        logger.exception("Error handling recent queries PostBack")
+        messenger.reply(event.reply_token, TextRecipe("系統暫時有點忙，請稍後再試一次。"))
 
 
-def handle_other_postback(event: PostbackEvent, data: dict[str, str]) -> None:
-    """Handle PostBack events triggered from the 'other' menu."""
+def handle_current_location_weather(
+    event: PostbackEvent,
+    messenger: ReplyMessenger,
+) -> None:
+    """Prompt the user to share their current location for weather lookup."""
+    messenger.reply(
+        event.reply_token,
+        LocationRequestRecipe(
+            text="請點擊地圖上任意位置，將為您查詢該地天氣",
+            label="開啟地圖選擇",
+        ),
+    )
+
+
+def handle_other_postback(
+    event: PostbackEvent,
+    data: dict[str, str],
+    messenger: ReplyMessenger,
+) -> None:
+    """Handle PostBack events triggered from the other menu."""
     postback_type = data.get("type")
 
     if postback_type == "menu":
-        send_other_menu_quick_reply(event.reply_token)
+        messenger.reply(
+            event.reply_token,
+            UriChoicesRecipe(
+                text="請選擇想了解的資訊：",
+                choices=(
+                    UriChoice(
+                        label="🔄 更新",
+                        uri="https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md",
+                    ),
+                    UriChoice(
+                        label="📖 使用說明",
+                        uri="https://github.com/kyomind/WeaMind/blob/main/README.md",
+                    ),
+                    UriChoice(
+                        label="ℹ️ 專案介紹",
+                        uri="https://api.kyomind.tw/static/about/index.html",
+                    ),
+                ),
+            ),
+        )
         return
 
     logger.warning("Unknown other PostBack type", extra={"type": postback_type})
-    send_error_response(event.reply_token, "未知的操作")
+    messenger.reply(event.reply_token, TextRecipe("未知的操作"))

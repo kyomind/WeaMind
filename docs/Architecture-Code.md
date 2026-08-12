@@ -100,32 +100,35 @@ async def line_webhook(request, x_line_signature, background_tasks):
 - 避免使用者看到「處理中」狀態
 - 後台例外不影響 ACK 回應
 
-#### 3.2 事件處理服務 (`service.py`)
-**功能**: LINE 事件的核心業務邏輯處理
+#### 3.2 事件處理 (`service.py`)
+**功能**: LINE webhook dispatch 與事件流程協調
 
 **主要事件處理器**:
-- `handle_message_event`: 文字訊息處理 (地點查詢)
-- `handle_location_message_event`: GPS 位置分享處理
-- `handle_follow_event`: 使用者加入好友
-- `handle_unfollow_event`: 使用者封鎖/移除好友
-- `handle_postback_event`: 互動元件回調處理
+- `handle_message_event`: 執行文字 Weather Query 並建立回覆 recipe
+- `handle_location_message_event`: 執行分享位置 Weather Query 並建立回覆 recipe
+- `handle_follow_event`: 建立或重新啟用使用者
+- `handle_unfollow_event`: 停用使用者
+- `handle_postback_event`: 解析、鎖定並分派互動元件回調
+
+LINE SDK decorator callback 固定使用 production `ReplyMessenger`；核心處理器則明確接收 `ReplyMessenger`，測試可替換成 in-memory adapter。
 
 **文字訊息處理流程**:
-1. 驗證 reply_token
-2. 取得資料庫 Session
-3. 呼叫 LocationService.parse_location_input (地點解析)
-4. 根據解析結果決定回應類型:
-   - 單一地點 → 直接查詢天氣
-   - 多個地點 → Quick Reply 選項
-   - 無結果/格式錯誤 → 錯誤訊息
-5. 記錄使用者查詢歷史
+1. 驗證 `reply_token` 與訊息型別
+2. 呼叫 Weather Query workflow
+3. 格式化 Weather Query 結果
+4. 建立文字或候選地點 recipe
+5. 經由 `ReplyMessenger` seam 送出
 
-#### 3.3 訊息處理 (`messaging.py`)
-**功能**: LINE 訊息格式化與傳送邏輯
-- 天氣資訊訊息格式化
-- Quick Reply 選項建立
-- LIFF 位置設定頁面連結
-- 錯誤訊息統一處理
+#### 3.3 訊息送出 (`messaging.py`)
+**功能**: 提供 recipe-based `ReplyMessenger` seam
+
+- `TextRecipe`、`MessageChoicesRecipe`、`LocationRequestRecipe`、`UriChoicesRecipe` 表達訊息意圖
+- `LineSdkReplyMessenger` 是 production adapter，隱藏 LINE SDK 訊息模型、Quick Reply 建構與 client lifecycle
+- `InMemoryReplyMessenger` 是測試 adapter，記錄 recipe 而不建立 SDK object graph
+- `SendResult` 以穩定錯誤類別回報結果，原始 SDK exception 不跨越 seam
+- reply token 為 single-use；送出失敗不使用同一 token 重試
+
+Weather Query、Query History 與其他領域文案留在各自 module，訊息送出 module 僅負責 recipe 驗證、SDK 轉換與傳送。
 
 #### 3.4 Postback 處理 (`postback.py`)
 **功能**: 處理 Rich Menu、Quick Reply 等互動元件回調
@@ -206,17 +209,15 @@ def find_nearest_location(session: Session, lat: float, lon: float) -> Location 
 
 1. **使用者輸入** → "台北市信義區"
 2. **Webhook 接收** → 快速驗證 + 後台處理
-3. **地點解析** → LocationService.parse_location_input
-4. **輸入驗證** → 字數、中文、格式檢查
-5. **地點搜尋** → 資料庫模糊查詢
-6. **結果處理**:
-   - 0 筆: "找不到相符的地點"
-   - 1 筆: 直接查詢天氣
-   - 2-3 筆: Quick Reply 選項讓使用者選擇
-   - >3 筆: "太多相符地點，請輸入更精確的地名"
-7. **天氣查詢** → WeatherService (目前回傳模擬資料)
-8. **歷史記錄** → 記錄查詢以支援「最近查詢」
-9. **回應傳送** → LINE MessagingApi
+3. **Weather Query** → 協調 Location resolution、forecast 與 Query History side effect
+4. **Location resolution** → 驗證輸入並搜尋 persisted Taiwan Location
+5. **結果格式化** → 將 structured Weather Query result 轉成使用者文案
+6. **Recipe 選擇**:
+   - 0 筆或格式錯誤：文字 recipe
+   - 1 筆：forecast 文字 recipe
+   - 2–3 筆：候選地點 Quick Reply recipe
+   - >3 筆：要求更精確地名的文字 recipe
+7. **訊息送出** → `ReplyMessenger` 將 recipe 交給 production LINE SDK adapter
 
 ### GPS 位置分享流程
 

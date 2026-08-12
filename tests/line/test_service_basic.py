@@ -1,334 +1,407 @@
-"""Test basic LINE service functionality."""
+"""Test basic LINE service handlers through the reply messenger seam."""
 
 from collections.abc import Callable
 from unittest.mock import Mock, patch
 
-from linebot.v3.webhooks import (
-    FollowEvent,
-    UnfollowEvent,
-)
-
 from app.core.config import settings
+from app.line.messaging import (
+    InMemoryReplyMessenger,
+    SendResult,
+    SentReply,
+    TextRecipe,
+)
 from app.line.service import (
-    handle_current_location_weather,
+    _handle_follow_event_callback,
+    _handle_location_message_event_callback,
+    _handle_message_event_callback,
+    _handle_postback_event_callback,
     handle_default_event,
     handle_follow_event,
     handle_location_message_event,
     handle_message_event,
+    handle_postback_event,
     handle_unfollow_event,
-    send_liff_location_setting_response,
+    production_reply_messenger,
 )
+from app.weather.workflow import QueryOutcome, WeatherQueryResult
 
 
-class TestLineService:
-    """Test LINE webhook handler functions."""
+class TestMessageHandler:
+    """Test text message handler behavior."""
 
     def test_handle_message_event_non_text_message(
         self, create_mock_message_event: Callable[..., Mock]
     ) -> None:
-        """Test handling non-text message events."""
-        # Create mock event with non-text message
-        mock_event = create_mock_message_event()
-        mock_event.message = Mock()  # Not TextMessageContent
+        """Ignore message events whose content is not text."""
+        event = create_mock_message_event()
+        event.message = Mock()
+        messenger = InMemoryReplyMessenger()
 
-        # Should return early without processing
-        handle_message_event(mock_event)
-        # No exception should be raised
+        handle_message_event(event, messenger)
+
+        assert messenger.sent_replies == []
 
     def test_handle_message_event_empty_reply_token(
         self, create_mock_message_event: Callable[..., Mock]
     ) -> None:
-        """Test handling events with empty reply token."""
-        mock_event = create_mock_message_event(reply_token=None)
+        """Ignore text events without a reply token."""
+        event = create_mock_message_event(reply_token=None)
+        messenger = InMemoryReplyMessenger()
 
-        # Should return early without processing
-        handle_message_event(mock_event)
-        # No exception should be raised
+        handle_message_event(event, messenger)
 
-    def test_handle_message_event_dev_mode(
+        assert messenger.sent_replies == []
+
+    def test_handle_message_event_contains_query_error(
         self, create_mock_message_event: Callable[..., Mock]
     ) -> None:
-        """Test handling message events in development mode."""
-        mock_event = create_mock_message_event()
+        """Contain query errors and send the generic text recipe."""
+        event = create_mock_message_event(text="永和")
+        messenger = InMemoryReplyMessenger()
 
-        # In dev mode (CHANGE_ME token), should just log
-        handle_message_event(mock_event)
-        # No exception should be raised
+        with patch("app.line.service.query_text", side_effect=RuntimeError("query error")):
+            handle_message_event(event, messenger)
+
+        assert messenger.sent_replies == [
+            SentReply("test_token", TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+        ]
 
     def test_handle_default_event(self) -> None:
-        """Test handling default events."""
-        mock_event = {"type": "unknown", "replyToken": "test_token"}
+        """Accept an unhandled event without raising an exception."""
+        handle_default_event({"type": "unknown"})
 
-        # Should just log the event without raising exception
-        handle_default_event(mock_event)
-        # No exception should be raised
+
+class TestLocationMessageHandler:
+    """Test shared-location message handler behavior."""
+
+    def test_handle_location_message_event_empty_reply_token(
+        self, create_mock_location_message_event: Callable[..., Mock]
+    ) -> None:
+        """Ignore location events without a reply token."""
+        event = create_mock_location_message_event(reply_token=None)
+        messenger = InMemoryReplyMessenger()
+
+        handle_location_message_event(event, messenger)
+
+        assert messenger.sent_replies == []
+
+    def test_handle_location_message_event_wrong_message_type(
+        self, create_mock_location_message_event: Callable[..., Mock]
+    ) -> None:
+        """Ignore location events whose content has the wrong type."""
+        event = create_mock_location_message_event()
+        event.message = Mock()
+        messenger = InMemoryReplyMessenger()
+
+        handle_location_message_event(event, messenger)
+
+        assert messenger.sent_replies == []
+
+    def test_handle_location_message_event_success(
+        self, create_mock_location_message_event: Callable[..., Mock]
+    ) -> None:
+        """Query shared coordinates and send the formatted text recipe."""
+        event = create_mock_location_message_event(
+            latitude=25.03,
+            longitude=121.56,
+            address="臺北市",
+        )
+        query_result = WeatherQueryResult(QueryOutcome.LOCATION_NOT_FOUND)
+        messenger = InMemoryReplyMessenger()
+
+        with patch("app.line.service.query_shared_location", return_value=query_result) as query:
+            handle_location_message_event(event, messenger)
+
+        query.assert_called_once_with(25.03, 121.56, "臺北市", "test_user_id")
+        assert len(messenger.sent_replies) == 1
+        assert isinstance(messenger.sent_replies[0].recipe, TextRecipe)
+
+    def test_handle_location_message_event_contains_query_error(
+        self, create_mock_location_message_event: Callable[..., Mock]
+    ) -> None:
+        """Contain location query errors and send the generic recipe."""
+        event = create_mock_location_message_event()
+        messenger = InMemoryReplyMessenger()
+
+        with patch(
+            "app.line.service.query_shared_location",
+            side_effect=RuntimeError("query error"),
+        ):
+            handle_location_message_event(event, messenger)
+
+        assert messenger.sent_replies == [
+            SentReply("test_token", TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+        ]
+
+
+class TestFollowHandler:
+    """Test follow event persistence and reply behavior."""
 
     def test_handle_follow_event_success(
         self,
         create_mock_follow_event: Callable[..., Mock],
         mock_db_session: Mock,
     ) -> None:
-        """Test successful follow event handling."""
-        mock_event = create_mock_follow_event()
+        """Create the user and reply after releasing the database session."""
+        event = create_mock_follow_event()
+        messenger = InMemoryReplyMessenger()
 
-        with patch("app.line.service.SessionLocal") as mock_session_factory:
-            mock_session = mock_db_session
-            mock_session_factory.return_value.__enter__.return_value = mock_session
+        with (
+            patch("app.line.service.SessionLocal") as session_factory,
+            patch("app.line.service.create_user_if_not_exists") as create_user,
+        ):
+            session_factory.return_value.__enter__.return_value = mock_db_session
 
-            with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
-                mock_user = Mock()
-                mock_user.id = 1
-                mock_create_user.return_value = mock_user
+            def assert_session_closed(reply_token: str | None, recipe: TextRecipe) -> SendResult:
+                """Assert the session exits before handing the recipe to the adapter."""
+                session_factory.return_value.__exit__.assert_called_once()
+                return messenger.reply(reply_token, recipe)
 
-                with patch("app.line.service.MessagingApi.reply_message") as mock_reply:
+            messenger_double = Mock(reply=Mock(side_effect=assert_session_closed))
+            handle_follow_event(event, messenger_double)
 
-                    def assert_session_closed_before_reply(
-                        *_args: object, **_kwargs: object
-                    ) -> None:
-                        """Verify the LINE API call starts after the Session scope ends."""
-                        mock_session_factory.return_value.__exit__.assert_called_once()
-
-                    mock_reply.side_effect = assert_session_closed_before_reply
-                    handle_follow_event(mock_event)
-
-                    mock_create_user.assert_called_once_with(mock_session, "test_user_id")
-                    mock_reply.assert_called_once()
-                    mock_session_factory.return_value.__exit__.assert_called_once()
+        create_user.assert_called_once_with(mock_db_session, "test_user_id")
+        assert messenger.sent_replies == [
+            SentReply(
+                "test_token",
+                TextRecipe("Welcome! You can now start interacting with me."),
+            )
+        ]
 
     def test_handle_follow_event_no_user_id(
         self, create_mock_follow_event: Callable[..., Mock]
     ) -> None:
-        """Test follow event without user_id."""
-        mock_event = create_mock_follow_event()
-        mock_event.source = None
+        """Ignore a follow event without a user identifier."""
+        event = create_mock_follow_event()
+        event.source = None
+        messenger = InMemoryReplyMessenger()
 
-        # Should return early without processing
-        handle_follow_event(mock_event)
-        # No exception should be raised
+        handle_follow_event(event, messenger)
+
+        assert messenger.sent_replies == []
 
     def test_handle_follow_event_no_reply_token(
         self,
         create_mock_follow_event: Callable[..., Mock],
         mock_db_session: Mock,
     ) -> None:
-        """Test follow event without reply token."""
-        mock_event = create_mock_follow_event(reply_token=None)
+        """Persist a followed user even when no reply token is supplied."""
+        event = create_mock_follow_event(reply_token=None)
+        messenger = InMemoryReplyMessenger()
 
-        with patch("app.line.service.SessionLocal") as mock_session_factory:
-            mock_session = mock_db_session
-            mock_session_factory.return_value.__enter__.return_value = mock_session
+        with (
+            patch("app.line.service.SessionLocal") as session_factory,
+            patch("app.line.service.create_user_if_not_exists") as create_user,
+        ):
+            session_factory.return_value.__enter__.return_value = mock_db_session
+            handle_follow_event(event, messenger)
 
-            with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
-                mock_user = Mock()
-                mock_user.id = 1
-                mock_create_user.return_value = mock_user
+        create_user.assert_called_once_with(mock_db_session, "test_user_id")
+        assert messenger.sent_replies == []
 
-                handle_follow_event(mock_event)
+    def test_handle_follow_event_contains_database_error(
+        self, create_mock_follow_event: Callable[..., Mock]
+    ) -> None:
+        """Contain follow persistence failures without attempting a reply."""
+        messenger = InMemoryReplyMessenger()
 
-                mock_create_user.assert_called_once_with(mock_session, "test_user_id")
-                mock_session_factory.return_value.__exit__.assert_called_once()
+        with patch("app.line.service.SessionLocal", side_effect=RuntimeError("db error")):
+            handle_follow_event(create_mock_follow_event(), messenger)
 
-    def test_handle_follow_event_api_error(self) -> None:
-        """Test follow event with messaging API error."""
-        mock_event = Mock(spec=FollowEvent)
-        mock_event.reply_token = "test_token"
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
+        assert messenger.sent_replies == []
 
-        with patch("app.line.service.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
 
-            with patch("app.line.service.create_user_if_not_exists") as mock_create_user:
-                mock_user = Mock()
-                mock_user.id = 1
-                mock_create_user.return_value = mock_user
-
-                with patch(
-                    "app.line.service.MessagingApi.reply_message",
-                    side_effect=Exception("API Error"),
-                ):
-                    # Should not raise exception, just log error
-                    handle_follow_event(mock_event)
-
-                    mock_create_user.assert_called_once_with(mock_session, "test_user_id")
-                    mock_session_factory.return_value.__exit__.assert_called_once()
+class TestUnfollowHandler:
+    """Test unfollow event persistence behavior."""
 
     def test_handle_unfollow_event_success(
         self,
         create_mock_unfollow_event: Callable[..., Mock],
         mock_db_session: Mock,
     ) -> None:
-        """Test successful unfollow event handling."""
-        mock_event = create_mock_unfollow_event()
+        """Deactivate the user inside a managed database session."""
+        event = create_mock_unfollow_event()
 
-        with patch("app.line.service.SessionLocal") as mock_session_factory:
-            mock_session = mock_db_session
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-
-            with patch("app.line.service.deactivate_user") as mock_deactivate_user:
-                mock_user = Mock()
-                mock_user.id = 1
-                mock_deactivate_user.return_value = mock_user
-
-                handle_unfollow_event(mock_event)
-
-                mock_deactivate_user.assert_called_once_with(mock_session, "test_user_id")
-                mock_session_factory.return_value.__exit__.assert_called_once()
-
-    def test_handle_unfollow_event_user_not_found(self) -> None:
-        """Test unfollow event for unknown user."""
-        mock_event = Mock(spec=UnfollowEvent)
-        mock_source = Mock()
-        mock_source.user_id = "test_user_id"
-        mock_event.source = mock_source
-
-        with patch("app.line.service.SessionLocal") as mock_session_factory:
-            mock_session = Mock()
-            mock_session_factory.return_value.__enter__.return_value = mock_session
-
-            with patch("app.line.service.deactivate_user") as mock_deactivate_user:
-                mock_deactivate_user.return_value = None
-
-                handle_unfollow_event(mock_event)
-
-                mock_deactivate_user.assert_called_once_with(mock_session, "test_user_id")
-                mock_session_factory.return_value.__exit__.assert_called_once()
-
-    def test_handle_unfollow_event_no_user_id(self) -> None:
-        """Test unfollow event without user_id."""
-        mock_event = Mock(spec=UnfollowEvent)
-        mock_event.source = None
-
-        # Should return early without processing
-        handle_unfollow_event(mock_event)
-        # No exception should be raised
-
-    def test_handle_follow_event_exception(
-        self, create_mock_follow_event: Callable[..., Mock]
-    ) -> None:
-        """Test follow event with general exception."""
-        mock_event = create_mock_follow_event()
-
-        with patch(
-            "app.line.service.SessionLocal",
-            side_effect=Exception("Database error"),
+        with (
+            patch("app.line.service.SessionLocal") as session_factory,
+            patch("app.line.service.deactivate_user", return_value=Mock()) as deactivate,
         ):
-            # Should not raise exception, just log error
-            handle_follow_event(mock_event)
+            session_factory.return_value.__enter__.return_value = mock_db_session
+            handle_unfollow_event(event)
 
-    def test_handle_unfollow_event_exception(
+        deactivate.assert_called_once_with(mock_db_session, "test_user_id")
+        session_factory.return_value.__exit__.assert_called_once()
+
+    def test_handle_unfollow_event_no_user_id(
         self, create_mock_unfollow_event: Callable[..., Mock]
     ) -> None:
-        """Test unfollow event with general exception."""
-        mock_event = create_mock_unfollow_event()
+        """Ignore an unfollow event without a user identifier."""
+        event = create_mock_unfollow_event()
+        event.source = None
 
-        with patch(
-            "app.line.service.SessionLocal",
-            side_effect=Exception("Database error"),
+        with patch("app.line.service.deactivate_user") as deactivate:
+            handle_unfollow_event(event)
+
+        deactivate.assert_not_called()
+
+    def test_handle_unfollow_event_unknown_user(
+        self,
+        create_mock_unfollow_event: Callable[..., Mock],
+        mock_db_session: Mock,
+    ) -> None:
+        """Tolerate an unfollow event for a user that was never persisted."""
+        event = create_mock_unfollow_event(user_id="ghost_user")
+
+        with (
+            patch("app.line.service.SessionLocal") as session_factory,
+            patch("app.line.service.deactivate_user", return_value=None) as deactivate,
         ):
-            # Should not raise exception, just log error
-            handle_unfollow_event(mock_event)
+            session_factory.return_value.__enter__.return_value = mock_db_session
+            handle_unfollow_event(event)
 
-    def test_send_liff_location_setting_response_success(self) -> None:
-        """Test successful LIFF location setting response."""
+        deactivate.assert_called_once_with(mock_db_session, "ghost_user")
+        session_factory.return_value.__exit__.assert_called_once()
 
-        with patch("app.line.messaging.MessagingApi") as mock_messaging_api:
-            mock_api_instance = Mock()
-            mock_messaging_api.return_value = mock_api_instance
+    def test_handle_unfollow_event_contains_database_error(
+        self, create_mock_unfollow_event: Callable[..., Mock]
+    ) -> None:
+        """Contain unfollow persistence failures."""
+        with patch("app.line.service.SessionLocal", side_effect=RuntimeError("db error")):
+            handle_unfollow_event(create_mock_unfollow_event())
 
-            with patch("app.line.messaging.ApiClient"):
-                send_liff_location_setting_response("test_token")
 
-                mock_api_instance.reply_message.assert_called_once()
-                call_args = mock_api_instance.reply_message.call_args[0]
-                request = call_args[0]
-                message = request.messages[0]
-                assert "地點設定" in message.text
-                assert settings.BASE_URL in message.text
+class TestPostbackLock:
+    """Test the processing-lock guard around PostBack dispatch."""
 
-    def test_send_liff_location_setting_response_error(self) -> None:
-        """Test LIFF location setting response with API error."""
+    def test_handle_postback_event_rejects_locked_user(
+        self, create_mock_postback_event: Callable[..., Mock]
+    ) -> None:
+        """Reply with the throttling text and skip dispatch when the lock is held."""
+        event = create_mock_postback_event()
+        event.postback = Mock(data="action=recent_queries")
+        event.source = Mock(user_id="test_user_id")
+        messenger = InMemoryReplyMessenger()
 
-        with patch(
-            "app.line.messaging.MessagingApi.reply_message",
-            side_effect=Exception("API Error"),
+        with (
+            patch("app.line.service.processing_lock_service") as lock_service,
+            patch.object(settings, "PROCESSING_LOCK_ENABLED", True),
+            patch("app.line.service.dispatch_postback") as dispatch,
         ):
-            with patch("app.line.messaging.ApiClient"):
-                # Should not raise exception, just log error
-                send_liff_location_setting_response("test_token")
+            lock_service.build_lock_key.return_value = "lock:test_user_id"
+            lock_service.try_acquire_lock.return_value = False
+            handle_postback_event(event, messenger)
 
-    def test_send_liff_location_setting_response_no_reply_token(self) -> None:
-        """Test LIFF location setting response with no reply token."""
-        # Should return early without API call
-        send_liff_location_setting_response(None)
-        # No exception should be raised
+        lock_service.try_acquire_lock.assert_called_once_with("lock:test_user_id")
+        dispatch.assert_not_called()
+        assert messenger.sent_replies == [
+            SentReply("test_token", TextRecipe("操作太過頻繁，請放慢腳步 ☕️"))
+        ]
+
+    def test_handle_postback_event_dispatches_when_lock_acquired(
+        self, create_mock_postback_event: Callable[..., Mock]
+    ) -> None:
+        """Dispatch the PostBack once the processing lock has been acquired."""
+        event = create_mock_postback_event()
+        event.postback = Mock(data="action=recent_queries")
+        event.source = Mock(user_id="test_user_id")
+        messenger = InMemoryReplyMessenger()
+
+        with (
+            patch("app.line.service.processing_lock_service") as lock_service,
+            patch.object(settings, "PROCESSING_LOCK_ENABLED", True),
+            patch("app.line.service.dispatch_postback") as dispatch,
+        ):
+            lock_service.build_lock_key.return_value = "lock:test_user_id"
+            lock_service.try_acquire_lock.return_value = True
+            handle_postback_event(event, messenger)
+
+        dispatch.assert_called_once_with(
+            event, "test_user_id", {"action": "recent_queries"}, messenger
+        )
+        assert messenger.sent_replies == []
+
+    def test_handle_postback_event_skips_lock_when_disabled(
+        self, create_mock_postback_event: Callable[..., Mock]
+    ) -> None:
+        """Dispatch without acquiring a lock when the feature flag is disabled."""
+        event = create_mock_postback_event()
+        event.postback = Mock(data="action=recent_queries")
+        event.source = Mock(user_id="test_user_id")
+        messenger = InMemoryReplyMessenger()
+
+        with (
+            patch("app.line.service.processing_lock_service") as lock_service,
+            patch.object(settings, "PROCESSING_LOCK_ENABLED", False),
+            patch("app.line.service.dispatch_postback") as dispatch,
+        ):
+            handle_postback_event(event, messenger)
+
+        lock_service.try_acquire_lock.assert_not_called()
+        dispatch.assert_called_once()
+
+    def test_handle_postback_event_skips_lock_for_unlocked_action(
+        self, create_mock_postback_event: Callable[..., Mock]
+    ) -> None:
+        """Never build a lock key for actions that do not touch the database."""
+        event = create_mock_postback_event()
+        event.postback = Mock(data="action=settings&type=location")
+        event.source = Mock(user_id="test_user_id")
+        messenger = InMemoryReplyMessenger()
+
+        with (
+            patch("app.line.service.processing_lock_service") as lock_service,
+            patch.object(settings, "PROCESSING_LOCK_ENABLED", True),
+            patch("app.line.service.dispatch_postback") as dispatch,
+        ):
+            handle_postback_event(event, messenger)
+
+        lock_service.build_lock_key.assert_not_called()
+        dispatch.assert_called_once()
 
 
-class TestLocationMessageHandler:
-    """Test location message handler functionality."""
+class TestProductionCallbacks:
+    """Test that SDK-decorated callbacks compose handlers with the production messenger."""
 
-    def test_handle_location_message_event_empty_reply_token(
+    def test_text_message_callback_uses_production_messenger(
+        self, create_mock_message_event: Callable[..., Mock]
+    ) -> None:
+        """Pass the production messenger to the text message handler."""
+        event = create_mock_message_event()
+
+        with patch("app.line.service.handle_message_event") as handler:
+            _handle_message_event_callback(event)
+
+        handler.assert_called_once_with(event, production_reply_messenger)
+
+    def test_location_message_callback_uses_production_messenger(
         self, create_mock_location_message_event: Callable[..., Mock]
     ) -> None:
-        """Test location message handling with empty reply token."""
-        mock_event = create_mock_location_message_event(reply_token=None)
+        """Pass the production messenger to the location message handler."""
+        event = create_mock_location_message_event()
 
-        # Should return early without processing
-        handle_location_message_event(mock_event)
+        with patch("app.line.service.handle_location_message_event") as handler:
+            _handle_location_message_event_callback(event)
 
-    def test_handle_location_message_event_wrong_message_type(
-        self, create_mock_location_message_event: Callable[..., Mock]
+        handler.assert_called_once_with(event, production_reply_messenger)
+
+    def test_follow_callback_uses_production_messenger(
+        self, create_mock_follow_event: Callable[..., Mock]
     ) -> None:
-        """Test location message handling with wrong message type."""
-        mock_event = create_mock_location_message_event()
-        mock_event.message = Mock()  # Not LocationMessageContent
+        """Pass the production messenger to the follow handler."""
+        event = create_mock_follow_event()
 
-        # Should return early without processing
-        handle_location_message_event(mock_event)
+        with patch("app.line.service.handle_follow_event") as handler:
+            _handle_follow_event_callback(event)
 
+        handler.assert_called_once_with(event, production_reply_messenger)
 
-class TestCurrentLocationWeatherHandler:
-    """Test current location weather handler functionality."""
+    def test_postback_callback_uses_production_messenger(
+        self, create_mock_postback_event: Callable[..., Mock]
+    ) -> None:
+        """Pass the production messenger to the PostBack handler."""
+        event = create_mock_postback_event()
 
-    def test_handle_current_location_weather_no_reply_token(self) -> None:
-        """Test current location weather with no reply token."""
-        from linebot.v3.webhooks import PostbackEvent
+        with patch("app.line.service.handle_postback_event") as handler:
+            _handle_postback_event_callback(event)
 
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = None
-
-        # Should return early without processing
-        handle_current_location_weather(mock_event)
-
-    def test_handle_current_location_weather_success(self) -> None:
-        """Test successful current location weather request."""
-        from linebot.v3.webhooks import PostbackEvent
-
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch("app.line.postback.MessagingApi") as mock_messaging_api:
-            mock_api_instance = Mock()
-            mock_messaging_api.return_value = mock_api_instance
-
-            with patch("app.line.postback.ApiClient"):
-                handle_current_location_weather(mock_event)
-
-                mock_api_instance.reply_message.assert_called_once()
-
-    def test_handle_current_location_weather_api_error(self) -> None:
-        """Test current location weather with API error."""
-        from linebot.v3.webhooks import PostbackEvent
-
-        mock_event = Mock(spec=PostbackEvent)
-        mock_event.reply_token = "test_token"
-
-        with patch(
-            "app.line.postback.MessagingApi.reply_message",
-            side_effect=Exception("API Error"),
-        ):
-            with patch("app.line.postback.ApiClient"):
-                # Should not raise exception, just log error
-                handle_current_location_weather(mock_event)
+        handler.assert_called_once_with(event, production_reply_messenger)

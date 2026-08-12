@@ -169,3 +169,54 @@ def test_text_query_distinguishes_too_many_matches(
     result = query_text("中正區", None, session_factory=factory)
 
     assert result.outcome == QueryOutcome.TOO_MANY_LOCATIONS
+
+
+def test_text_query_rejects_invalid_input(
+    workflow_db: tuple[sessionmaker[Session], Location],
+) -> None:
+    """Surface the resolver's invalid-input reason without touching Location data."""
+    factory, _ = workflow_db
+    result = query_text("a", None, session_factory=factory)
+    assert result.outcome == QueryOutcome.INVALID_INPUT
+    assert result.invalid_reason is not None
+    assert result.locations == ()
+
+
+def test_text_query_handles_location_vanishing_mid_transaction(
+    workflow_db: tuple[sessionmaker[Session], Location],
+) -> None:
+    """Fall back to not-found when a resolved Location is gone by the time it is loaded."""
+    factory, _ = workflow_db
+    with patch.object(Session, "get", return_value=None):
+        result = query_text("松山區", "known", session_factory=factory)
+    assert result.outcome == QueryOutcome.LOCATION_NOT_FOUND
+
+
+def test_shared_query_handles_location_vanishing_mid_transaction(
+    workflow_db: tuple[sessionmaker[Session], Location],
+) -> None:
+    """Fall back to outside-Taiwan when a resolved shared Location cannot be loaded."""
+    factory, _ = workflow_db
+    with patch.object(Session, "get", return_value=None):
+        result = query_shared_location(25.0, 121.0, None, "known", session_factory=factory)
+    assert result.outcome == QueryOutcome.OUTSIDE_TAIWAN
+
+
+def test_preset_query_for_unknown_user(
+    workflow_db: tuple[sessionmaker[Session], Location],
+) -> None:
+    """Treat a preset query from an unregistered user as an unset preset."""
+    factory, _ = workflow_db
+    result = query_preset("nobody", "home", session_factory=factory)
+    assert result.outcome == QueryOutcome.PRESET_NOT_SET
+
+
+def test_preset_query_without_configured_location(
+    workflow_db: tuple[sessionmaker[Session], Location],
+) -> None:
+    """Treat a user without a configured preset Location as an unset preset."""
+    factory, _ = workflow_db
+    with factory.begin() as session:
+        session.add(User(line_user_id="blank"))
+    result = query_preset("blank", "office", session_factory=factory)
+    assert result.outcome == QueryOutcome.PRESET_NOT_SET
