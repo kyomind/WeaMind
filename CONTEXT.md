@@ -4,3 +4,4 @@
 - **Location resolution**: Converting text, an address, or coordinates into a persisted Taiwan Location. When a shared location provides both a valid address and coordinates, the address takes precedence; coordinates are the fallback. Preset queries bypass this step.
 - **Query History**: A record that a known user queried a resolved Location. It is recorded even when no fresh weather exists; failure must not fail the Weather Query.
 - **Preset Location**: A user's configured home or office Location ID, used directly without name resolution.
+- **PostBack Action**: One interaction requested through a LINE rich menu or Quick Reply. It includes whether duplicate processing must be prevented and resolves to exactly one reply.

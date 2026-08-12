@@ -306,14 +306,14 @@ class TestPostbackLock:
         with (
             patch("app.line.service.processing_lock_service") as lock_service,
             patch.object(settings, "PROCESSING_LOCK_ENABLED", True),
-            patch("app.line.service.dispatch_postback") as dispatch,
+            patch("app.line.service.execute_postback") as execute,
         ):
             lock_service.build_lock_key.return_value = "lock:test_user_id"
             lock_service.try_acquire_lock.return_value = False
             handle_postback_event(event, messenger)
 
         lock_service.try_acquire_lock.assert_called_once_with("lock:test_user_id")
-        dispatch.assert_not_called()
+        execute.assert_not_called()
         assert messenger.sent_replies == [
             SentReply("test_token", TextRecipe("操作太過頻繁，請放慢腳步 ☕️"))
         ]
@@ -330,16 +330,16 @@ class TestPostbackLock:
         with (
             patch("app.line.service.processing_lock_service") as lock_service,
             patch.object(settings, "PROCESSING_LOCK_ENABLED", True),
-            patch("app.line.service.dispatch_postback") as dispatch,
+            patch(
+                "app.line.service.execute_postback", return_value=TextRecipe("history")
+            ) as execute,
         ):
             lock_service.build_lock_key.return_value = "lock:test_user_id"
             lock_service.try_acquire_lock.return_value = True
             handle_postback_event(event, messenger)
 
-        dispatch.assert_called_once_with(
-            event, "test_user_id", {"action": "recent_queries"}, messenger
-        )
-        assert messenger.sent_replies == []
+        execute.assert_called_once()
+        assert messenger.sent_replies == [SentReply("test_token", TextRecipe("history"))]
 
     def test_handle_postback_event_skips_lock_when_disabled(
         self, create_mock_postback_event: Callable[..., Mock]
@@ -353,12 +353,14 @@ class TestPostbackLock:
         with (
             patch("app.line.service.processing_lock_service") as lock_service,
             patch.object(settings, "PROCESSING_LOCK_ENABLED", False),
-            patch("app.line.service.dispatch_postback") as dispatch,
+            patch(
+                "app.line.service.execute_postback", return_value=TextRecipe("history")
+            ) as execute,
         ):
             handle_postback_event(event, messenger)
 
         lock_service.try_acquire_lock.assert_not_called()
-        dispatch.assert_called_once()
+        execute.assert_called_once()
 
     def test_handle_postback_event_skips_lock_for_unlocked_action(
         self, create_mock_postback_event: Callable[..., Mock]
@@ -372,12 +374,14 @@ class TestPostbackLock:
         with (
             patch("app.line.service.processing_lock_service") as lock_service,
             patch.object(settings, "PROCESSING_LOCK_ENABLED", True),
-            patch("app.line.service.dispatch_postback") as dispatch,
+            patch(
+                "app.line.service.execute_postback", return_value=TextRecipe("settings")
+            ) as execute,
         ):
             handle_postback_event(event, messenger)
 
         lock_service.build_lock_key.assert_not_called()
-        dispatch.assert_called_once()
+        execute.assert_called_once()
 
 
 class TestProductionCallbacks:

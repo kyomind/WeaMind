@@ -27,17 +27,7 @@ from .messaging import (
     ReplyRecipe,
     TextRecipe,
 )
-from .postback import (
-    dispatch_postback,
-    handle_current_location_weather,
-    handle_other_postback,
-    handle_recent_queries_postback,
-    handle_settings_postback,
-    handle_user_location_weather,
-    handle_weather_postback,
-    parse_postback_data,
-    should_use_processing_lock,
-)
+from .postback import execute_postback, prepare_postback
 from .sdk_dispatch import LineSdkWebhookDispatcher
 from .weather_presentation import QueryKind, build_weather_reply
 
@@ -48,14 +38,6 @@ __all__ = [
     "handle_unfollow_event",
     "handle_default_event",
     "handle_postback_event",
-    "handle_weather_postback",
-    "handle_user_location_weather",
-    "handle_settings_postback",
-    "handle_recent_queries_postback",
-    "handle_current_location_weather",
-    "handle_other_postback",
-    "parse_postback_data",
-    "should_use_processing_lock",
     "process_webhook_events",
     "webhook_handler",
 ]
@@ -276,25 +258,19 @@ def handle_postback_event(event: PostbackEvent, messenger: ReplyMessenger) -> No
             logger.warning("PostBack event without reply_token")
             return
 
-        postback_data = parse_postback_data(event.postback.data)
-
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("PostBack event without user_id")
             return
 
-        needs_lock = should_use_processing_lock(postback_data)
-        lock_key = None
-
-        if needs_lock and hasattr(event, "source") and event.source:
+        plan = prepare_postback(event.postback.data, user_id)
+        if plan.requires_lock and settings.PROCESSING_LOCK_ENABLED:
             lock_key = processing_lock_service.build_lock_key(event.source)
-
-        if lock_key and settings.PROCESSING_LOCK_ENABLED:
-            if not processing_lock_service.try_acquire_lock(lock_key):
-                messenger.reply(event.reply_token, TextRecipe("操作太過頻繁，請放慢腳步 ☕️"))
+            if lock_key and not processing_lock_service.try_acquire_lock(lock_key):
+                messenger.reply(event.reply_token, plan.lock_denied_recipe)
                 return
 
-        dispatch_postback(event, user_id, postback_data, messenger)
+        messenger.reply(event.reply_token, execute_postback(plan))
 
     except Exception:
         logger.exception("Error handling PostBack event")

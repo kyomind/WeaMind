@@ -142,12 +142,12 @@ Weather Query、Query History 與其他領域文案留在各自 module，訊息�
 - 非預期例外仍由 LINE event handler 隔離；weather workflow 不含任何 LINE recipe 政策
 
 #### 3.5 Postback 處理 (`postback.py`)
-**功能**: 處理 Rich Menu、Quick Reply 等互動元件回調
-**主要功能**:
-- 使用者位置天氣查詢 (住家/公司)
-- 最近查詢歷史
-- 設定頁面導引
-- 其他選單功能
+**功能**: 以 deep module 處理 Rich Menu、Quick Reply 等互動元件回調。
+
+- 小型 interface 分為 `prepare_postback(raw_data, user_id) -> PostbackPlan` 與 `execute_postback(plan) -> ReplyRecipe`；plan 是 immutable、封閉 typed action，並包含鎖定 policy 與拒絕 recipe。
+- `service.py` 是 LINE SDK event adapter，僅負責提取欄位、套用 processing-lock policy，並透過 `ReplyMessenger` seam 送出 recipe；SDK event 不進入 action module。
+- action 分派、細分無效輸入文案與例外相容策略保持 local，提升 locality 與變更 leverage；Weather Query／Query History 仍直接依賴既有 workflow，不建立假想 seam。
+- Query History 的資料庫 session 在 recipe 回傳前關閉，訊息 transport 完全留在外層 adapter。
 
 ### 4. 使用者管理模組 (`app/user/`)
 

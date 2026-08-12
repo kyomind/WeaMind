@@ -1,11 +1,10 @@
-"""Handle LINE rich-menu PostBack actions through the reply messenger seam."""
+"""Prepare and execute typed PostBack actions without LINE SDK dependencies."""
 
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from urllib.parse import parse_qs
-
-from linebot.v3.webhooks import PostbackEvent
 
 from app.core.config import settings
 from app.core.database import SessionLocal
@@ -13,228 +12,176 @@ from app.line.messaging import (
     LocationRequestRecipe,
     MessageChoice,
     MessageChoicesRecipe,
-    ReplyMessenger,
+    ReplyRecipe,
     TextRecipe,
     UriChoice,
     UriChoicesRecipe,
 )
-from app.user.service import (
-    create_user_if_not_exists,
-    get_recent_queries,
-    get_user_by_line_id,
-)
+from app.user.service import create_user_if_not_exists, get_recent_queries, get_user_by_line_id
 from app.weather.workflow import query_preset
 
 from .weather_presentation import QueryKind, build_weather_reply
 
 logger = logging.getLogger(__name__)
+_LOCK_DENIED_RECIPE = TextRecipe("操作太過頻繁，請放慢腳步 ☕️")
 
 
-def parse_postback_data(data: str) -> dict[str, str]:
-    """Parse raw postback query string data into a dictionary."""
-    if not data:
-        return {}
+@dataclass(frozen=True)
+class PresetWeatherAction:
+    """Query weather for a user's saved location."""
 
-    try:
-        parsed = parse_qs(data, keep_blank_values=False)
-    except Exception:
-        logger.exception("Failed to parse PostBack data", extra={"raw_data": data})
-        return {}
-
-    return {key: values[0] for key, values in parsed.items() if values}
+    user_id: str
+    location_type: str
 
 
-def should_use_processing_lock(postback_data: dict[str, str]) -> bool:
-    """Determine whether a PostBack action should use the processing lock."""
-    action = postback_data.get("action")
-    action_type = postback_data.get("type")
+@dataclass(frozen=True)
+class CurrentWeatherAction:
+    """Ask the user to share a current location."""
+
+
+@dataclass(frozen=True)
+class LocationSettingsAction:
+    """Show the location-settings entry point."""
+
+
+@dataclass(frozen=True)
+class RecentQueriesAction:
+    """Show a user's recent weather-query locations."""
+
+    user_id: str
+
+
+@dataclass(frozen=True)
+class OtherMenuAction:
+    """Show links from the other-information menu."""
+
+
+@dataclass(frozen=True)
+class InvalidAction:
+    """Preserve the specific recipe for invalid or incomplete PostBack data."""
+
+    recipe: ReplyRecipe
+
+
+type PostbackAction = (
+    PresetWeatherAction
+    | CurrentWeatherAction
+    | LocationSettingsAction
+    | RecentQueriesAction
+    | OtherMenuAction
+    | InvalidAction
+)
+
+
+@dataclass(frozen=True)
+class PostbackPlan:
+    """Describe one closed PostBack action and its processing-lock policy."""
+
+    action: PostbackAction
+    requires_lock: bool
+    lock_denied_recipe: ReplyRecipe
+
+
+def prepare_postback(raw_data: str, user_id: str) -> PostbackPlan:
+    """Parse raw query-string data into an immutable executable action plan."""
+    data = _parse_data(raw_data)
+    action = data.get("action")
+    action_type = data.get("type")
 
     if action == "weather":
-        return action_type in {"home", "office"}
-
-    if action == "recent_queries":
-        return True
-
-    return False
-
-
-def dispatch_postback(
-    event: PostbackEvent,
-    user_id: str,
-    postback_data: dict[str, str],
-    messenger: ReplyMessenger,
-) -> None:
-    """Route a PostBack event to the appropriate handler."""
-    action = postback_data.get("action")
-
-    if action == "weather":
-        handle_weather_postback(event, user_id, postback_data, messenger)
-        return
-
-    if action == "settings":
-        handle_settings_postback(event, postback_data, messenger)
-        return
-
-    if action == "recent_queries":
-        handle_recent_queries_postback(event, messenger)
-        return
-
-    if action == "other":
-        handle_other_postback(event, postback_data, messenger)
-        return
-
-    logger.warning("Unknown PostBack action", extra={"postback_data": postback_data})
-    messenger.reply(event.reply_token, TextRecipe("未知的操作"))
-
-
-def handle_weather_postback(
-    event: PostbackEvent,
-    user_id: str,
-    data: dict[str, str],
-    messenger: ReplyMessenger,
-) -> None:
-    """Handle weather-related PostBack operations for home, office, or current."""
-    location_type = data.get("type")
-
-    if location_type in {"home", "office"}:
-        handle_user_location_weather(event, user_id, location_type, messenger)
-        return
-
-    if location_type == "current":
-        handle_current_location_weather(event, messenger)
-        return
-
-    messenger.reply(event.reply_token, TextRecipe("未知的地點類型"))
-
-
-def handle_user_location_weather(
-    event: PostbackEvent,
-    user_id: str,
-    location_type: str,
-    messenger: ReplyMessenger,
-) -> None:
-    """Reply with preset location weather information for home or office."""
-    try:
-        kind = QueryKind.PRESET_HOME if location_type == "home" else QueryKind.PRESET_OFFICE
-        query_result = query_preset(user_id, location_type)
-        messenger.reply(event.reply_token, build_weather_reply(query_result, kind))
-    except Exception:
-        logger.exception("Error handling preset location weather", extra={"type": location_type})
-        messenger.reply(event.reply_token, TextRecipe("查詢時發生錯誤，請稍後再試。"))
-
-
-def handle_settings_postback(
-    event: PostbackEvent,
-    data: dict[str, str],
-    messenger: ReplyMessenger,
-) -> None:
-    """Handle settings-related PostBack operations."""
-    settings_type = data.get("type")
-
-    if settings_type == "location":
-        logger.info("Location setting requested via PostBack")
-        liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
-        response_message = (
-            "地點設定\n\n"
-            "請點擊下方連結設定您的常用地點：\n"
-            f"{liff_url}\n\n"
-            "設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
-        )
-        messenger.reply(event.reply_token, TextRecipe(response_message))
-        return
-
-    logger.warning("Unknown settings PostBack type", extra={"type": settings_type})
-    messenger.reply(event.reply_token, TextRecipe("未知的設定類型"))
-
-
-def handle_recent_queries_postback(
-    event: PostbackEvent,
-    messenger: ReplyMessenger,
-) -> None:
-    """Handle PostBack events requesting recent query history."""
-    try:
-        user_id = getattr(event.source, "user_id", None) if event.source else None
-        if not user_id:
-            logger.warning("Recent queries PostBack event without user_id")
-            messenger.reply(event.reply_token, TextRecipe("用戶識別錯誤"))
-            return
-
-        with SessionLocal() as session:
-            user = get_user_by_line_id(session, user_id)
-            if not user:
-                user = create_user_if_not_exists(session, user_id)
-
-            recent_locations = get_recent_queries(session, user.id, limit=5)
-            recent_location_names = tuple(location.full_name for location in recent_locations)
-
-        # Build and send only after releasing the database connection.
-        if not recent_location_names:
-            messenger.reply(
-                event.reply_token,
-                TextRecipe("您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！"),
+        if action_type in {"home", "office"}:
+            return PostbackPlan(
+                PresetWeatherAction(user_id, action_type), True, _LOCK_DENIED_RECIPE
             )
-            return
-
-        recipe = MessageChoicesRecipe(
-            text="最近查過的 5 個地點：",
-            choices=tuple(
-                MessageChoice(label=location_name, text=location_name)
-                for location_name in recent_location_names
-            ),
-        )
-        send_result = messenger.reply(event.reply_token, recipe)
-        if send_result.success:
-            logger.info("Recent queries response sent", extra={"options": len(recipe.choices)})
-        # Never spend a single-use reply token on a fallback after a failed send.
-    except Exception:
-        logger.exception("Error handling recent queries PostBack")
-        messenger.reply(event.reply_token, TextRecipe("系統暫時有點忙，請稍後再試一次。"))
-
-
-def handle_current_location_weather(
-    event: PostbackEvent,
-    messenger: ReplyMessenger,
-) -> None:
-    """Prompt the user to share their current location for weather lookup."""
-    messenger.reply(
-        event.reply_token,
-        LocationRequestRecipe(
-            text="請點擊地圖上任意位置，將為您查詢該地天氣",
-            label="開啟地圖選擇",
-        ),
-    )
+        if action_type == "current":
+            return PostbackPlan(CurrentWeatherAction(), False, _LOCK_DENIED_RECIPE)
+        return PostbackPlan(InvalidAction(TextRecipe("未知的地點類型")), False, _LOCK_DENIED_RECIPE)
+    if action == "settings":
+        if action_type == "location":
+            logger.info("Location setting requested via PostBack")
+            return PostbackPlan(LocationSettingsAction(), False, _LOCK_DENIED_RECIPE)
+        logger.warning("Unknown settings PostBack type", extra={"type": action_type})
+        return PostbackPlan(InvalidAction(TextRecipe("未知的設定類型")), False, _LOCK_DENIED_RECIPE)
+    if action == "recent_queries":
+        return PostbackPlan(RecentQueriesAction(user_id), True, _LOCK_DENIED_RECIPE)
+    if action == "other":
+        if action_type == "menu":
+            return PostbackPlan(OtherMenuAction(), False, _LOCK_DENIED_RECIPE)
+        logger.warning("Unknown other PostBack type", extra={"type": action_type})
+        return PostbackPlan(InvalidAction(TextRecipe("未知的操作")), False, _LOCK_DENIED_RECIPE)
+    logger.warning("Unknown PostBack action", extra={"postback_data": data})
+    return PostbackPlan(InvalidAction(TextRecipe("未知的操作")), False, _LOCK_DENIED_RECIPE)
 
 
-def handle_other_postback(
-    event: PostbackEvent,
-    data: dict[str, str],
-    messenger: ReplyMessenger,
-) -> None:
-    """Handle PostBack events triggered from the other menu."""
-    postback_type = data.get("type")
-
-    if postback_type == "menu":
-        messenger.reply(
-            event.reply_token,
-            UriChoicesRecipe(
+def execute_postback(plan: PostbackPlan) -> ReplyRecipe:
+    """Execute a prepared action and always return exactly one reply recipe."""
+    try:
+        action = plan.action
+        if isinstance(action, PresetWeatherAction):
+            kind = (
+                QueryKind.PRESET_HOME if action.location_type == "home" else QueryKind.PRESET_OFFICE
+            )
+            return build_weather_reply(query_preset(action.user_id, action.location_type), kind)
+        if isinstance(action, CurrentWeatherAction):
+            return LocationRequestRecipe(
+                text="請點擊地圖上任意位置，將為您查詢該地天氣", label="開啟地圖選擇"
+            )
+        if isinstance(action, LocationSettingsAction):
+            liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
+            return TextRecipe(
+                "地點設定\n\n請點擊下方連結設定您的常用地點：\n"
+                f"{liff_url}\n\n設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
+            )
+        if isinstance(action, RecentQueriesAction):
+            return _execute_recent_queries(action)
+        if isinstance(action, OtherMenuAction):
+            return UriChoicesRecipe(
                 text="請選擇想了解的資訊：",
                 choices=(
                     UriChoice(
-                        label="🔄 更新",
-                        uri="https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md",
+                        "🔄 更新", "https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md"
                     ),
                     UriChoice(
-                        label="📖 使用說明",
-                        uri="https://github.com/kyomind/WeaMind/blob/main/README.md",
+                        "📖 使用說明", "https://github.com/kyomind/WeaMind/blob/main/README.md"
                     ),
-                    UriChoice(
-                        label="ℹ️ 專案介紹",
-                        uri="https://api.kyomind.tw/static/about/index.html",
-                    ),
+                    UriChoice("ℹ️ 專案介紹", "https://api.kyomind.tw/static/about/index.html"),
                 ),
-            ),
+            )
+        return action.recipe  # noqa: TRY300
+    except Exception:
+        logger.exception(
+            "Error executing PostBack action", extra={"action": type(plan.action).__name__}
         )
-        return
+        if isinstance(plan.action, PresetWeatherAction):
+            return TextRecipe("查詢時發生錯誤，請稍後再試。")
+        return TextRecipe("系統暫時有點忙，請稍後再試一次。")
 
-    logger.warning("Unknown other PostBack type", extra={"type": postback_type})
-    messenger.reply(event.reply_token, TextRecipe("未知的操作"))
+
+def _parse_data(raw_data: str) -> dict[str, str]:
+    """Parse PostBack query-string data while containing malformed input."""
+    if not raw_data:
+        return {}
+    try:
+        parsed = parse_qs(raw_data, keep_blank_values=False)
+    except Exception:
+        logger.exception("Failed to parse PostBack data", extra={"raw_data": raw_data})
+        return {}
+    return {key: values[0] for key, values in parsed.items() if values}
+
+
+def _execute_recent_queries(action: RecentQueriesAction) -> ReplyRecipe:
+    """Load query history and close its database session before returning a recipe."""
+    with SessionLocal() as session:
+        user = get_user_by_line_id(session, action.user_id)
+        if not user:
+            user = create_user_if_not_exists(session, action.user_id)
+        names = tuple(
+            location.full_name for location in get_recent_queries(session, user.id, limit=5)
+        )
+
+    if not names:
+        return TextRecipe("您還沒有查詢過其他地點的天氣\n\n試試看輸入地點名稱來查詢天氣吧！")
+    return MessageChoicesRecipe(
+        text="最近查過的 5 個地點：",
+        choices=tuple(MessageChoice(label=name, text=name) for name in names),
+    )
