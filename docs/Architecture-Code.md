@@ -112,6 +112,8 @@ async def line_webhook(request, x_line_signature, background_tasks):
 
 LINE SDK decorator callback 固定使用 production `ReplyMessenger`；核心處理器則明確接收 `ReplyMessenger`，測試可替換成 in-memory adapter。
 
+`LineSdkWebhookDispatcher` 集中 LINE SDK webhook parsing、handler resolution 與 invocation lifecycle。`service.py` 僅透過它的穩定 interface 協調 event-level metrics；LINE SDK 的 private implementation 不跨出 `sdk_dispatch.py`。
+
 **文字訊息處理流程**:
 1. 驗證 `reply_token` 與訊息型別
 2. 呼叫 Weather Query workflow

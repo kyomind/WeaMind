@@ -18,7 +18,7 @@ from app.line.metrics import (
     record_webhook_received,
     record_webhook_success,
 )
-from app.line.service import _resolve_event_handler, process_webhook_events
+from app.line.service import process_webhook_events
 
 
 class TestLineMetrics:
@@ -144,67 +144,21 @@ class TestLineMetrics:
         second_event.type = "postback"
         payload = Mock(events=[first_event, second_event])
 
-        with patch("app.line.service.webhook_handler.parser.parse", return_value=payload):
-            with patch("app.line.service._resolve_event_handler", return_value=object()):
-                with patch("app.line.service.webhook_handler._WebhookHandler__invoke_func"):
+        with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
+            with patch("app.line.service.webhook_dispatcher.dispatch", return_value=True):
+                with patch("app.line.service.line_metrics.record_webhook_success") as mock_success:
                     with patch(
-                        "app.line.service.line_metrics.record_webhook_success"
-                    ) as mock_success:
-                        with patch(
-                            "app.line.service.line_metrics.record_webhook_duration"
-                        ) as mock_duration:
-                            process_webhook_events("{}", "signature")
+                        "app.line.service.line_metrics.record_webhook_duration"
+                    ) as mock_duration:
+                        process_webhook_events("{}", "signature")
 
         assert mock_success.call_args_list == [((["follow"],),), ((["postback"],),)]
         assert mock_duration.call_count == 2
 
-    def test_resolve_event_handler_uses_message_registration_first(self) -> None:
-        """Test message events prefer the message-specific registered handler."""
-
-        class FakeMessageEvent:
-            """Lightweight stand-in for MessageEvent in handler resolution tests."""
-
-            def __init__(self, message: object) -> None:
-                """Store a message object for handler-key resolution."""
-                self.message = message
-
-        event = FakeMessageEvent(object())
-        handler = object()
-
-        with patch("app.line.service.MessageEvent", FakeMessageEvent):
-            with patch(
-                "app.line.service.webhook_handler._WebhookHandler__get_handler_key",
-                side_effect=["message-key"],
-            ) as mock_get_handler_key:
-                with patch.dict(
-                    "app.line.service.webhook_handler._handlers",
-                    {"message-key": handler},
-                    clear=True,
-                ):
-                    resolved_handler = _resolve_event_handler(event)
-
-        assert resolved_handler is handler
-        mock_get_handler_key.assert_called_once_with(FakeMessageEvent, object)
-
-    def test_resolve_event_handler_falls_back_to_default_handler(self) -> None:
-        """Test handler resolution returns the SDK default when no registration matches."""
-        event = Mock()
-        default_handler = object()
-
-        with patch(
-            "app.line.service.webhook_handler._WebhookHandler__get_handler_key",
-            return_value="missing-key",
-        ):
-            with patch.dict("app.line.service.webhook_handler._handlers", {}, clear=True):
-                with patch("app.line.service.webhook_handler._default", default_handler):
-                    resolved_handler = _resolve_event_handler(event)
-
-        assert resolved_handler is default_handler
-
     def test_process_webhook_events_records_signature_error_during_parse(self) -> None:
         """Test parse-time signature errors use fallback labels and record failure metrics."""
         with patch(
-            "app.line.service.webhook_handler.parser.parse",
+            "app.line.service.webhook_dispatcher.parse",
             side_effect=InvalidSignatureError("bad signature"),
         ):
             with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
@@ -220,7 +174,7 @@ class TestLineMetrics:
     def test_process_webhook_events_records_parse_failure_as_handler_error(self) -> None:
         """Test parse-time non-signature failures fall back to handler_error metrics."""
         with patch(
-            "app.line.service.webhook_handler.parser.parse",
+            "app.line.service.webhook_dispatcher.parse",
             side_effect=RuntimeError("parse failed"),
         ):
             with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
@@ -239,8 +193,8 @@ class TestLineMetrics:
         event.type = "follow"
         payload = Mock(events=[event])
 
-        with patch("app.line.service.webhook_handler.parser.parse", return_value=payload):
-            with patch("app.line.service._resolve_event_handler", return_value=None):
+        with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
+            with patch("app.line.service.webhook_dispatcher.dispatch", return_value=False):
                 with patch("app.line.service.line_metrics.record_webhook_success") as mock_success:
                     with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
                         with patch(
@@ -258,18 +212,17 @@ class TestLineMetrics:
         event.type = "follow"
         payload = Mock(events=[event])
 
-        with patch("app.line.service.webhook_handler.parser.parse", return_value=payload):
-            with patch("app.line.service._resolve_event_handler", return_value=object()):
-                with patch(
-                    "app.line.service.webhook_handler._WebhookHandler__invoke_func",
-                    side_effect=InvalidSignatureError("expired"),
-                ):
-                    with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
-                        with patch(
-                            "app.line.service.line_metrics.record_webhook_duration"
-                        ) as mock_duration:
-                            with pytest.raises(InvalidSignatureError):
-                                process_webhook_events("{}", "signature")
+        with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
+            with patch(
+                "app.line.service.webhook_dispatcher.dispatch",
+                side_effect=InvalidSignatureError("expired"),
+            ):
+                with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
+                    with patch(
+                        "app.line.service.line_metrics.record_webhook_duration"
+                    ) as mock_duration:
+                        with pytest.raises(InvalidSignatureError):
+                            process_webhook_events("{}", "signature")
 
         mock_error.assert_called_once_with(["follow"], "signature_error")
         mock_duration.assert_called_once()
@@ -284,25 +237,20 @@ class TestLineMetrics:
         third_event.type = "postback"
         payload = Mock(events=[first_event, second_event, third_event])
 
-        with patch("app.line.service.webhook_handler.parser.parse", return_value=payload):
-            with patch("app.line.service._resolve_event_handler", return_value=object()):
-                with patch(
-                    "app.line.service.webhook_handler._WebhookHandler__invoke_func",
-                    side_effect=[None, Exception("boom")],
-                ):
-                    with patch(
-                        "app.line.service.line_metrics.record_webhook_success"
-                    ) as mock_success:
+        with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
+            with patch(
+                "app.line.service.webhook_dispatcher.dispatch",
+                side_effect=[True, Exception("boom")],
+            ):
+                with patch("app.line.service.line_metrics.record_webhook_success") as mock_success:
+                    with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
                         with patch(
-                            "app.line.service.line_metrics.record_webhook_error"
-                        ) as mock_error:
-                            with patch(
-                                "app.line.service.line_metrics.record_webhook_duration"
-                            ) as mock_duration:
-                                try:
-                                    process_webhook_events("{}", "signature")
-                                except Exception as exc:
-                                    assert str(exc) == "boom"
+                            "app.line.service.line_metrics.record_webhook_duration"
+                        ) as mock_duration:
+                            try:
+                                process_webhook_events("{}", "signature")
+                            except Exception as exc:
+                                assert str(exc) == "boom"
 
         assert mock_success.call_args_list == [((["follow"],),)]
         mock_error.assert_called_once_with(["unfollow"], "handler_error")

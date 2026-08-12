@@ -2,7 +2,6 @@
 
 import logging
 import time
-from typing import Protocol, cast
 
 from linebot.v3 import WebhookHandler
 from linebot.v3.exceptions import InvalidSignatureError
@@ -40,6 +39,7 @@ from .postback import (
     parse_postback_data,
     should_use_processing_lock,
 )
+from .sdk_dispatch import LineSdkWebhookDispatcher
 from .weather_presentation import format_weather_query
 
 __all__ = [
@@ -64,56 +64,11 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-class _ParsedWebhookPayload(Protocol):
-    """
-    Minimal payload protocol used by the webhook metrics wrapper.
-
-    The LINE SDK parser returns a richer payload object, but the metrics-aware
-    dispatch path only needs access to the parsed event list.
-    """
-
-    events: list[object]
-
-
 # The SDK requires fixed decorated callbacks, while core handlers receive the
 # messenger explicitly. Production wrappers below close over this immutable root.
 production_reply_messenger = LineSdkReplyMessenger(settings.LINE_CHANNEL_ACCESS_TOKEN)
 webhook_handler = WebhookHandler(settings.LINE_CHANNEL_SECRET)
-
-
-def _resolve_event_handler(event: object) -> object | None:
-    """
-    Resolve the registered LINE SDK handler for a parsed event object.
-
-    This mirrors the LINE SDK's internal dispatch logic so the project can wrap
-    each event invocation with metrics without rewriting the existing handlers.
-
-    Args:
-        event: Parsed LINE SDK event object.
-
-    Returns:
-        The registered handler callable for the event, or the SDK default
-        handler when no specific registration exists.
-    """
-    handler = None
-
-    if isinstance(event, MessageEvent):
-        message = getattr(event, "message", None)
-        handler_key = webhook_handler._WebhookHandler__get_handler_key(  # type: ignore[attr-defined]
-            event.__class__,
-            message.__class__,
-        )
-        handler = webhook_handler._handlers.get(handler_key)
-
-    if handler is None:
-        handler_key = webhook_handler._WebhookHandler__get_handler_key(  # type: ignore[attr-defined]
-            event.__class__
-        )
-        handler = webhook_handler._handlers.get(handler_key)
-
-    if handler is None:
-        return webhook_handler._default
-    return handler
+webhook_dispatcher = LineSdkWebhookDispatcher(webhook_handler)
 
 
 def process_webhook_events(
@@ -142,10 +97,7 @@ def process_webhook_events(
     """
     parse_start_time = time.perf_counter()
     try:
-        payload = cast(
-            _ParsedWebhookPayload,
-            webhook_handler.parser.parse(body_text, signature, as_payload=True),
-        )
+        payload = webhook_dispatcher.parse(body_text, signature)
     except InvalidSignatureError:
         event_types = fallback_event_types or ["unknown"]
         line_metrics.record_webhook_error(event_types, "signature_error")
@@ -161,13 +113,10 @@ def process_webhook_events(
         event_type = line_metrics.normalize_runtime_event_type(event)
         start_time = time.perf_counter()
         try:
-            handler = _resolve_event_handler(event)
-            if handler is None:
+            if webhook_dispatcher.dispatch(event, payload):
+                line_metrics.record_webhook_success([event_type])
+            else:
                 logger.info("No handler registered for LINE event")
-                continue
-
-            webhook_handler._WebhookHandler__invoke_func(handler, event, payload)  # type: ignore[attr-defined]
-            line_metrics.record_webhook_success([event_type])
         except InvalidSignatureError:
             line_metrics.record_webhook_error([event_type], "signature_error")
             raise
