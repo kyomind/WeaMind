@@ -12,7 +12,6 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.core.database import Base
 from app.user.models import User, UserQuery
 from app.weather.models import Location, Weather
-from app.weather.service import LocationService
 from app.weather.workflow import QueryOutcome, query_preset, query_shared_location, query_text
 
 
@@ -24,7 +23,12 @@ def workflow_db() -> Iterator[tuple[sessionmaker[Session], Location]]:
     factory = sessionmaker(engine, autoflush=False)
     with factory.begin() as session:
         location = Location(
-            geocode="63000010", county="臺北市", district="松山區", full_name="臺北市松山區"
+            geocode="63000010",
+            county="臺北市",
+            district="松山區",
+            full_name="臺北市松山區",
+            latitude=25.0,
+            longitude=121.0,
         )
         session.add(location)
         session.flush()
@@ -68,55 +72,15 @@ def test_text_query_records_history_and_returns_dtos(
 def test_shared_location_and_presets_use_adapter(
     workflow_db: tuple[sessionmaker[Session], Location],
 ) -> None:
-    """Cover shared location plus both home and office presets."""
+    """Cover shared location, address precedence, and both presets via public seams."""
     factory, _ = workflow_db
-
-    def find_location(session: Session, _latitude: float, _longitude: float) -> Location | None:
-        """Return a Location attached to the workflow-owned Session."""
-        return session.scalar(select(Location).where(Location.full_name == "臺北市松山區"))
-
-    with patch(
-        "app.weather.workflow.LocationService.find_nearest_location",
-        side_effect=find_location,
-    ):
-        shared = query_shared_location(25.0, 121.0, None, "known", session_factory=factory)
-    assert shared.outcome == QueryOutcome.FORECAST
+    shared = query_shared_location(25.0, 121.0, None, "known", session_factory=factory)
+    addressed = query_shared_location(35.0, 139.0, "臺北市松山區", "known", session_factory=factory)
+    assert shared.selected_location == addressed.selected_location
+    assert shared.selected_location is not None
+    assert shared.selected_location.full_name == "臺北市松山區"
     assert query_preset("known", "home", session_factory=factory).outcome == QueryOutcome.FORECAST
     assert query_preset("known", "office", session_factory=factory).outcome == QueryOutcome.FORECAST
-
-
-def test_shared_location_prefers_address_and_falls_back_to_gps(
-    workflow_db: tuple[sessionmaker[Session], Location],
-) -> None:
-    """Prefer an address match and perform one GPS fallback when it fails."""
-    factory, _ = workflow_db
-
-    def attached_location(session: Session, *_args: object) -> Location | None:
-        """Return the fixture Location attached to the workflow Session."""
-        return session.scalar(select(Location).where(Location.full_name == "臺北市松山區"))
-
-    with (
-        patch.object(
-            LocationService, "extract_location_from_address", side_effect=attached_location
-        ) as address,
-        patch.object(LocationService, "find_nearest_location") as gps,
-    ):
-        result = query_shared_location(
-            35.0, 139.0, "臺北市松山區", "known", session_factory=factory
-        )
-    assert result.outcome == QueryOutcome.FORECAST
-    address.assert_called_once()
-    gps.assert_not_called()
-
-    with (
-        patch.object(LocationService, "extract_location_from_address", return_value=None),
-        patch.object(
-            LocationService, "find_nearest_location", side_effect=attached_location
-        ) as gps,
-    ):
-        fallback = query_shared_location(25.0, 121.0, "無法解析", "known", session_factory=factory)
-    assert fallback.outcome == QueryOutcome.FORECAST
-    gps.assert_called_once()
 
 
 def test_no_weather_is_recorded_but_unknown_user_is_not(
@@ -161,19 +125,23 @@ def test_history_flush_failure_does_not_poison_transaction(
         assert session.scalars(select(UserQuery)).all() == []
 
 
-def test_text_query_resolves_location_once(
+def test_text_query_not_found_preserves_normalized_text(
     workflow_db: tuple[sessionmaker[Session], Location],
 ) -> None:
-    """Resolve text through exactly one Location parsing pass."""
+    """Map a missing Location to the Weather Query outcome and preserve its text."""
     factory, _ = workflow_db
-    with patch.object(
-        LocationService,
-        "parse_location_input",
-        wraps=LocationService.parse_location_input,
-    ) as parse:
-        result = query_text("松山", "known", session_factory=factory)
-    assert result.outcome == QueryOutcome.FORECAST
-    parse.assert_called_once()
+    result = query_text("不存在", None, session_factory=factory)
+    assert result.outcome == QueryOutcome.LOCATION_NOT_FOUND
+    assert result.query_text == "不存在"
+
+
+def test_shared_query_outside_taiwan(
+    workflow_db: tuple[sessionmaker[Session], Location],
+) -> None:
+    """Map an unserviceable shared location to the Weather Query outcome."""
+    factory, _ = workflow_db
+    result = query_shared_location(35.0, 139.0, None, "known", session_factory=factory)
+    assert result.outcome == QueryOutcome.OUTSIDE_TAIWAN
 
 
 def test_invalid_preset_is_rejected_before_opening_a_session() -> None:

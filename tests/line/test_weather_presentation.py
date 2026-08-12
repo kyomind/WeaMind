@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 
 from app.line.weather_presentation import format_weather_query
+from app.weather.location_resolution import InvalidInputReason
 from app.weather.workflow import (
     ForecastData,
     LocationData,
@@ -18,7 +19,19 @@ from app.weather.workflow import (
     [
         (WeatherQueryResult(QueryOutcome.INVALID_INPUT), "輸入格式不正確"),
         (
-            WeatherQueryResult(QueryOutcome.INVALID_INPUT, invalid_input_message="請輸入中文地名"),
+            WeatherQueryResult(QueryOutcome.INVALID_INPUT, invalid_reason=InvalidInputReason.EMPTY),
+            "輸入不能為空",
+        ),
+        (
+            WeatherQueryResult(
+                QueryOutcome.INVALID_INPUT, invalid_reason=InvalidInputReason.INVALID_LENGTH
+            ),
+            "🤔 輸入的字數不對喔！請輸入 2 到 7 個字的地名",
+        ),
+        (
+            WeatherQueryResult(
+                QueryOutcome.INVALID_INPUT, invalid_reason=InvalidInputReason.NON_CHINESE
+            ),
             "請輸入中文地名",
         ),
         (

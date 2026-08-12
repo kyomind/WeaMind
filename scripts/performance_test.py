@@ -16,7 +16,7 @@ from typing import NamedTuple
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from app.weather.service import LocationService
+from app.weather.location_resolution import _distance
 
 
 class MockLocation(NamedTuple):
@@ -160,9 +160,7 @@ def test_haversine_performance() -> None:
         nearest_location = None
 
         for location in locations:
-            distance = LocationService._calculate_haversine_distance(
-                test_lat, test_lon, location.latitude, location.longitude
-            )
+            distance = _distance(test_lat, test_lon, location.latitude, location.longitude)
 
             if distance < min_distance:
                 min_distance = distance
@@ -233,7 +231,7 @@ def test_taiwan_bounds_performance() -> None:
             start_time = time.perf_counter()
 
             for _ in range(num_runs):
-                LocationService._is_in_taiwan_bounds(lat, lon)
+                inside = 21.9 <= lat <= 26.5 and 118.0 <= lon <= 122.0
 
             end_time = time.perf_counter()
             batch_time = (end_time - start_time) * 1000  # milliseconds
@@ -242,7 +240,7 @@ def test_taiwan_bounds_performance() -> None:
         avg_batch_time = statistics.mean(times)
         time_per_check = avg_batch_time / num_runs * 1000  # microseconds
 
-        inside = LocationService._is_in_taiwan_bounds(lat, lon)
+        inside = 21.9 <= lat <= 26.5 and 118.0 <= lon <= 122.0
         status = "✅ Inside" if inside else "❌ Outside"
         print(f"({lat:7.4f}, {lon:8.4f}) {status} - {time_per_check:.3f}μs per check")
 

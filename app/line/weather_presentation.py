@@ -2,6 +2,7 @@
 
 from datetime import UTC, timedelta, timezone
 
+from app.weather.location_resolution import InvalidInputReason
 from app.weather.workflow import QueryOutcome, WeatherQueryResult
 
 
@@ -9,7 +10,13 @@ def format_weather_query(result: WeatherQueryResult) -> str:
     """Format a structured Weather Query result for LINE."""
     location = result.selected_location
     if result.outcome == QueryOutcome.INVALID_INPUT:
-        return result.invalid_input_message or "輸入格式不正確"
+        if result.invalid_reason is None:
+            return "輸入格式不正確"
+        return {
+            InvalidInputReason.EMPTY: "輸入不能為空",
+            InvalidInputReason.INVALID_LENGTH: "🤔 輸入的字數不對喔！請輸入 2 到 7 個字的地名",
+            InvalidInputReason.NON_CHINESE: "請輸入中文地名",
+        }[result.invalid_reason]
     if result.outcome == QueryOutcome.MULTIPLE_LOCATIONS:
         return "找到多個符合的地點，請選擇："
     if result.outcome == QueryOutcome.TOO_MANY_LOCATIONS:

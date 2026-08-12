@@ -10,8 +10,14 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.user.models import User, UserQuery
+from app.weather.location_resolution import (
+    InvalidInputReason,
+    ResolutionOutcome,
+    resolve_shared_location,
+    resolve_text,
+)
 from app.weather.models import Location, Weather
-from app.weather.service import LocationParseError, LocationService, WeatherService
+from app.weather.service import WeatherService
 
 logger = logging.getLogger(__name__)
 SessionFactory = Callable[[], Session]
@@ -58,7 +64,7 @@ class WeatherQueryResult:
     locations: tuple[LocationData, ...] = ()
     forecast: tuple[ForecastData, ...] = ()
     query_text: str | None = None
-    invalid_input_message: str | None = None
+    invalid_reason: InvalidInputReason | None = None
 
     @property
     def selected_location(self) -> LocationData | None:
@@ -124,25 +130,24 @@ def query_text(
             if line_user_id
             else None
         )
-        try:
-            locations, response_message = LocationService.parse_location_input(session, text)
-        except LocationParseError as error:
+        resolution = resolve_text(session, text)
+        if resolution.outcome == ResolutionOutcome.INVALID:
             return WeatherQueryResult(
-                QueryOutcome.INVALID_INPUT, invalid_input_message=error.message
+                QueryOutcome.INVALID_INPUT, invalid_reason=resolution.invalid_reason
             )
-        if len(locations) == 1:
-            return _result_for_location(session, locations[0], user)
-        copied = tuple(_location_data(location) for location in locations)
-        if copied:
-            outcome = QueryOutcome.MULTIPLE_LOCATIONS
-        elif "太多" in response_message:
-            outcome = QueryOutcome.TOO_MANY_LOCATIONS
-        else:
-            outcome = QueryOutcome.LOCATION_NOT_FOUND
+        if resolution.outcome == ResolutionOutcome.RESOLVED:
+            location = session.get(Location, resolution.locations[0].id)
+            if location is None:  # The resolver and workflow share one transaction.
+                return WeatherQueryResult(QueryOutcome.LOCATION_NOT_FOUND)
+            return _result_for_location(session, location, user)
+        outcome = {
+            ResolutionOutcome.MULTIPLE: QueryOutcome.MULTIPLE_LOCATIONS,
+            ResolutionOutcome.TOO_MANY: QueryOutcome.TOO_MANY_LOCATIONS,
+            ResolutionOutcome.NOT_FOUND: QueryOutcome.LOCATION_NOT_FOUND,
+        }[resolution.outcome]
+        copied = tuple(LocationData(item.id, item.full_name) for item in resolution.locations)
         return WeatherQueryResult(
-            outcome=outcome,
-            locations=copied,
-            query_text=text.strip().replace("台", "臺"),
+            outcome=outcome, locations=copied, query_text=resolution.normalized_text
         )
 
 
@@ -162,10 +167,10 @@ def query_shared_location(
             if line_user_id
             else None
         )
-        location = (
-            LocationService.extract_location_from_address(session, address) if address else None
-        )
-        location = location or LocationService.find_nearest_location(session, latitude, longitude)
+        resolution = resolve_shared_location(session, latitude, longitude, address)
+        if resolution.outcome != ResolutionOutcome.RESOLVED:
+            return WeatherQueryResult(QueryOutcome.OUTSIDE_TAIWAN)
+        location = session.get(Location, resolution.locations[0].id)
         if location is None:
             return WeatherQueryResult(QueryOutcome.OUTSIDE_TAIWAN)
         return _result_for_location(session, location, user)
