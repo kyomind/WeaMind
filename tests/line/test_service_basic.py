@@ -23,7 +23,8 @@ from app.line.service import (
     handle_unfollow_event,
     production_reply_messenger,
 )
-from app.weather.workflow import QueryOutcome, WeatherQueryResult
+from app.line.weather_presentation import QueryKind, build_weather_reply
+from app.weather.workflow import LocationData, QueryOutcome, WeatherQueryResult
 
 
 class TestMessageHandler:
@@ -51,6 +52,25 @@ class TestMessageHandler:
         handle_message_event(event, messenger)
 
         assert messenger.sent_replies == []
+
+    def test_handle_message_event_sends_presentation_recipe(
+        self, create_mock_message_event: Callable[..., Mock]
+    ) -> None:
+        """Send exactly the recipe the presentation module decides."""
+        event = create_mock_message_event(text="永和")
+        query_result = WeatherQueryResult(
+            QueryOutcome.MULTIPLE_LOCATIONS,
+            locations=(LocationData(1, "新北市永和區"), LocationData(2, "臺南市永和區")),
+        )
+        messenger = InMemoryReplyMessenger()
+
+        with patch("app.line.service.query_text", return_value=query_result) as query:
+            handle_message_event(event, messenger)
+
+        query.assert_called_once_with("永和", "test_user_id")
+        assert messenger.sent_replies == [
+            SentReply("test_token", build_weather_reply(query_result, QueryKind.TEXT))
+        ]
 
     def test_handle_message_event_contains_query_error(
         self, create_mock_message_event: Callable[..., Mock]
@@ -113,8 +133,9 @@ class TestLocationMessageHandler:
             handle_location_message_event(event, messenger)
 
         query.assert_called_once_with(25.03, 121.56, "臺北市", "test_user_id")
-        assert len(messenger.sent_replies) == 1
-        assert isinstance(messenger.sent_replies[0].recipe, TextRecipe)
+        assert messenger.sent_replies == [
+            SentReply("test_token", build_weather_reply(query_result, QueryKind.SHARED_LOCATION))
+        ]
 
     def test_handle_location_message_event_contains_query_error(
         self, create_mock_location_message_event: Callable[..., Mock]

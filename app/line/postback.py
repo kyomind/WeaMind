@@ -23,9 +23,9 @@ from app.user.service import (
     get_recent_queries,
     get_user_by_line_id,
 )
-from app.weather.workflow import QueryOutcome, query_preset
+from app.weather.workflow import query_preset
 
-from .weather_presentation import format_weather_query
+from .weather_presentation import QueryKind, build_weather_reply
 
 logger = logging.getLogger(__name__)
 
@@ -115,15 +115,9 @@ def handle_user_location_weather(
 ) -> None:
     """Reply with preset location weather information for home or office."""
     try:
-        location_name = "住家" if location_type == "home" else "公司"
+        kind = QueryKind.PRESET_HOME if location_type == "home" else QueryKind.PRESET_OFFICE
         query_result = query_preset(user_id, location_type)
-        response_message = format_weather_query(query_result)
-
-        if query_result.outcome == QueryOutcome.PRESET_NOT_SET:
-            recipe = TextRecipe(f"請先設定{location_name}地址，點擊下方「設定地點」按鈕即可設定。")
-        else:
-            recipe = TextRecipe(response_message)
-        messenger.reply(event.reply_token, recipe)
+        messenger.reply(event.reply_token, build_weather_reply(query_result, kind))
     except Exception:
         logger.exception("Error handling preset location weather", extra={"type": location_type})
         messenger.reply(event.reply_token, TextRecipe("查詢時發生錯誤，請稍後再試。"))

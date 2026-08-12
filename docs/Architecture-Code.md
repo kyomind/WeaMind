@@ -117,9 +117,9 @@ LINE SDK decorator callback 固定使用 production `ReplyMessenger`；核心處
 **文字訊息處理流程**:
 1. 驗證 `reply_token` 與訊息型別
 2. 呼叫 Weather Query workflow
-3. 格式化 Weather Query 結果
-4. 建立文字或候選地點 recipe
-5. 經由 `ReplyMessenger` seam 送出
+3. 交由 `weather_presentation` 決定唯一 recipe
+4. 經由 `ReplyMessenger` seam 送出
+5. handler 只負責隔離非預期例外，改送通用錯誤 recipe
 
 #### 3.3 訊息送出 (`messaging.py`)
 **功能**: 提供 recipe-based `ReplyMessenger` seam
@@ -132,7 +132,16 @@ LINE SDK decorator callback 固定使用 production `ReplyMessenger`；核心處
 
 Weather Query、Query History 與其他領域文案留在各自 module，訊息送出 module 僅負責 recipe 驗證、SDK 轉換與傳送。
 
-#### 3.4 Postback 處理 (`postback.py`)
+#### 3.4 Weather Query 呈現 (`weather_presentation.py`)
+**功能**: 決定正常 Weather Query 結果的完整 LINE 回覆
+
+- `build_weather_reply(result, kind)` 對每個正常 `WeatherQueryResult` 回傳「剛好一個」recipe，包含資料不完整或未知情況的 fallback
+- 同時擁有文案、recipe 選擇、多地點 `MessageChoicesRecipe`（2–3 筆）與 preset 未設定提示
+- `QueryKind` 是封閉的 typed 查詢入口列舉（`TEXT`、`SHARED_LOCATION`、`PRESET_HOME`、`PRESET_OFFICE`），由三條 event path 明確傳入；不接受 LINE SDK event、鬆散 dict 或顯示文字
+- 住家／公司等 preset 文案由 `QueryKind` 在本模組內衍生，caller 不傳 label
+- 非預期例外仍由 LINE event handler 隔離；weather workflow 不含任何 LINE recipe 政策
+
+#### 3.5 Postback 處理 (`postback.py`)
 **功能**: 處理 Rich Menu、Quick Reply 等互動元件回調
 **主要功能**:
 - 使用者位置天氣查詢 (住家/公司)
@@ -213,13 +222,12 @@ def find_nearest_location(session: Session, lat: float, lon: float) -> Location 
 2. **Webhook 接收** → 快速驗證 + 後台處理
 3. **Weather Query** → 協調 Location resolution、forecast 與 Query History side effect
 4. **Location resolution** → 驗證輸入並搜尋 persisted Taiwan Location
-5. **結果格式化** → 將 structured Weather Query result 轉成使用者文案
-6. **Recipe 選擇**:
+5. **Recipe 決策** → `weather_presentation` 由 structured result 產生唯一 recipe:
    - 0 筆或格式錯誤：文字 recipe
-   - 1 筆：forecast 文字 recipe
+   - 1 筆：forecast 文字 recipe（無資料時為 fallback 文字）
    - 2–3 筆：候選地點 Quick Reply recipe
    - >3 筆：要求更精確地名的文字 recipe
-7. **訊息送出** → `ReplyMessenger` 將 recipe 交給 production LINE SDK adapter
+6. **訊息送出** → `ReplyMessenger` 將 recipe 交給 production LINE SDK adapter
 
 ### GPS 位置分享流程
 

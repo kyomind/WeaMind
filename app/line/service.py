@@ -23,9 +23,8 @@ from app.weather.workflow import query_shared_location, query_text
 
 from .messaging import (
     LineSdkReplyMessenger,
-    MessageChoice,
-    MessageChoicesRecipe,
     ReplyMessenger,
+    ReplyRecipe,
     TextRecipe,
 )
 from .postback import (
@@ -40,7 +39,7 @@ from .postback import (
     should_use_processing_lock,
 )
 from .sdk_dispatch import LineSdkWebhookDispatcher
-from .weather_presentation import format_weather_query
+from .weather_presentation import QueryKind, build_weather_reply
 
 __all__ = [
     "handle_message_event",
@@ -152,18 +151,7 @@ def handle_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None
     try:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         query_result = query_text(message.text, user_id)
-        response_message = format_weather_query(query_result)
-        locations = query_result.locations
-        if 2 <= len(locations) <= 3:
-            recipe = MessageChoicesRecipe(
-                text=response_message,
-                choices=tuple(
-                    MessageChoice(label=location.full_name, text=location.full_name)
-                    for location in locations
-                ),
-            )
-        else:
-            recipe = TextRecipe(response_message)
+        recipe: ReplyRecipe = build_weather_reply(query_result, QueryKind.TEXT)
     except Exception:
         logger.exception(f"Unexpected error parsing location input: {message.text}")
         recipe = TextRecipe("系統暫時有點忙，請稍後再試一次。")
@@ -201,13 +189,13 @@ def handle_location_message_event(event: MessageEvent, messenger: ReplyMessenger
     try:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         query_result = query_shared_location(lat, lon, address, user_id)
-        response_message = format_weather_query(query_result)
+        recipe: ReplyRecipe = build_weather_reply(query_result, QueryKind.SHARED_LOCATION)
         logger.info("Location query completed")
     except Exception:
         logger.exception("Error handling location message from user")
-        response_message = "系統暫時有點忙，請稍後再試一次。"
+        recipe = TextRecipe("系統暫時有點忙，請稍後再試一次。")
 
-    messenger.reply(event.reply_token, TextRecipe(response_message))
+    messenger.reply(event.reply_token, recipe)
 
 
 def handle_follow_event(event: FollowEvent, messenger: ReplyMessenger) -> None:

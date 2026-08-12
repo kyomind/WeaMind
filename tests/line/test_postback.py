@@ -28,6 +28,7 @@ from app.line.postback import (
     should_use_processing_lock,
 )
 from app.line.service import handle_postback_event
+from app.line.weather_presentation import QueryKind
 from app.weather.workflow import QueryOutcome, WeatherQueryResult
 
 
@@ -123,29 +124,6 @@ def test_handle_postback_event_contains_dispatch_exception() -> None:
     ]
 
 
-def test_handle_weather_postback_preset_not_set() -> None:
-    """Prompt for setup when the requested preset has not been configured."""
-    messenger = InMemoryReplyMessenger()
-    event = _postback_event()
-    query_result = WeatherQueryResult(QueryOutcome.PRESET_NOT_SET)
-
-    with patch("app.line.postback.query_preset", return_value=query_result) as query:
-        handle_weather_postback(
-            event,
-            "test_user_id",
-            {"action": "weather", "type": "home"},
-            messenger,
-        )
-
-    query.assert_called_once_with("test_user_id", "home")
-    assert messenger.sent_replies == [
-        SentReply(
-            "test_token",
-            TextRecipe("請先設定住家地址，點擊下方「設定地點」按鈕即可設定。"),
-        )
-    ]
-
-
 def test_handle_weather_postback_success() -> None:
     """Reply with formatted weather when a preset query succeeds."""
     messenger = InMemoryReplyMessenger()
@@ -154,7 +132,7 @@ def test_handle_weather_postback_success() -> None:
 
     with (
         patch("app.line.postback.query_preset", return_value=query_result) as query,
-        patch("app.line.postback.format_weather_query", return_value="晴朗") as format_query,
+        patch("app.line.postback.build_weather_reply", return_value=TextRecipe("晴朗")) as build,
     ):
         handle_weather_postback(
             event,
@@ -164,7 +142,7 @@ def test_handle_weather_postback_success() -> None:
         )
 
     query.assert_called_once_with("test_user_id", "office")
-    format_query.assert_called_once_with(query_result)
+    build.assert_called_once_with(query_result, QueryKind.PRESET_OFFICE)
     assert messenger.sent_replies == [SentReply("test_token", TextRecipe("晴朗"))]
 
 
@@ -364,7 +342,7 @@ def test_dispatch_postback_routes_weather_action() -> None:
 
     with (
         patch("app.line.postback.query_preset", return_value=query_result) as query,
-        patch("app.line.postback.format_weather_query", return_value="晴朗"),
+        patch("app.line.postback.build_weather_reply", return_value=TextRecipe("晴朗")),
     ):
         dispatch_postback(
             _postback_event(),
