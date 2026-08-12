@@ -5,8 +5,8 @@ from __future__ import annotations
 from datetime import UTC, timedelta, timezone
 from enum import StrEnum
 
-from app.weather.location_resolution import InvalidInputReason
-from app.weather.workflow import ForecastData, LocationData, QueryOutcome, WeatherQueryResult
+from app.weather.location_resolution import InvalidInputReason, QueryOutcome, ResolvedLocation
+from app.weather.workflow import ForecastData, WeatherQueryResult
 
 from .messaging import MessageChoice, MessageChoicesRecipe, ReplyRecipe, TextRecipe
 
@@ -103,7 +103,7 @@ def _reply_text(result: WeatherQueryResult, kind: QueryKind) -> str:
     return _format_forecast(location, result.forecast)
 
 
-def _format_forecast(location: LocationData, forecast: tuple[ForecastData, ...]) -> str:
+def _format_forecast(location: ResolvedLocation, forecast: tuple[ForecastData, ...]) -> str:
     """Render a non-empty forecast for one resolved location in Taiwan time."""
     taiwan_tz = timezone(timedelta(hours=8))
     updated = forecast[0].fetched_at.replace(tzinfo=UTC).astimezone(taiwan_tz)

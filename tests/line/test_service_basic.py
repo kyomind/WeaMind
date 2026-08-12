@@ -24,7 +24,8 @@ from app.line.service import (
     production_reply_messenger,
 )
 from app.line.weather_presentation import QueryKind, build_weather_reply
-from app.weather.workflow import LocationData, QueryOutcome, WeatherQueryResult
+from app.weather.location_resolution import QueryOutcome, ResolvedLocation
+from app.weather.workflow import WeatherQueryResult
 
 
 class TestMessageHandler:
@@ -60,7 +61,7 @@ class TestMessageHandler:
         event = create_mock_message_event(text="永和")
         query_result = WeatherQueryResult(
             QueryOutcome.MULTIPLE_LOCATIONS,
-            locations=(LocationData(1, "新北市永和區"), LocationData(2, "臺南市永和區")),
+            locations=(ResolvedLocation(1, "新北市永和區"), ResolvedLocation(2, "臺南市永和區")),
         )
         messenger = InMemoryReplyMessenger()
 

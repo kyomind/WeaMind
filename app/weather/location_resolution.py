@@ -14,15 +14,17 @@ from app.weather.models import Location
 logger = logging.getLogger(__name__)
 
 
-class ResolutionOutcome(StrEnum):
-    """Describe a location resolution result without presentation text."""
+class QueryOutcome(StrEnum):
+    """Describe every structured outcome of a Weather Query."""
 
-    RESOLVED = "resolved"
-    MULTIPLE = "multiple"
-    TOO_MANY = "too_many"
-    NOT_FOUND = "not_found"
-    INVALID = "invalid"
-    OUTSIDE_SERVICE_AREA = "outside_service_area"
+    FORECAST = "forecast"
+    NO_WEATHER = "no_weather"
+    MULTIPLE_LOCATIONS = "multiple_locations"
+    TOO_MANY_LOCATIONS = "too_many_locations"
+    LOCATION_NOT_FOUND = "location_not_found"
+    OUTSIDE_TAIWAN = "outside_taiwan"
+    INVALID_INPUT = "invalid_input"
+    PRESET_NOT_SET = "preset_not_set"
 
 
 class InvalidInputReason(StrEnum):
@@ -35,7 +37,7 @@ class InvalidInputReason(StrEnum):
 
 @dataclass(frozen=True)
 class ResolvedLocation:
-    """Carry immutable location identity across the resolution seam."""
+    """Represent immutable Location data needed outside the ORM boundary."""
 
     id: int
     full_name: str
@@ -45,10 +47,15 @@ class ResolvedLocation:
 class LocationResolution:
     """Represent the complete structured result of location resolution."""
 
-    outcome: ResolutionOutcome
+    outcome: QueryOutcome
     locations: tuple[ResolvedLocation, ...] = ()
     normalized_text: str | None = None
     invalid_reason: InvalidInputReason | None = None
+
+
+def immutable_location(location: Location) -> ResolvedLocation:
+    """Copy required persisted Location data into an immutable domain result."""
+    return ResolvedLocation(id=location.id, full_name=location.full_name)
 
 
 def resolve_text(session: Session, text: str) -> LocationResolution:
@@ -56,15 +63,15 @@ def resolve_text(session: Session, text: str) -> LocationResolution:
     normalized = text.strip()
     if not normalized:
         return LocationResolution(
-            ResolutionOutcome.INVALID, invalid_reason=InvalidInputReason.EMPTY
+            QueryOutcome.INVALID_INPUT, invalid_reason=InvalidInputReason.EMPTY
         )
     if not 2 <= len(normalized) <= 7:
         return LocationResolution(
-            ResolutionOutcome.INVALID, invalid_reason=InvalidInputReason.INVALID_LENGTH
+            QueryOutcome.INVALID_INPUT, invalid_reason=InvalidInputReason.INVALID_LENGTH
         )
     if re.fullmatch(r"[\u4e00-\u9fff]+", normalized) is None:
         return LocationResolution(
-            ResolutionOutcome.INVALID, invalid_reason=InvalidInputReason.NON_CHINESE
+            QueryOutcome.INVALID_INPUT, invalid_reason=InvalidInputReason.NON_CHINESE
         )
     normalized = normalized.replace("台", "臺")
     matches = (
@@ -73,16 +80,16 @@ def resolve_text(session: Session, text: str) -> LocationResolution:
         .order_by(Location.full_name)
         .all()
     )
-    locations = tuple(ResolvedLocation(item.id, item.full_name) for item in matches)
+    locations = tuple(immutable_location(item) for item in matches)
     if len(locations) == 1:
-        outcome = ResolutionOutcome.RESOLVED
+        outcome = QueryOutcome.FORECAST
     elif 2 <= len(locations) <= 3:
-        outcome = ResolutionOutcome.MULTIPLE
+        outcome = QueryOutcome.MULTIPLE_LOCATIONS
     elif len(locations) > 3:
-        outcome = ResolutionOutcome.TOO_MANY
+        outcome = QueryOutcome.TOO_MANY_LOCATIONS
         locations = ()
     else:
-        outcome = ResolutionOutcome.NOT_FOUND
+        outcome = QueryOutcome.LOCATION_NOT_FOUND
     return LocationResolution(outcome, locations, normalized)
 
 
@@ -93,11 +100,8 @@ def resolve_shared_location(
     location = _from_address(session, address) if address else None
     location = location or _from_coordinates(session, latitude, longitude)
     if location is None:
-        return LocationResolution(ResolutionOutcome.OUTSIDE_SERVICE_AREA)
-    return LocationResolution(
-        ResolutionOutcome.RESOLVED,
-        (ResolvedLocation(location.id, location.full_name),),
-    )
+        return LocationResolution(QueryOutcome.OUTSIDE_TAIWAN)
+    return LocationResolution(QueryOutcome.FORECAST, (immutable_location(location),))
 
 
 def _from_address(session: Session, address: str) -> Location | None:
@@ -127,7 +131,6 @@ def _from_coordinates(session: Session, latitude: float, longitude: float) -> Lo
     nearest: Location | None = None
     nearest_distance = float("inf")
     for location in locations:
-        # Keep the model's nullable annotation safe even if adapter filtering changes.
         if location.latitude is None or location.longitude is None:
             continue
         candidate_distance = _distance(
@@ -135,7 +138,6 @@ def _from_coordinates(session: Session, latitude: float, longitude: float) -> Lo
         )
         if candidate_distance < nearest_distance:
             nearest, nearest_distance = location, candidate_distance
-    # A broad bounds check alone would incorrectly serve users over nearby water.
     return nearest if nearest_distance <= 15.0 else None
 
 

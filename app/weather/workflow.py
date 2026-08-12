@@ -4,7 +4,6 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from enum import StrEnum
 
 from sqlalchemy.orm import Session
 
@@ -12,7 +11,9 @@ from app.core.database import SessionLocal
 from app.user.models import User, UserQuery
 from app.weather.location_resolution import (
     InvalidInputReason,
-    ResolutionOutcome,
+    QueryOutcome,
+    ResolvedLocation,
+    immutable_location,
     resolve_shared_location,
     resolve_text,
 )
@@ -21,27 +22,6 @@ from app.weather.service import WeatherService
 
 logger = logging.getLogger(__name__)
 SessionFactory = Callable[[], Session]
-
-
-class QueryOutcome(StrEnum):
-    """Describe the structured outcome of a Weather Query."""
-
-    FORECAST = "forecast"
-    NO_WEATHER = "no_weather"
-    MULTIPLE_LOCATIONS = "multiple_locations"
-    TOO_MANY_LOCATIONS = "too_many_locations"
-    LOCATION_NOT_FOUND = "location_not_found"
-    OUTSIDE_TAIWAN = "outside_taiwan"
-    INVALID_INPUT = "invalid_input"
-    PRESET_NOT_SET = "preset_not_set"
-
-
-@dataclass(frozen=True)
-class LocationData:
-    """Represent immutable Location data crossing the Session boundary."""
-
-    id: int
-    full_name: str
 
 
 @dataclass(frozen=True)
@@ -61,20 +41,15 @@ class WeatherQueryResult:
     """Return structured, ORM-free Weather Query output."""
 
     outcome: QueryOutcome
-    locations: tuple[LocationData, ...] = ()
+    locations: tuple[ResolvedLocation, ...] = ()
     forecast: tuple[ForecastData, ...] = ()
     query_text: str | None = None
     invalid_reason: InvalidInputReason | None = None
 
     @property
-    def selected_location(self) -> LocationData | None:
+    def selected_location(self) -> ResolvedLocation | None:
         """Return the uniquely selected Location data, when present."""
         return self.locations[0] if len(self.locations) == 1 else None
-
-
-def _location_data(location: Location) -> LocationData:
-    """Copy a Location ORM entity into immutable data."""
-    return LocationData(id=location.id, full_name=location.full_name)
 
 
 def _forecast_data(weather: Weather) -> ForecastData:
@@ -107,14 +82,14 @@ def _record_history(session: Session, user: User | None, location_id: int) -> No
 
 
 def _result_for_location(
-    session: Session, location: Location, user: User | None
+    session: Session, location: ResolvedLocation, user: User | None
 ) -> WeatherQueryResult:
     """Query weather and record history for an already resolved Location."""
     weather = WeatherService.get_weather_forecast_by_location(session, location.id)
     _record_history(session, user, location.id)
     return WeatherQueryResult(
         outcome=QueryOutcome.FORECAST if weather else QueryOutcome.NO_WEATHER,
-        locations=(_location_data(location),),
+        locations=(location,),
         forecast=tuple(_forecast_data(item) for item in weather),
     )
 
@@ -131,23 +106,16 @@ def query_text(
             else None
         )
         resolution = resolve_text(session, text)
-        if resolution.outcome == ResolutionOutcome.INVALID:
+        if resolution.outcome == QueryOutcome.INVALID_INPUT:
             return WeatherQueryResult(
                 QueryOutcome.INVALID_INPUT, invalid_reason=resolution.invalid_reason
             )
-        if resolution.outcome == ResolutionOutcome.RESOLVED:
-            location = session.get(Location, resolution.locations[0].id)
-            if location is None:  # The resolver and workflow share one transaction.
-                return WeatherQueryResult(QueryOutcome.LOCATION_NOT_FOUND)
-            return _result_for_location(session, location, user)
-        outcome = {
-            ResolutionOutcome.MULTIPLE: QueryOutcome.MULTIPLE_LOCATIONS,
-            ResolutionOutcome.TOO_MANY: QueryOutcome.TOO_MANY_LOCATIONS,
-            ResolutionOutcome.NOT_FOUND: QueryOutcome.LOCATION_NOT_FOUND,
-        }[resolution.outcome]
-        copied = tuple(LocationData(item.id, item.full_name) for item in resolution.locations)
+        if resolution.outcome == QueryOutcome.FORECAST:
+            return _result_for_location(session, resolution.locations[0], user)
         return WeatherQueryResult(
-            outcome=outcome, locations=copied, query_text=resolution.normalized_text
+            outcome=resolution.outcome,
+            locations=resolution.locations,
+            query_text=resolution.normalized_text,
         )
 
 
@@ -168,12 +136,9 @@ def query_shared_location(
             else None
         )
         resolution = resolve_shared_location(session, latitude, longitude, address)
-        if resolution.outcome != ResolutionOutcome.RESOLVED:
-            return WeatherQueryResult(QueryOutcome.OUTSIDE_TAIWAN)
-        location = session.get(Location, resolution.locations[0].id)
-        if location is None:
-            return WeatherQueryResult(QueryOutcome.OUTSIDE_TAIWAN)
-        return _result_for_location(session, location, user)
+        if resolution.outcome != QueryOutcome.FORECAST:
+            return WeatherQueryResult(resolution.outcome)
+        return _result_for_location(session, resolution.locations[0], user)
 
 
 def query_preset(
@@ -191,4 +156,4 @@ def query_preset(
         location = session.get(Location, location_id) if location_id is not None else None
         if location is None:
             return WeatherQueryResult(QueryOutcome.PRESET_NOT_SET)
-        return _result_for_location(session, location, user)
+        return _result_for_location(session, immutable_location(location), user)

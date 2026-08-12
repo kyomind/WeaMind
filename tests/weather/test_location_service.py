@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.weather.location_resolution import (
     InvalidInputReason,
-    ResolutionOutcome,
+    QueryOutcome,
     resolve_shared_location,
     resolve_text,
 )
@@ -28,7 +28,7 @@ def test_text_resolution_reports_invalid_reason(
 ) -> None:
     """Expose invalid input reasons without presentation wording."""
     result = resolve_text(session, text)
-    assert result.outcome == ResolutionOutcome.INVALID
+    assert result.outcome == QueryOutcome.INVALID_INPUT
     assert result.invalid_reason == reason
 
 
@@ -43,7 +43,7 @@ def test_text_resolution_encapsulates_candidate_policy(
         full_name="臺北市大安區",
     )
     resolved = resolve_text(session, "台北市大安區")
-    assert resolved.outcome == ResolutionOutcome.RESOLVED
+    assert resolved.outcome == QueryOutcome.FORECAST
     assert resolved.normalized_text == "臺北市大安區"
     assert resolved.locations[0].id == direct.id
 
@@ -54,8 +54,8 @@ def test_text_resolution_encapsulates_candidate_policy(
             district="中正區",
             full_name=f"測試{index}中正區",
         )
-    assert resolve_text(session, "中正區").outcome == ResolutionOutcome.TOO_MANY
-    assert resolve_text(session, "不存在").outcome == ResolutionOutcome.NOT_FOUND
+    assert resolve_text(session, "中正區").outcome == QueryOutcome.TOO_MANY_LOCATIONS
+    assert resolve_text(session, "不存在").outcome == QueryOutcome.LOCATION_NOT_FOUND
 
     create_location(
         geocode="second-xinyi",
@@ -70,7 +70,7 @@ def test_text_resolution_encapsulates_candidate_policy(
         full_name="臺北市信義區",
     )
     candidates = resolve_text(session, "信義區")
-    assert candidates.outcome == ResolutionOutcome.MULTIPLE
+    assert candidates.outcome == QueryOutcome.MULTIPLE_LOCATIONS
     assert len(candidates.locations) == 2
 
 
@@ -113,9 +113,9 @@ def test_shared_resolution_rejects_unserviceable_coordinates(
         longitude=121.0,
     )
     overseas = resolve_shared_location(session, 35.0, 139.0, None)
-    assert overseas.outcome == ResolutionOutcome.OUTSIDE_SERVICE_AREA
+    assert overseas.outcome == QueryOutcome.OUTSIDE_TAIWAN
     distant = resolve_shared_location(session, 23.0, 119.5, None)
-    assert distant.outcome == ResolutionOutcome.OUTSIDE_SERVICE_AREA
+    assert distant.outcome == QueryOutcome.OUTSIDE_TAIWAN
 
 
 def test_shared_resolution_supports_taiwan_address_forms(

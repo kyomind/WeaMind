@@ -182,8 +182,16 @@ class User(Base):
 **Location 模型**: 台灣行政區劃位置資料
 **Weather 模型**: 天氣資料 (目前為模擬資料結構)
 
-#### 5.2 位置服務 (`service.py` - LocationService)
+#### 5.2 Location resolution (`location_resolution.py`)
 **核心功能**:
+
+- `resolve_text` 與 `resolve_shared_location` 封裝 validation、地址／座標解析及候選數量 policy。
+- resolver 接收 Weather Query workflow 擁有的 SQLAlchemy `Session`；不另建 repository 或 persistence seam，也不擁有 transaction lifecycle。
+- `LocationResolution` 直接使用完整 `QueryOutcome`，該 enum 統一定義於本模組（包含 forecast 與 preset outcomes），workflow 不做 outcome translation。
+- 成功與候選結果攜帶 Weather Query 所需的 immutable `ResolvedLocation`（ID 與完整地名）；workflow 不再以 `Session.get` 重載同一 ORM，也不複製另一套 Location DTO。未使用的 ORM 欄位不跨越 resolution seam。
+- Weather Query workflow 最終建立 `WeatherQueryResult`，並繼續擁有 forecast 查詢與 Query History side effect。
+- 測試維持兩層：resolution tests 驗證 validation、address、coordinate、candidate policy；workflow tests 驗證完整 Weather Query transaction，不測 resolution 後 ORM 重載。
+
 
 **地點輸入驗證與解析**:
 ```python

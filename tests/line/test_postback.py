@@ -28,7 +28,8 @@ from app.line.postback import (
 )
 from app.line.service import handle_postback_event
 from app.line.weather_presentation import QueryKind
-from app.weather.workflow import QueryOutcome, WeatherQueryResult
+from app.weather.location_resolution import QueryOutcome
+from app.weather.workflow import WeatherQueryResult
 
 
 def _event(

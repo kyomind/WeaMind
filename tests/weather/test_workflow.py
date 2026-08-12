@@ -11,8 +11,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.database import Base
 from app.user.models import User, UserQuery
+from app.weather.location_resolution import QueryOutcome
 from app.weather.models import Location, Weather
-from app.weather.workflow import QueryOutcome, query_preset, query_shared_location, query_text
+from app.weather.workflow import query_preset, query_shared_location, query_text
 
 
 @pytest.fixture
@@ -63,7 +64,7 @@ def test_text_query_records_history_and_returns_dtos(
     factory, location = workflow_db
     result = query_text("松山區", "known", session_factory=factory)
     assert result.outcome == QueryOutcome.FORECAST
-    assert result.locations[0].__class__.__name__ == "LocationData"
+    assert result.locations[0].__class__.__name__ == "ResolvedLocation"
     assert result.forecast[0].__class__.__name__ == "ForecastData"
     with factory() as session:
         assert len(session.scalars(select(UserQuery)).all()) == 1
@@ -180,26 +181,6 @@ def test_text_query_rejects_invalid_input(
     assert result.outcome == QueryOutcome.INVALID_INPUT
     assert result.invalid_reason is not None
     assert result.locations == ()
-
-
-def test_text_query_handles_location_vanishing_mid_transaction(
-    workflow_db: tuple[sessionmaker[Session], Location],
-) -> None:
-    """Fall back to not-found when a resolved Location is gone by the time it is loaded."""
-    factory, _ = workflow_db
-    with patch.object(Session, "get", return_value=None):
-        result = query_text("松山區", "known", session_factory=factory)
-    assert result.outcome == QueryOutcome.LOCATION_NOT_FOUND
-
-
-def test_shared_query_handles_location_vanishing_mid_transaction(
-    workflow_db: tuple[sessionmaker[Session], Location],
-) -> None:
-    """Fall back to outside-Taiwan when a resolved shared Location cannot be loaded."""
-    factory, _ = workflow_db
-    with patch.object(Session, "get", return_value=None):
-        result = query_shared_location(25.0, 121.0, None, "known", session_factory=factory)
-    assert result.outcome == QueryOutcome.OUTSIDE_TAIWAN
 
 
 def test_preset_query_for_unknown_user(

@@ -14,8 +14,8 @@ from app.line.weather_presentation import QueryKind, build_weather_reply
 from app.weather.location_resolution import InvalidInputReason
 from app.weather.workflow import (
     ForecastData,
-    LocationData,
     QueryOutcome,
+    ResolvedLocation,
     WeatherQueryResult,
 )
 
@@ -73,14 +73,14 @@ def _forecast(hour: int, emoji: str | None = "☀️") -> ForecastData:
         (
             WeatherQueryResult(
                 QueryOutcome.NO_WEATHER,
-                locations=(LocationData(1, "臺北市松山區"),),
+                locations=(ResolvedLocation(1, "臺北市松山區"),),
             ),
             "抱歉，目前無法取得 臺北市松山區 的天氣資料，請稍後再試。",
         ),
         (
             WeatherQueryResult(
                 QueryOutcome.FORECAST,
-                locations=(LocationData(1, "臺北市松山區"),),
+                locations=(ResolvedLocation(1, "臺北市松山區"),),
             ),
             "抱歉，目前無法取得 臺北市松山區 的天氣資料，請稍後再試。",
         ),
@@ -100,7 +100,7 @@ def test_multiple_locations_build_message_choices() -> None:
     """Offer Quick Reply choices for a short list of candidate locations."""
     result = WeatherQueryResult(
         QueryOutcome.MULTIPLE_LOCATIONS,
-        locations=(LocationData(1, "新北市永和區"), LocationData(2, "臺南市永和區")),
+        locations=(ResolvedLocation(1, "新北市永和區"), ResolvedLocation(2, "臺南市永和區")),
     )
 
     assert build_weather_reply(result, QueryKind.TEXT) == MessageChoicesRecipe(
@@ -117,7 +117,7 @@ def test_multiple_locations_outside_choice_range_fall_back_to_text(count: int) -
     """Fall back to the prompt text when the candidate list cannot become choices."""
     result = WeatherQueryResult(
         QueryOutcome.MULTIPLE_LOCATIONS,
-        locations=tuple(LocationData(index, f"地點{index}") for index in range(count)),
+        locations=tuple(ResolvedLocation(index, f"地點{index}") for index in range(count)),
     )
 
     recipe = build_weather_reply(result, QueryKind.TEXT)
@@ -145,7 +145,7 @@ def test_query_kind_does_not_change_other_outcomes() -> None:
     """Keep non-preset outcomes independent of the query kind."""
     result = WeatherQueryResult(
         QueryOutcome.FORECAST,
-        locations=(LocationData(1, "臺北市松山區"),),
+        locations=(ResolvedLocation(1, "臺北市松山區"),),
         forecast=(_forecast(0),),
     )
 
@@ -158,7 +158,7 @@ def test_forecast_renders_in_taiwan_time() -> None:
     """Format immutable forecast data without ORM or Session access."""
     result = WeatherQueryResult(
         QueryOutcome.FORECAST,
-        locations=(LocationData(1, "臺北市松山區"),),
+        locations=(ResolvedLocation(1, "臺北市松山區"),),
         forecast=(_forecast(0),),
     )
 
@@ -171,7 +171,7 @@ def test_forecast_inserts_blank_line_after_four_periods() -> None:
     """Separate the first four forecast periods from the rest with a blank line."""
     result = WeatherQueryResult(
         QueryOutcome.FORECAST,
-        locations=(LocationData(1, "臺北市松山區"),),
+        locations=(ResolvedLocation(1, "臺北市松山區"),),
         forecast=tuple(_forecast(index * 3, emoji=None) for index in range(5)),
     )
 
@@ -189,7 +189,7 @@ def test_forecast_renders_at_most_eight_periods() -> None:
     """Keep the reply short by rendering only the first eight forecast periods."""
     result = WeatherQueryResult(
         QueryOutcome.FORECAST,
-        locations=(LocationData(1, "臺北市松山區"),),
+        locations=(ResolvedLocation(1, "臺北市松山區"),),
         forecast=tuple(_forecast(index, emoji="☀️") for index in range(10)),
     )
 
