@@ -163,7 +163,7 @@ class ReplyMessenger(Protocol):
 
     def reply(self, reply_token: str | None, recipe: ReplyRecipe) -> SendResult:
         """Send one recipe using the supplied reply token."""
-        ...
+        raise NotImplementedError
 
 
 @dataclass(frozen=True, slots=True)
