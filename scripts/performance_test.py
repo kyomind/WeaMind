@@ -240,7 +240,6 @@ def test_taiwan_bounds_performance() -> None:
         avg_batch_time = statistics.mean(times)
         time_per_check = avg_batch_time / num_runs * 1000  # microseconds
 
-        inside = 21.9 <= lat <= 26.5 and 118.0 <= lon <= 122.0
         status = "✅ Inside" if inside else "❌ Outside"
         print(f"({lat:7.4f}, {lon:8.4f}) {status} - {time_per_check:.3f}μs per check")
 
