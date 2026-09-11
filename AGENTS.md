@@ -3,12 +3,7 @@
 ## Project Overview
 WeaMind delivers fast and intuitive weather query services through LINE Bot. This repository contains the line-bot (FastAPI) module that serves as the main user interface.
 
-## Architecture
-- **DDD Structure**: `app/core` (config, DB), `app/user`, `app/line` (LINE webhook), `app/weather`, `app/main.py`
-- **Database**: PostgreSQL with Alembic migrations
-- **Deployment**: Docker containerized app and database services (see `docker-compose.yml`, `Dockerfile`, and `Makefile` for deployment workflows)
-- **Package Management**: uv (Python package and virtual environment manager)
-- **Dependencies**: FastAPI, Pydantic, SQLAlchemy 2.0, pytest, Ruff(lint, format), Pyright
+For architecture and directory structure, see `README.md` (developer highlights), `docs/Architecture.md`, and `docs/Tree.md`.
 
 ## Coding Standards
 1. **Type Safety**: Always use type hints
@@ -30,30 +25,24 @@ WeaMind delivers fast and intuitive weather query services through LINE Bot. Thi
   - "Add location settings feature"
 
 ## References
-- Architecture: `docs/Architecture.md` (high-level overview of the system architecture)
-- Todo: `docs/Todo.md` (includes completed and pending tasks)
+- Architecture: `docs/Architecture.md`
 - Directory structure: `docs/Tree.md`
+- Todo: `docs/Todo.md` (completed and pending tasks)
 - PRD documents: `prd/` (internal only)
-- Makefile: `Makefile` (project-specific shortcuts and preferred commands)
-- CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md` (guidelines for using terminal tools effectively)
-- Docstring Guidelines: `.github/prompts/docstring-guidelines.prompt.md` (Python function documentation standards)
-- Testing Guidelines: `.github/instructions/testing-guidelines.instructions.md` (comprehensive testing best practices and patterns)
-- CHANGELOG Guide: `.github/instructions/changelog.instructions.md` (comprehensive guide for maintaining version history with AI assistance)
+- Makefile: `Makefile` (deployment workflows and project-specific shortcuts)
+- CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md`
+- Docstring Guidelines: `.github/prompts/docstring-guidelines.prompt.md`
+- Testing Guidelines: `.github/instructions/testing-guidelines.instructions.md`
+- CHANGELOG Guide: `.github/instructions/changelog.instructions.md`
 
 ## Core Development Commands
 **Important**: This project uses uv for package and virtual environment management. Always use `uv run` prefix for Python commands.
 
-- Tests: Use `runTests` tool in VS Code (preferred), or `uv run pytest` in terminal
-- Coverage: `uv run pytest --cov=app --cov-report=xml --cov-report=html` to generate reports
+- Tests: `uv run pytest`
+- Coverage: `uv run pytest --cov=app --cov-report=xml --cov-report=html`
 - Lint: `uv run ruff check .`
 - Format: `uv run ruff format .`
 - Type check: `uv run pyright .`
-
-## VS Code Environment Best Practices
-*Note: Some tools mentioned below are GitHub Copilot specific. Use terminal alternatives if tools are unavailable.*
-- **Testing**: Always use `runTests` tool for better integration with VS Code test explorer
-- **Test Failures**: Use `test_failure` tool to get detailed failure information
-- **File Errors**: Use `get_errors` tool for compile/lint errors in specific files
 
 ## AGENTS.md as the project main prompt
 
