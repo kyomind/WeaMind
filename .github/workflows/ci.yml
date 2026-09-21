@@ -49,7 +49,7 @@ jobs:
       - name: Upload coverage to Codecov
         # Dependabot pull_request runs cannot access CODECOV_TOKEN on protected branches.
         if: ${{ github.event_name != 'pull_request' || github.actor != 'dependabot[bot]' }}
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5
 
         with:
           fail_ci_if_error: true
