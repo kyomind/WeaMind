@@ -35,6 +35,10 @@ For architecture and directory structure, see `README.md` (developer highlights)
 - Testing Guidelines: `.github/instructions/testing-guidelines.instructions.md`
 - CHANGELOG Guide: `.github/instructions/changelog.instructions.md`
 
+## Scheduled Maintenance
+- `~/Code/agent-scheduler` runs the `weamind-maintenance-codex` job every Saturday 02:00 (Asia/Taipei). It executes `.github/prompts/github-maintenance.prompt.md` unattended in this repo and may merge PRs, push commits, and rerun workflows.
+- Before moving, renaming, or restructuring `github-maintenance.prompt.md`, check that the job still works; the job lives in another repository, so confirm with the user before changing it.
+
 ## Core Development Commands
 **Important**: This project uses uv for package and virtual environment management. Always use `uv run` prefix for Python commands.
 
