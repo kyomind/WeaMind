@@ -24,7 +24,8 @@ jobs:
         run: uv sync --locked
 
       - name: Install git and other tools
-        run: apt-get update && apt-get install -y git curl gnupg libatomic1
+        # Provide Node explicitly so pyright does not use nodeenv's latest-version discovery.
+        run: apt-get update && apt-get install -y git curl gnupg libatomic1 nodejs
 
       - name: Lint (ruff)
         run: uv run ruff check . --fix
