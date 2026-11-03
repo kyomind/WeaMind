@@ -1,0 +1,44 @@
+{
+  "webhook": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/webhook.svg",
+    "file": "webhook.svg",
+    "bytes": 514
+  },
+  "bgtasks": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/cog.svg",
+    "file": "bgtasks.svg",
+    "bytes": 695
+  },
+  "etl": {
+    "source": "lucide",
+    "url": "https://cdn.jsdelivr.net/npm/lucide-static/icons/cloud-download.svg",
+    "file": "etl.svg",
+    "bytes": 423
+  },
+  "line": {
+    "source": "explicit",
+    "url": "https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg",
+    "file": "line.svg",
+    "bytes": 1466
+  },
+  "fastapi": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/fastapi.svg",
+    "file": "fastapi.svg",
+    "bytes": 280
+  },
+  "redis": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/redis.svg",
+    "file": "redis.svg",
+    "bytes": 1928
+  },
+  "postgresql": {
+    "source": "svgl",
+    "url": "https://svgl.app/library/postgresql.svg",
+    "file": "postgresql.svg",
+    "bytes": 3944
+  }
+}
