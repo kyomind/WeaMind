@@ -25,26 +25,12 @@
 
 ## Engineering Highlights
 
-```mermaid
-graph TB
-    LINE[LINE Platform]
-    REDIS[(Redis<br/>Distributed Lock)]
-    DB[(PostgreSQL<br/>Primary DB)]
-    DATA[weamind-data<br/>Microservice]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/weamind-architecture-dark.png">
+  <img alt="WeaMind Architecture" src="docs/weamind-architecture.png">
+</picture>
 
-    subgraph FASTAPI["FastAPI LINE Bot App"]
-        WEB[Webhook Handler]
-        BG[Background Tasks]
-    end
-
-    LINE -->|Webhook| WEB
-    WEB -->|Fast ACK<br/>sub-100ms| LINE
-    WEB -->|Non-blocking| BG
-    BG -->|Selective lock| REDIS
-    BG <-->|Read / Write| DB
-    BG -->|Push reply<br/>< 2s| LINE
-    DATA -->|ETL every 6h| DB
-```
+[HTML version](https://kyomind.github.io/WeaMind/)
 
 ### Fast ACK Webhook Architecture
 - **Sub-50ms acknowledgement** (measured ~15–30ms in production): validates and responds to LINE Platform immediately on receipt, preventing platform-side retries.

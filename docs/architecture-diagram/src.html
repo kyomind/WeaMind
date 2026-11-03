@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<!--
+  WeaMind architecture diagram source (stack-diagram skill, vendored in the sibling weamind-infra repo).
+  Rebuild from repo root (expects ../weamind-infra checked out):
+    S=../weamind-infra/.agents/skills/stack-diagram
+    python3 $S/scripts/build.py docs/architecture-diagram/src.html docs/architecture-diagram/icons docs/site/index.html --fonts $S/assets/fonts
+    uv run --with playwright python $S/scripts/render_png.py docs/site/index.html docs/weamind-architecture.png --selector .canvas --scale 2
+  render_png.py writes both weamind-architecture.png and weamind-architecture-dark.png.
+  CSS and font sizes are copied from weamind-infra's tuned version; keep them in sync.
+-->
+<html lang="en"><!-- set lang to the label language, e.g. "ja" for Japanese labels -->
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WeaMind Architecture</title>
+<script>if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.dataset.theme = 'dark'</script>
+<style>
+/* engineered-paper theme (cool near-white, one accent, mono labels)
+ * All colors/fonts flow through the :root tokens — tweak tokens, not scattered values. */
+:root {
+  color-scheme: light;
+  --color-paper:   oklch(98.5% 0.004 250);
+  --color-paper-2: oklch(96.5% 0.005 252);
+  --color-rule:    oklch(93% 0.007 255);    /* graph-paper grid */
+  --color-rule-2:  oklch(83% 0.011 255);    /* hairline borders */
+  --color-muted:   oklch(56% 0.013 255);
+  --color-neutral: oklch(46% 0.015 255);    /* neutral edges */
+  --color-ink-2:   oklch(34% 0.018 257);
+  --color-ink:     oklch(24% 0.020 258);
+  --color-accent:  oklch(58% 0.20 256);     /* primary-flow edges, one signal color */
+  --color-graphite:oklch(24% 0.018 260);    /* dark tile for white/light logos */
+  /* group palette A — warm vendor (e.g. Cloudflare/AWS orange). Retune hue per vendor. */
+  --color-g1:      oklch(58% 0.19 22);
+  --color-g1-soft: oklch(72% 0.13 22);
+  --color-g1-ink:  oklch(50% 0.18 22);
+  --color-g1-tint: oklch(97% 0.012 22 / .5);
+  /* group palette B — accent-family (repo/tooling groups) */
+  --color-accent-soft: oklch(58% 0.20 256 / .45);
+  --color-accent-tint: oklch(97% 0.012 256 / .5);
+  /* JP glyphs: name JP faces explicitly — bare sans-serif fallback on Linux picks Chinese-variant CJK */
+  --font-display: "Geist", "Hiragino Sans", "Yu Gothic UI", "Noto Sans CJK JP", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Hiragino Sans", "Yu Gothic UI", "Noto Sans CJK JP", "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --space-xs: 4px; --space-sm: 8px; --space-md: 16px; --space-lg: 24px; --space-xl: 40px; --space-2xl: 64px;
+  --radius-card: 10px; --radius-tile: 12px;
+  /* translucent veil behind node label text: matches paper on plain canvas, blends into
+     group tints instead of punching an off-color rectangle through them */
+  --color-veil: oklch(98.5% 0.004 250 / .78);
+}
+/* Dark variant: set data-theme="dark" on <html>. Tiles stay white — brand logos are drawn
+   for light grounds. Everything (arrowheads via context-stroke, legend via border-color)
+   follows the tokens, so toggling the attribute is all it takes. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-paper:   oklch(18% 0.012 255);
+  --color-paper-2: oklch(22% 0.014 255);
+  --color-rule:    oklch(24% 0.013 255);
+  --color-rule-2:  oklch(38% 0.018 255);
+  --color-muted:   oklch(65% 0.014 255);
+  --color-neutral: oklch(72% 0.012 255);
+  --color-ink-2:   oklch(85% 0.010 255);
+  --color-ink:     oklch(94% 0.008 255);
+  --color-accent:  oklch(70% 0.16 256);
+  --color-graphite:oklch(31% 0.020 260);
+  --color-g1:      oklch(66% 0.17 22);
+  --color-g1-soft: oklch(54% 0.12 22);
+  --color-g1-ink:  oklch(72% 0.13 22);
+  --color-g1-tint: oklch(26% 0.035 22 / .40);
+  --color-accent-soft: oklch(70% 0.16 256 / .5);
+  --color-accent-tint: oklch(28% 0.045 256 / .35);
+  --color-veil: oklch(18% 0.012 255 / .78);
+}
+@font-face { font-family:"Geist"; font-style:normal; font-weight:100 900; font-display:swap;
+  src:url(data:font/woff2;base64,%%FONT_DISPLAY%%) format("woff2"); }
+@font-face { font-family:"JetBrains Mono"; font-style:normal; font-weight:100 800; font-display:swap;
+  src:url(data:font/woff2;base64,%%FONT_JBM%%) format("woff2"); }
+/* JetBrains Mono reads cramped at 9.5–11px; open every mono label slightly */
+.kicker, .node .role, .el, .legend, .foot { letter-spacing: 0.04em; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { overflow-x: clip; }
+body { background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); padding: var(--space-xl) var(--space-lg) var(--space-2xl); }
+.page { width: fit-content; max-width: 100%; margin: 0 auto; }
+
+.head { display:grid; grid-template-columns: 1fr auto; gap: var(--space-lg); align-items:end;
+  padding-bottom: var(--space-md); border-bottom: 1px solid var(--color-rule-2); margin-bottom: var(--space-lg); }
+.kicker { font-family: var(--font-mono); font-size: 13px;
+  color: var(--color-accent); margin-bottom: var(--space-sm); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(22px, 4vw, 30px);
+  letter-spacing: -0.005em; line-height: 1.2; }
+.lede { max-width: 380px; font-size: 14px; line-height: 1.7; color: var(--color-neutral); padding-bottom: 2px; }
+@media (max-width: 680px) { .head { grid-template-columns: 1fr; align-items:start; } .lede { max-width:none; } }
+
+.scroller { overflow-x: auto; border: 1px solid var(--color-rule-2); border-radius: var(--radius-card); }
+/* CANVAS SIZE: set width/height here AND on svg.edges AND its viewBox — keep the three in sync */
+.canvas { position: relative; width: 1000px; height: 500px; background: var(--color-paper);
+  background-image:
+    linear-gradient(var(--color-rule) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-rule) 1px, transparent 1px);
+  background-size: 24px 24px; background-position: -1px -1px; }
+
+.group { position:absolute; border-radius: var(--radius-tile); }
+/* group labels are names like node names (display font), written in the brand's own case.
+   They sit inside the top-left corner, so the border stays unbroken and needs no mask */
+.g-label { position:absolute; top:12px; left:12px; display:flex; align-items:center; gap:6px;
+  font-family: var(--font-display); font-size: 17px; font-weight: 600;
+  color: var(--color-neutral); white-space: nowrap; }
+.g-label img { width: 18px; height: 18px; }
+/* group labels sit on the group's tint, not on a white tile: in the dark theme swap in the brand's own
+   dark-theme logo (lt/dk pair), or give a mark with black parts a white plate */
+.g-label img.dk, .tile img.dk { display:none; }
+[data-theme="dark"] .g-label img.lt, [data-theme="dark"] .tile img.lt { display:none; }
+[data-theme="dark"] .g-label img.dk, [data-theme="dark"] .tile img.dk { display:block; }
+[data-theme="dark"] .g-label img.plate { background:#fff; border-radius:3px; padding:2px; width:18px; height:18px; }
+.group.ga { border:1.5px solid var(--color-g1); background: var(--color-g1-tint); }
+.group.ga-nested { border:1.5px dashed var(--color-g1-soft); }
+.group.gb { border:1.5px solid var(--color-accent-soft); background: var(--color-accent-tint); }
+.group.ga > .g-label, .group.ga-nested > .g-label { color: var(--color-g1-ink); }
+.group.gb > .g-label { color: var(--color-accent); }
+.group.aws { border:1.5px solid var(--color-ink); border-radius:0; }
+.group.aws > .g-label { top:-1.5px; left:-1.5px; gap:8px; color: var(--color-ink); }
+.group.aws > .g-label img { width:30px; height:30px; }
+.group.aws.az > .g-label { top:8px; left:12px; }
+.group.aws.region, .group.aws.az { border-color:#00A4A6; border-style:dashed; }
+.group.aws.vpc { border-color:#8C4FFF; }
+.group.aws.private { border-color:#00A4A6; }
+.group.aws.public { border-color:#7AA116; }
+.group.gcp { border:1.5px solid #4285F4; border-radius:6px; }
+.group.azure { border:1.5px solid #0078D4; border-radius:6px; }
+.group.gcp > .g-label, .group.azure > .g-label { gap:8px; color: var(--color-ink); }
+.group.gcp > .g-label img, .group.azure > .g-label img { width:20px; height:20px; }
+.group.gcp.region, .group.azure.region { border-color: var(--color-rule-2); background: var(--color-paper-2); }
+.group.gcp.vpc { border:1.5px dashed var(--color-ink-2); }
+.group.gcp.subnet { border:1px dashed var(--color-neutral); }
+.group.gcp.zone { border-color:#34A853; }
+.group.azure.rg { border:1.5px dashed #0096D7; }
+.group.azure.vnet { border:1.5px solid #A4CBFB; }
+.group.azure.subnet { border:1px solid #A4CBFB; }
+.group.azure.zone { border-color:#FFD965; }
+
+.node { position:absolute; width:164px; margin-left:-16px; text-align:center; }  /* inline left stays centerX-66 */
+.tile { width:60px; height:60px; margin:0 auto; border-radius: var(--radius-tile);
+  background:#fff; border:1px solid var(--color-rule-2); display:grid; place-items:center;
+  box-shadow: 0 1px 2px oklch(24% 0.02 258 / 0.05); transition: border-color .15s cubic-bezier(0.16,1,0.3,1); }
+.node:hover .tile { border-color: var(--color-accent); }
+.tile img { width:34px; height:34px; object-fit:contain; }
+.tile.wide img { width:44px; }                       /* wide-aspect logos */
+.tile.dark { background: var(--color-graphite); border-color: var(--color-graphite); }  /* white/light logos */
+.tile.bare { background:none; border:none; box-shadow:none; }
+.tile.bare img { width:60px; height:60px; }
+.tile.bare.res img { width:44px; height:44px; }
+.node .name { font-family: var(--font-display); font-weight:600; font-size:18px; margin-top: var(--space-sm); letter-spacing:0; }
+.node .role { font-family: var(--font-mono); font-size:15px; color: var(--color-muted); margin-top:2px; }
+/* veil behind label spans: crossing edges/grid fade behind text; translucent so it
+   blends into group tints (a solid paper rectangle looks pasted-on inside tinted groups) */
+.node .name span, .node .role span { background: var(--color-veil); backdrop-filter: blur(1.5px);
+  padding: 0 var(--space-xs); border-radius: 3px; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+
+svg.edges { position:absolute; inset:0; width:1000px; height:500px; pointer-events:none; }
+.e  { stroke: var(--color-accent); stroke-width:1.6; fill:none; }   /* primary flow */
+.n  { stroke: var(--color-neutral); stroke-width:1.4; fill:none; }  /* internal */
+path.aws { stroke: var(--color-ink); stroke-width:1.6; fill:none; }
+.dash { stroke-dasharray:4 5; }                                     /* dev / deploy */
+.el { font-family: var(--font-mono); font-size:15px; fill: var(--color-neutral);
+  paint-order: stroke; stroke: var(--color-paper); stroke-width:4px; stroke-linejoin:round; }  /* halo */
+.el.a { fill: var(--color-accent); }
+
+.legend { display:flex; gap: var(--space-lg); align-items:center; margin-top: var(--space-md);
+  font-family: var(--font-mono); font-size:13px; color: var(--color-muted); flex-wrap:wrap; }
+.legend .sw { display:inline-block; width:30px; vertical-align:middle; margin-right:6px;
+  border-top:1.6px solid var(--color-accent); }
+.legend .sw.n { border-color: var(--color-neutral); border-top-width:1.4px; }
+.legend .sw.dash { border-top-style: dashed; }
+
+.foot { margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--color-rule-2);
+  display:flex; justify-content:space-between; gap: var(--space-md); flex-wrap:wrap;
+  font-family: var(--font-mono); font-size:12px; color: var(--color-muted); }
+.foot a { color: inherit; text-decoration-color: var(--color-rule-2); text-underline-offset: 2px; }
+.foot a:hover { color: var(--color-accent); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="head">
+    <div>
+      <div class="kicker">weamind / kyo / 2026-11</div>
+      <h1>WeaMind Architecture</h1>
+    </div>
+    <p class="lede">Fast ACK webhook: the handler acknowledges LINE within tens of milliseconds, then background tasks do the work and answer through the Reply API in under 2 seconds.</p>
+  </header>
+
+  <div class="scroller">
+  <div class="canvas">
+
+    <!-- GROUPS ============================================================ -->
+    <div class="group gb" style="left:250px; top:80px; width:420px; height:210px;">
+      <div class="g-label"><img src="%%ICON_fastapi%%" alt="">FastAPI LINE Bot</div>
+    </div>
+
+    <!-- EDGES ============================================================= -->
+    <svg class="edges" viewBox="0 0 1000 500" aria-hidden="true">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/>
+        </marker>
+      </defs>
+      <!-- request path: LINE -> handler (ack back) -> background tasks -> reply to LINE over the top -->
+      <path class="e" d="M134 154 H306" marker-end="url(#ar)"/>
+      <text class="el a" x="190" y="146" text-anchor="middle">webhook</text>
+      <path class="e" d="M306 186 H134" marker-end="url(#ar)"/>
+      <text class="el a" x="190" y="178" text-anchor="middle">ack &lt;50ms</text>
+      <path class="e" d="M374 170 H546" marker-end="url(#ar)"/>
+      <text class="el a" x="460" y="162" text-anchor="middle">non-blocking</text>
+      <path class="e" d="M580 136 V50 H100 V136" marker-end="url(#ar)"/>
+      <text class="el a" x="340" y="42" text-anchor="middle">reply api &lt;2s</text>
+      <!-- internal -->
+      <path class="n" d="M614 170 H826" marker-end="url(#ar)"/>
+      <text class="el" x="748" y="162" text-anchor="middle">selective lock</text>
+      <path class="n" d="M580 258 V336" marker-start="url(#ar)" marker-end="url(#ar)"/>
+      <text class="el" x="590" y="312">read / write</text>
+      <path class="n" d="M826 370 H614" marker-end="url(#ar)"/>
+      <text class="el" x="720" y="362" text-anchor="middle">etl every 6h</text>
+    </svg>
+
+    <!-- NODES ============================================================= -->
+    <div class="node" style="left:34px;top:140px">
+      <div class="tile "><img src="%%ICON_line%%" alt=""></div>
+      <div class="name"><span>LINE Platform</span></div><div class="role"><span>messaging api</span></div>
+    </div>
+    <div class="node" style="left:274px;top:140px">
+      <div class="tile "><img src="%%ICON_webhook%%" alt=""></div>
+      <div class="name"><span>Webhook Handler</span></div><div class="role"><span>verify · ack</span></div>
+    </div>
+    <div class="node" style="left:498px;top:140px;width:196px"><!-- widened so the name stays on one line -->
+      <div class="tile "><img src="%%ICON_bgtasks%%" alt=""></div>
+      <div class="name"><span>Background Tasks</span></div><div class="role"><span>business logic</span></div>
+    </div>
+    <div class="node" style="left:794px;top:140px">
+      <div class="tile "><img src="%%ICON_redis%%" alt=""></div>
+      <div class="name"><span>Redis</span></div><div class="role"><span>distributed lock</span></div>
+    </div>
+    <div class="node" style="left:514px;top:340px">
+      <div class="tile "><img src="%%ICON_postgresql%%" alt=""></div>
+      <div class="name"><span>PostgreSQL</span></div><div class="role"><span>primary db</span></div>
+    </div>
+    <div class="node" style="left:794px;top:340px">
+      <div class="tile "><img src="%%ICON_etl%%" alt=""></div>
+      <div class="name"><span>weamind-data</span></div><div class="role"><span>etl service</span></div>
+    </div>
+
+  </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw"></span>request path</span>
+    <span><span class="sw n"></span>internal</span>
+  </div>
+
+  <div class="foot">
+    <span>WeaMind · LINE webhook → FastAPI → PostgreSQL</span>
+    <span>icons: svgl / Lucide / official brand files · made with <a href="https://github.com/caru-ini/stack-diagram" target="_blank" rel="noopener">stack-diagram</a></span>
+  </div>
+
+</div>
+</body>
+</html>

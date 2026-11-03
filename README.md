@@ -70,26 +70,12 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
 
 ## 開發者技術亮點
 
-```mermaid
-graph TB
-    LINE[LINE Platform]
-    REDIS[(Redis<br/>分散式鎖)]
-    DB[(PostgreSQL<br/>主資料庫)]
-    DATA[weamind-data<br/>微服務]
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/weamind-architecture-dark.png">
+  <img alt="WeaMind Architecture" src="docs/weamind-architecture.png">
+</picture>
 
-    subgraph FASTAPI["FastAPI LINE Bot App"]
-        WEB[Webhook Handler]
-        BG[Background Tasks]
-    end
-
-    LINE -->|Webhook| WEB
-    WEB -->|Fast ACK<br/>數十毫秒| LINE
-    WEB -->|非阻塞| BG
-    BG -->|選擇性鎖定| REDIS
-    BG <-->|資料讀寫| DB
-        BG -->|回應用戶<br/>< 2 秒| LINE
-    DATA -->|每 6 小時<br/>ETL 更新| DB
-```
+[HTML 網頁版](https://kyomind.github.io/WeaMind/)
 
 ### Fast ACK Webhook 架構
 - **數十毫秒 ACK**：Webhook Handler 收到請求後立即驗證並回應 LINE Platform，避免平台重送。
