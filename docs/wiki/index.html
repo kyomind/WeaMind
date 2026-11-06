@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeaMind</title>
+    <link rel="icon" type="image/png" href="codewiki-icon.png">
+    <script>
+        // Apply persisted theme before first paint to avoid a flash of the wrong theme
+        (function() {
+            try {
+                var theme = localStorage.getItem('codewiki-theme');
+                if (!theme) {
+                    theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css" id="hljs-theme-light">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" id="hljs-theme-dark" disabled>
+    <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11.9.0/dist/mermaid.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.0.0/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked-gfm-heading-id@3.1.3/lib/index.umd.js"></script>
+    <style>
+        :root {
+            --primary-color: #d95f00;
+            --active-nav-bg: #0d2b50;
+            --active-nav-text: #ffffff;
+            --secondary-color: #f1f5f9;
+            --text-color: #334155;
+            --border-color: #e2e8f0;
+            --hover-color: #f8fafc;
+            --code-bg: #f8fafc;
+            --page-bg: #ffffff;
+            --panel-bg: #ffffff;
+            --heading-color: #1e293b;
+            --subheading-color: #475569;
+            --body-color: #475569;
+            --muted-color: #64748b;
+            --inline-code-color: #e11d48;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --error-color: #991b1b;
+            --backdrop-color: rgba(15, 23, 42, 0.5);
+            --lightbox-bg: rgba(255, 255, 255, 0.97);
+        }
+
+        html[data-theme="dark"] {
+            color-scheme: dark;
+            --primary-color: #ff9a2e;
+            --active-nav-bg: #c45100;
+            --active-nav-text: #ffffff;
+            --secondary-color: #111827;
+            --text-color: #cbd5e1;
+            --border-color: #334155;
+            --hover-color: #1e293b;
+            --code-bg: #0d1117;
+            --page-bg: #0f172a;
+            --panel-bg: #1e293b;
+            --heading-color: #f1f5f9;
+            --subheading-color: #cbd5e1;
+            --body-color: #94a3b8;
+            --muted-color: #94a3b8;
+            --inline-code-color: #f472b6;
+            --error-bg: rgba(127, 29, 29, 0.25);
+            --error-border: #7f1d1d;
+            --error-color: #fca5a5;
+            --backdrop-color: rgba(0, 0, 0, 0.6);
+            --lightbox-bg: rgba(15, 23, 42, 0.97);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--page-bg);
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: var(--secondary-color);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            overflow-y: auto;
+            position: fixed;
+            height: 100vh;
+            z-index: 200;
+        }
+
+        .content {
+            flex: 1;
+            margin-left: 320px;
+            padding: 40px 60px;
+            max-width: calc(100% - 320px);
+        }
+
+        .content-inner {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 220px;
+            gap: 48px;
+            align-items: start;
+        }
+
+        .content-inner.no-toc {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .content-inner.no-toc .toc {
+            display: none;
+        }
+
+        .doc-column {
+            min-width: 0;
+            max-width: 920px;
+        }
+
+        .sidebar-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .logo-mark {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            object-fit: contain;
+        }
+
+        .logo-title {
+            overflow: hidden;
+            color: var(--heading-color);
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .theme-toggle {
+            flex-shrink: 0;
+            width: 34px;
+            height: 34px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--panel-bg);
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+        }
+
+        .repo-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--panel-bg);
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .repo-link:hover {
+            background: var(--hover-color);
+            border-color: var(--primary-color);
+        }
+
+        .repo-info {
+            margin: 0 0 20px 0;
+            padding: 15px;
+            background: var(--hover-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .repo-info h4 {
+            margin: 0 0 10px 0;
+            font-size: 12px;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .info-row {
+            font-size: 11px;
+            color: var(--body-color);
+            line-height: 1.6;
+            margin-bottom: 4px;
+        }
+
+        .info-row strong {
+            font-weight: 600;
+            min-width: 80px;
+            display: inline-block;
+        }
+
+        .nav-filter {
+            width: 100%;
+            padding: 8px 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: inherit;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .nav-filter:focus {
+            border-color: var(--primary-color);
+        }
+
+        .nav-filter::placeholder {
+            color: var(--muted-color);
+        }
+
+        .nav-section {
+            margin-bottom: 12px;
+        }
+
+        .nav-section h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 10px 12px;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            margin-bottom: 2px;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: var(--panel-bg);
+            color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            background-color: var(--active-nav-bg);
+            color: var(--active-nav-text);
+        }
+
+        .nav-item.nav-parent {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-item.nav-parent.active {
+            color: var(--active-nav-text);
+        }
+
+        .nav-row {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .nav-row .nav-item {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .nav-toggle {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--muted-color);
+            font-size: 11px;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+            transform: rotate(90deg);
+        }
+
+        .nav-group.collapsed > .nav-row .nav-toggle {
+            transform: none;
+        }
+
+        .nav-group.collapsed > .nav-children {
+            display: none;
+        }
+
+        .nav-children {
+            margin-left: 14px;
+        }
+
+        .nav-children .nav-item {
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        .nav-children .nav-children .nav-item {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+
+        .nav-hidden {
+            display: none !important;
+        }
+
+        #navigation.filtering .nav-group.filter-open > .nav-children {
+            display: block;
+        }
+
+        .markdown-content {
+            max-width: 100%;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .markdown-content h1,
+        .markdown-content h2,
+        .markdown-content h3,
+        .markdown-content h4,
+        .markdown-content h5,
+        .markdown-content h6 {
+            scroll-margin-top: 1rem;
+        }
+
+        .markdown-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .markdown-content h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .markdown-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--subheading-color);
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .markdown-content h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--subheading-color);
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .markdown-content p {
+            margin-bottom: 1rem;
+            color: var(--body-color);
+        }
+
+        .markdown-content ul, .markdown-content ol {
+            margin-bottom: 1rem;
+            padding-left: 2rem;
+        }
+
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+            color: var(--body-color);
+        }
+
+        .markdown-content code {
+            background-color: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+            font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+            color: var(--inline-code-color);
+        }
+
+        .code-block {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .markdown-content pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .code-block pre {
+            margin-bottom: 0;
+        }
+
+        .markdown-content pre code {
+            background-color: transparent;
+            padding: 0;
+            font-size: 0.875rem;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--muted-color);
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s ease, border-color 0.15s ease;
+        }
+
+        .code-block:hover .copy-btn,
+        .copy-btn:focus {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            .copy-btn {
+                opacity: 1;
+            }
+        }
+
+        .copy-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .copy-btn.copied {
+            color: #16a34a;
+            border-color: #16a34a;
+            opacity: 1;
+        }
+
+        .markdown-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin: 1.5rem 0;
+            font-style: italic;
+            color: var(--muted-color);
+            background: var(--hover-color);
+            padding: 1rem 1rem 1rem 1.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .markdown-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .markdown-content th, .markdown-content td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: left;
+        }
+
+        .markdown-content th {
+            background-color: var(--secondary-color);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .markdown-content tr:hover {
+            background-color: var(--hover-color);
+        }
+
+        .markdown-content a {
+            color: var(--primary-color);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+
+        .markdown-content a:hover {
+            border-bottom-color: var(--primary-color);
+        }
+
+        .markdown-content img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .mermaid {
+            position: relative;
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .mermaid svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .mermaid.zoomable svg {
+            cursor: zoom-in;
+        }
+
+        .mermaid-expand {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            line-height: 1;
+            color: var(--muted-color);
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.15s ease, border-color 0.15s ease;
+        }
+
+        .mermaid:hover .mermaid-expand,
+        .mermaid-expand:focus {
+            opacity: 1;
+        }
+
+        @media (hover: none) {
+            .mermaid-expand {
+                opacity: 1;
+            }
+        }
+
+        .mermaid-expand:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .mermaid-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 400;
+            background: var(--lightbox-bg);
+        }
+
+        .mermaid-lightbox.open {
+            display: block;
+        }
+
+        .lightbox-canvas {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .lightbox-canvas.dragging {
+            cursor: grabbing;
+        }
+
+        .lightbox-stage {
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-origin: 0 0;
+        }
+
+        .lightbox-toolbar {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 2;
+            display: flex;
+            gap: 8px;
+        }
+
+        .lightbox-toolbar button {
+            min-width: 38px;
+            height: 38px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-family: inherit;
+            color: var(--text-color);
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+            transition: border-color 0.15s ease, color 0.15s ease;
+        }
+
+        .lightbox-toolbar button:hover {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .lightbox-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: var(--muted-color);
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            pointer-events: none;
+        }
+
+        .mermaid-error {
+            padding: 1rem;
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            border-radius: 0.5rem;
+            color: var(--error-color);
+            font-size: 0.875rem;
+        }
+
+        .mermaid-error details {
+            margin-top: 0.5rem;
+        }
+
+        .mermaid-error summary {
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .mermaid-error pre {
+            margin-top: 0.5rem;
+            padding: 0.75rem;
+            background: var(--code-bg);
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            color: var(--text-color);
+            font-size: 0.8rem;
+        }
+
+        .toc {
+            position: sticky;
+            top: 40px;
+            max-height: calc(100vh - 80px);
+            overflow-y: auto;
+            font-size: 13px;
+            padding-bottom: 20px;
+        }
+
+        .toc-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted-color);
+            margin-bottom: 8px;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 4px 0 4px 12px;
+            color: var(--muted-color);
+            text-decoration: none;
+            border-left: 2px solid var(--border-color);
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .toc-link.toc-h3 {
+            padding-left: 24px;
+        }
+
+        .toc-link:hover {
+            color: var(--primary-color);
+        }
+
+        .toc-link.active {
+            color: var(--primary-color);
+            border-left-color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .pager {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pager:empty {
+            display: none;
+        }
+
+        .pager-link {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 12px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            max-width: 48%;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .pager-link:hover {
+            border-color: var(--primary-color);
+            background: var(--hover-color);
+        }
+
+        .pager-next {
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .pager-label {
+            font-size: 12px;
+            color: var(--muted-color);
+        }
+
+        .pager-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            color: var(--muted-color);
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--secondary-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            padding: 2rem;
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            border-radius: 0.5rem;
+            color: var(--error-color);
+            margin: 2rem 0;
+        }
+
+        .error h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 300;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--panel-bg);
+            color: var(--text-color);
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        }
+
+        .backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--backdrop-color);
+            z-index: 150;
+        }
+
+        .backdrop.visible {
+            display: block;
+        }
+
+        @media (max-width: 1280px) {
+            .content-inner {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .toc {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .menu-toggle {
+                display: flex;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.25s ease;
+                box-shadow: 0 0 24px rgba(0, 0, 0, 0.2);
+            }
+
+            .sidebar.open {
+                transform: none;
+            }
+
+            .content {
+                margin-left: 0;
+                padding: 72px 20px 20px;
+                max-width: 100%;
+            }
+
+            .markdown-content h1,
+            .markdown-content h2,
+            .markdown-content h3,
+            .markdown-content h4,
+            .markdown-content h5,
+            .markdown-content h6 {
+                scroll-margin-top: 64px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menu-toggle" type="button" aria-label="Toggle navigation">☰</button>
+    <div class="backdrop" id="backdrop"></div>
+
+    <div class="container">
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-top">
+                <div class="logo">
+                    <img class="logo-mark" src="codewiki-icon.png" alt="CodeWiki">
+                    <span class="logo-title">WeaMind</span>
+                </div>
+                <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark mode">🌙</button>
+            </div>
+            <a href="https://github.com/kyomind/WeaMind" class="repo-link" target="_blank">🔗 View Repository</a>
+
+            <div class="repo-info" id="repo-info" style="display: block;">
+                <h4>Generation Info</h4>
+                <div id="info-content"><div class="info-row"><strong>Model:</strong> gpt-6.1-terra</div>
+                <div class="info-row"><strong>Generated:</strong> 2026-11-06</div>
+                <div class="info-row"><strong>Commit:</strong> d5bb54df</div>
+                <div class="info-row"><strong>Components:</strong> 290</div>
+                <div class="info-row"><strong>Max Depth:</strong> 3</div></div>
+            </div>
+
+            <input type="search" class="nav-filter" id="nav-filter" placeholder="Filter pages…" aria-label="Filter pages" autocomplete="off">
+
+            <div class="nav-section">
+                <div class="nav-item active" data-file="overview.md" id="nav-overview">
+                    📄 Overview
+                </div>
+            </div>
+
+            <div id="navigation"></div>
+        </nav>
+
+        <main class="content">
+            <div class="content-inner no-toc">
+                <div class="doc-column">
+                    <div id="loading" class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading documentation...</p>
+                    </div>
+
+                    <div id="content" class="markdown-content" style="display: none;"></div>
+
+                    <nav id="pager" class="pager" aria-label="Previous and next page"></nav>
+                </div>
+
+                <aside class="toc" id="toc" aria-label="Table of contents"></aside>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Embedded configuration
+        const CONFIG = {};
+        const MODULE_TREE = {
+  "build_deployment_and_configuration": {
+    "path": "",
+    "components": [
+      ".github/dependabot.yml::dependabot.yml",
+      ".github/workflows/auto-release.yml::auto-release.yml",
+      ".github/workflows/auto-release.yml::release",
+      ".github/workflows/check-pip-audit-ignores.yml::check-pip-audit-ignores",
+      ".github/workflows/check-pip-audit-ignores.yml::check-pip-audit-ignores.yml",
+      ".github/workflows/ci.yml::ci.yml",
+      ".github/workflows/ci.yml::code-quality-check",
+      ".github/workflows/ci.yml::docker-build-validate",
+      ".github/workflows/codeql.yml::analyze",
+      ".github/workflows/codeql.yml::codeql.yml",
+      ".github/workflows/pages.yml::deploy",
+      ".github/workflows/pages.yml::pages.yml",
+      ".github/workflows/publish-ghcr.yml::build-and-push",
+      ".github/workflows/publish-ghcr.yml::publish-ghcr.yml",
+      ".github/workflows/publish-release.yml::build-and-push",
+      ".github/workflows/publish-release.yml::publish-release.yml",
+      ".pre-commit-config.yaml::.pre-commit-config.yaml",
+      "Dockerfile::Dockerfile",
+      "Makefile::Makefile",
+      "Makefile::changelog-help",
+      "Makefile::changelog-prepare",
+      "Makefile::changelog-release",
+      "Makefile::changelog-status",
+      "Makefile::check",
+      "Makefile::clean",
+      "Makefile::clean-docs",
+      "Makefile::deploy",
+      "Makefile::dev-up",
+      "Makefile::down",
+      "Makefile::export-docs",
+      "Makefile::migrate",
+      "Makefile::prune",
+      "Makefile::revision",
+      "Makefile::rollback",
+      "Makefile::setup-prod",
+      "Makefile::tree",
+      "Makefile::up",
+      "Makefile::update-liff-version",
+      "Makefile::update-static-version",
+      "Makefile::upgrade-pyright",
+      "Makefile::worktree-add",
+      "Makefile::worktree-clean",
+      "Makefile::worktree-list",
+      "Makefile::worktree-remove",
+      "alembic.ini::alembic.ini",
+      "bandit.yaml::bandit.yaml",
+      "docker-compose.dev.yml::app",
+      "docker-compose.dev.yml::db",
+      "docker-compose.dev.yml::docker-compose.dev.yml",
+      "docker-compose.dev.yml::redis",
+      "docker-compose.prod.yml::app",
+      "docker-compose.prod.yml::db",
+      "docker-compose.prod.yml::docker-compose.prod.yml",
+      "docker-compose.prod.yml::redis",
+      "docker-compose.yml::app",
+      "docker-compose.yml::db",
+      "docker-compose.yml::docker-compose.yml",
+      "docker-compose.yml::redis",
+      "pyproject.toml::pyproject.toml",
+      "skills-lock.json::skills-lock.json"
+    ],
+    "children": {
+      "build_deployment_and_configuration_quality": {
+        "components": [
+          ".github/dependabot.yml::dependabot.yml",
+          ".pre-commit-config.yaml::.pre-commit-config.yaml",
+          "bandit.yaml::bandit.yaml",
+          "pyproject.toml::pyproject.toml",
+          "skills-lock.json::skills-lock.json"
+        ],
+        "children": {}
+      },
+      "build_deployment_and_configuration_automation": {
+        "components": [
+          ".github/workflows/auto-release.yml::auto-release.yml",
+          ".github/workflows/auto-release.yml::release",
+          ".github/workflows/check-pip-audit-ignores.yml::check-pip-audit-ignores",
+          ".github/workflows/check-pip-audit-ignores.yml::check-pip-audit-ignores.yml",
+          ".github/workflows/ci.yml::ci.yml",
+          ".github/workflows/ci.yml::code-quality-check",
+          ".github/workflows/ci.yml::docker-build-validate",
+          ".github/workflows/codeql.yml::analyze",
+          ".github/workflows/codeql.yml::codeql.yml",
+          ".github/workflows/pages.yml::deploy",
+          ".github/workflows/pages.yml::pages.yml",
+          ".github/workflows/publish-ghcr.yml::build-and-push",
+          ".github/workflows/publish-ghcr.yml::publish-ghcr.yml",
+          ".github/workflows/publish-release.yml::build-and-push",
+          ".github/workflows/publish-release.yml::publish-release.yml"
+        ],
+        "children": {}
+      },
+      "build_deployment_and_configuration_containers": {
+        "components": [
+          "Dockerfile::Dockerfile",
+          "Makefile::Makefile",
+          "Makefile::changelog-help",
+          "Makefile::changelog-prepare",
+          "Makefile::changelog-release",
+          "Makefile::changelog-status",
+          "Makefile::check",
+          "Makefile::clean",
+          "Makefile::clean-docs",
+          "Makefile::deploy",
+          "Makefile::dev-up",
+          "Makefile::down",
+          "Makefile::export-docs",
+          "Makefile::migrate",
+          "Makefile::prune",
+          "Makefile::revision",
+          "Makefile::rollback",
+          "Makefile::setup-prod",
+          "Makefile::tree",
+          "Makefile::up",
+          "Makefile::update-liff-version",
+          "Makefile::update-static-version",
+          "Makefile::upgrade-pyright",
+          "Makefile::worktree-add",
+          "Makefile::worktree-clean",
+          "Makefile::worktree-list",
+          "Makefile::worktree-remove",
+          "alembic.ini::alembic.ini",
+          "docker-compose.dev.yml::app",
+          "docker-compose.dev.yml::db",
+          "docker-compose.dev.yml::docker-compose.dev.yml",
+          "docker-compose.dev.yml::redis",
+          "docker-compose.prod.yml::app",
+          "docker-compose.prod.yml::db",
+          "docker-compose.prod.yml::docker-compose.prod.yml",
+          "docker-compose.prod.yml::redis",
+          "docker-compose.yml::app",
+          "docker-compose.yml::db",
+          "docker-compose.yml::docker-compose.yml",
+          "docker-compose.yml::redis"
+        ],
+        "children": {}
+      }
+    }
+  },
+  "application_core": {
+    "path": "app",
+    "components": [
+      "app/__init__.py::__file__",
+      "app/core/__init__.py::__file__",
+      "app/core/admin_divisions.py::AdminDivisionsManager",
+      "app/core/auth.py::_base64url_decode_nopad",
+      "app/core/config.py::Settings",
+      "app/core/database.py::Base",
+      "app/core/processing_lock.py::ProcessingLockService",
+      "app/main.py::health"
+    ],
+    "children": {}
+  },
+  "line_bot": {
+    "path": "app/line",
+    "components": [
+      "app/line/__init__.py::__file__",
+      "app/line/messaging.py::InMemoryReplyMessenger",
+      "app/line/messaging.py::LineSdkReplyMessenger",
+      "app/line/messaging.py::LocationRequestRecipe",
+      "app/line/messaging.py::MessageChoice",
+      "app/line/messaging.py::MessageChoicesRecipe",
+      "app/line/messaging.py::ReplyMessenger",
+      "app/line/messaging.py::SendErrorCategory",
+      "app/line/messaging.py::SendResult",
+      "app/line/messaging.py::SentReply",
+      "app/line/messaging.py::TextRecipe",
+      "app/line/messaging.py::UriChoice",
+      "app/line/messaging.py::UriChoicesRecipe",
+      "app/line/metrics.py::extract_event_types_from_body",
+      "app/line/postback.py::CurrentWeatherAction",
+      "app/line/postback.py::InvalidAction",
+      "app/line/postback.py::LocationSettingsAction",
+      "app/line/postback.py::OtherMenuAction",
+      "app/line/postback.py::PostbackPlan",
+      "app/line/postback.py::PresetWeatherAction",
+      "app/line/postback.py::RecentQueriesAction",
+      "app/line/router.py::line_webhook",
+      "app/line/sdk_dispatch.py::LineSdkWebhookDispatcher",
+      "app/line/sdk_dispatch.py::ParsedWebhookPayload",
+      "app/line/service.py::_handle_follow_event_callback",
+      "app/line/weather_presentation.py::QueryKind"
+    ],
+    "children": {
+      "line_bot_replies": {
+        "components": [
+          "app/line/messaging.py::InMemoryReplyMessenger",
+          "app/line/messaging.py::LineSdkReplyMessenger",
+          "app/line/messaging.py::LocationRequestRecipe",
+          "app/line/messaging.py::MessageChoice",
+          "app/line/messaging.py::MessageChoicesRecipe",
+          "app/line/messaging.py::ReplyMessenger",
+          "app/line/messaging.py::SendErrorCategory",
+          "app/line/messaging.py::SendResult",
+          "app/line/messaging.py::SentReply",
+          "app/line/messaging.py::TextRecipe",
+          "app/line/messaging.py::UriChoice",
+          "app/line/messaging.py::UriChoicesRecipe",
+          "app/line/weather_presentation.py::QueryKind"
+        ],
+        "children": {}
+      },
+      "line_bot_webhook": {
+        "components": [
+          "app/line/metrics.py::extract_event_types_from_body",
+          "app/line/router.py::line_webhook",
+          "app/line/sdk_dispatch.py::LineSdkWebhookDispatcher",
+          "app/line/sdk_dispatch.py::ParsedWebhookPayload",
+          "app/line/service.py::_handle_follow_event_callback"
+        ],
+        "children": {}
+      },
+      "line_bot_postback": {
+        "components": [
+          "app/line/__init__.py::__file__",
+          "app/line/postback.py::CurrentWeatherAction",
+          "app/line/postback.py::InvalidAction",
+          "app/line/postback.py::LocationSettingsAction",
+          "app/line/postback.py::OtherMenuAction",
+          "app/line/postback.py::PostbackPlan",
+          "app/line/postback.py::PresetWeatherAction",
+          "app/line/postback.py::RecentQueriesAction"
+        ],
+        "children": {}
+      }
+    }
+  },
+  "users_and_location_settings": {
+    "path": "",
+    "components": [
+      "app/user/__init__.py::__file__",
+      "app/user/models.py::User",
+      "app/user/models.py::UserQuery",
+      "app/user/router.py::set_user_location",
+      "app/user/schemas.py::LocationSettingRequest",
+      "app/user/schemas.py::LocationSettingResponse",
+      "app/user/service.py::create_user_if_not_exists",
+      "static/liff/location/app.js::LocationApp"
+    ],
+    "children": {
+      "users_and_location_settings_backend": {
+        "components": [
+          "app/user/__init__.py::__file__",
+          "app/user/models.py::User",
+          "app/user/models.py::UserQuery",
+          "app/user/router.py::set_user_location",
+          "app/user/schemas.py::LocationSettingRequest",
+          "app/user/schemas.py::LocationSettingResponse",
+          "app/user/service.py::create_user_if_not_exists"
+        ],
+        "children": {}
+      },
+      "users_and_location_settings_liff": {
+        "components": [
+          "static/liff/location/app.js::LocationApp"
+        ],
+        "children": {}
+      }
+    }
+  },
+  "weather_queries": {
+    "path": "app/weather",
+    "components": [
+      "app/weather/__init__.py::__file__",
+      "app/weather/location_resolution.py::InvalidInputReason",
+      "app/weather/location_resolution.py::LocationResolution",
+      "app/weather/location_resolution.py::QueryOutcome",
+      "app/weather/location_resolution.py::ResolvedLocation",
+      "app/weather/models.py::Location",
+      "app/weather/models.py::Task",
+      "app/weather/models.py::Weather",
+      "app/weather/service.py::WeatherService",
+      "app/weather/workflow.py::ForecastData",
+      "app/weather/workflow.py::WeatherQueryResult"
+    ],
+    "children": {}
+  },
+  "database_migrations": {
+    "path": "migrations",
+    "components": [
+      "migrations/env.py::run_migrations_offline",
+      "migrations/versions/1a4a3abc97f6_add_task_table_for_wea_data_monitoring.py::downgrade",
+      "migrations/versions/526d69e2321e_restrict_wea_bot_weather_permissions.py::downgrade",
+      "migrations/versions/67c6acf6e8df_setup_database_permissions.py::downgrade",
+      "migrations/versions/69db147baaec_grant_location_insert_update_.py::downgrade",
+      "migrations/versions/7f11c9b6d545_feature_liff_location_settings_20250816_.py::downgrade",
+      "migrations/versions/8ef96c483fc9_setup_task_table_permissions.py::downgrade",
+      "migrations/versions/8fda37b4a59c_optimize_weather_table_indexes.py::downgrade",
+      "migrations/versions/b05ddf47e04e_create_user_table.py::downgrade",
+      "migrations/versions/bcec2f9b0ea0_remove_user_display_name.py::downgrade",
+      "migrations/versions/cdb5dd844b83_feature_user_query_history_20250824_.py::downgrade",
+      "migrations/versions/d2d7367827f4_remove_weather_created_updated_timestamps.py::downgrade",
+      "migrations/versions/f557a1959851_create_location_weather_tables.py::downgrade"
+    ],
+    "children": {}
+  },
+  "operational_and_development_scripts": {
+    "path": "scripts",
+    "components": [
+      "scripts/changelog.sh::changelog.sh",
+      "scripts/check_liff_health.sh::check_liff_health.sh",
+      "scripts/check_pip_audit_ignores.py::AdvisoryStatus",
+      "scripts/check_pip_audit_ignores.py::IgnoreHit",
+      "scripts/clean_docs.sh::clean_docs.sh",
+      "scripts/cleanup_local_branches.sh::cleanup_local_branches.sh",
+      "scripts/cleanup_local_branches_preview.sh::cleanup_local_branches_preview.sh",
+      "scripts/export_branch_docs.sh::export_branch_docs.sh",
+      "scripts/gen_tree.sh::gen_tree.sh",
+      "scripts/open_infra_version_pr.sh::open_infra_version_pr.sh",
+      "scripts/performance_test.py::MockLocation",
+      "scripts/rich_menu_manager.py::create_rich_menu",
+      "scripts/update_liff_version.sh::update_liff_version.sh",
+      "scripts/update_static_pages_version.sh::update_static_pages_version.sh",
+      "scripts/worktree_add.sh::worktree_add.sh",
+      "scripts/worktree_clean.sh::worktree_clean.sh",
+      "scripts/worktree_list.sh::worktree_list.sh",
+      "scripts/worktree_remove.sh::worktree_remove.sh"
+    ],
+    "children": {
+      "release_and_version_management": {
+        "components": [
+          "scripts/changelog.sh::changelog.sh",
+          "scripts/open_infra_version_pr.sh::open_infra_version_pr.sh",
+          "scripts/update_liff_version.sh::update_liff_version.sh",
+          "scripts/update_static_pages_version.sh::update_static_pages_version.sh"
+        ],
+        "children": {}
+      },
+      "health_and_performance_checks": {
+        "components": [
+          "scripts/check_liff_health.sh::check_liff_health.sh",
+          "scripts/performance_test.py::MockLocation"
+        ],
+        "children": {}
+      },
+      "dependency_security_audit": {
+        "components": [
+          "scripts/check_pip_audit_ignores.py::AdvisoryStatus",
+          "scripts/check_pip_audit_ignores.py::IgnoreHit"
+        ],
+        "children": {}
+      },
+      "documentation_utilities": {
+        "components": [
+          "scripts/clean_docs.sh::clean_docs.sh",
+          "scripts/export_branch_docs.sh::export_branch_docs.sh",
+          "scripts/gen_tree.sh::gen_tree.sh"
+        ],
+        "children": {}
+      },
+      "git_branch_and_worktree_management": {
+        "components": [
+          "scripts/cleanup_local_branches.sh::cleanup_local_branches.sh",
+          "scripts/cleanup_local_branches_preview.sh::cleanup_local_branches_preview.sh",
+          "scripts/worktree_add.sh::worktree_add.sh",
+          "scripts/worktree_clean.sh::worktree_clean.sh",
+          "scripts/worktree_list.sh::worktree_list.sh",
+          "scripts/worktree_remove.sh::worktree_remove.sh"
+        ],
+        "children": {}
+      },
+      "line_rich_menu_management": {
+        "components": [
+          "scripts/rich_menu_manager.py::create_rich_menu"
+        ],
+        "children": {}
+      }
+    }
+  }
+};
+        const METADATA = {
+  "generation_info": {
+    "timestamp": "2026-11-06T02:02:31.122220+00:00",
+    "provider": "codex",
+    "main_model": "gpt-6.1-terra",
+    "generator_version": "2.0.0",
+    "repo_path": "/Users/kyo/Code/WeaMind",
+    "commit_id": "d5bb54df31b332158b68f7544739a349d2e8a969",
+    "language": "Chinese (Traditional)",
+    "layout": "hierarchical"
+  },
+  "statistics": {
+    "total_components": 290,
+    "leaf_nodes": 118,
+    "max_depth": 3
+  },
+  "files_generated": [
+    "overview.md",
+    "module_tree.json",
+    "first_module_tree.json",
+    "application_core.md",
+    "build_deployment_and_configuration.md",
+    "build_deployment_and_configuration/build_deployment_and_configuration_automation.md",
+    "build_deployment_and_configuration/build_deployment_and_configuration_containers.md",
+    "build_deployment_and_configuration/build_deployment_and_configuration_quality.md",
+    "database_migrations.md",
+    "line_bot.md",
+    "line_bot/line_bot_postback.md",
+    "line_bot/line_bot_replies.md",
+    "line_bot/line_bot_webhook.md",
+    "operational_and_development_scripts.md",
+    "operational_and_development_scripts/dependency_security_audit.md",
+    "operational_and_development_scripts/documentation_utilities.md",
+    "operational_and_development_scripts/git_branch_and_worktree_management.md",
+    "operational_and_development_scripts/health_and_performance_checks.md",
+    "operational_and_development_scripts/line_rich_menu_management.md",
+    "operational_and_development_scripts/release_and_version_management.md",
+    "users_and_location_settings.md",
+    "users_and_location_settings/users_and_location_settings_backend.md",
+    "users_and_location_settings/users_and_location_settings_liff.md",
+    "weather_queries.md"
+  ],
+  "usage": {
+    "schema_version": 2,
+    "scope": "this run only (modules resumed from disk cost nothing)",
+    "currency": "USD",
+    "cost_status": "unknown",
+    "incomplete": false,
+    "unknown_usage_calls": 0,
+    "n_calls": 25,
+    "totals": {
+      "input_tokens": 8204599,
+      "output_tokens": 95077,
+      "total_tokens": 8299676,
+      "cache_read_tokens": 7431552,
+      "cache_write_tokens": 0,
+      "cost_usd": 0.0
+    },
+    "by_phase": {
+      "clustering": {
+        "calls": 3,
+        "input_tokens": 99582,
+        "output_tokens": 3102,
+        "total_tokens": 102684,
+        "cache_read_tokens": 63616,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "unpriced_calls": 3
+      },
+      "modules": {
+        "calls": 20,
+        "input_tokens": 8033078,
+        "output_tokens": 90389,
+        "total_tokens": 8123467,
+        "cache_read_tokens": 7341568,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "unpriced_calls": 20
+      },
+      "parent_modules": {
+        "calls": 1,
+        "input_tokens": 35568,
+        "output_tokens": 739,
+        "total_tokens": 36307,
+        "cache_read_tokens": 13184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "unpriced_calls": 1
+      },
+      "overview": {
+        "calls": 1,
+        "input_tokens": 36371,
+        "output_tokens": 847,
+        "total_tokens": 37218,
+        "cache_read_tokens": 13184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "unpriced_calls": 1
+      }
+    },
+    "by_model": {
+      "gpt-6.1-terra": {
+        "calls": 25,
+        "input_tokens": 8204599,
+        "output_tokens": 95077,
+        "total_tokens": 8299676,
+        "cache_read_tokens": 7431552,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "unpriced_calls": 25
+      }
+    },
+    "unpriced_models": [
+      "gpt-6.1-terra"
+    ],
+    "calls": [
+      {
+        "phase": "clustering",
+        "kind": "complete",
+        "target": "",
+        "model": "gpt-6.1-terra",
+        "seconds": 48.62,
+        "input_tokens": 24827,
+        "output_tokens": 2049,
+        "total_tokens": 26876,
+        "cache_read_tokens": 13184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "clustering",
+        "kind": "complete",
+        "target": "",
+        "model": "gpt-6.1-terra",
+        "seconds": 19.51,
+        "input_tokens": 24086,
+        "output_tokens": 491,
+        "total_tokens": 24577,
+        "cache_read_tokens": 13184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "clustering",
+        "kind": "complete",
+        "target": "",
+        "model": "gpt-6.1-terra",
+        "seconds": 24.02,
+        "input_tokens": 50669,
+        "output_tokens": 562,
+        "total_tokens": 51231,
+        "cache_read_tokens": 37248,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "build_deployment_and_configuration_quality",
+        "model": "gpt-6.1-terra",
+        "seconds": 142.56,
+        "input_tokens": 363675,
+        "output_tokens": 4131,
+        "total_tokens": 367806,
+        "cache_read_tokens": 317184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "build_deployment_and_configuration_automation",
+        "model": "gpt-6.1-terra",
+        "seconds": 126.42,
+        "input_tokens": 292492,
+        "output_tokens": 3921,
+        "total_tokens": 296413,
+        "cache_read_tokens": 237952,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "build_deployment_and_configuration_containers",
+        "model": "gpt-6.1-terra",
+        "seconds": 177.65,
+        "input_tokens": 353945,
+        "output_tokens": 7439,
+        "total_tokens": 361384,
+        "cache_read_tokens": 311552,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "build_deployment_and_configuration",
+        "model": "gpt-6.1-terra",
+        "seconds": 552.15,
+        "input_tokens": 1270005,
+        "output_tokens": 5074,
+        "total_tokens": 1275079,
+        "cache_read_tokens": 1227776,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "application_core",
+        "model": "gpt-6.1-terra",
+        "seconds": 163.41,
+        "input_tokens": 288868,
+        "output_tokens": 4474,
+        "total_tokens": 293342,
+        "cache_read_tokens": 264704,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "line_bot_replies",
+        "model": "gpt-6.1-terra",
+        "seconds": 161.76,
+        "input_tokens": 305718,
+        "output_tokens": 6535,
+        "total_tokens": 312253,
+        "cache_read_tokens": 284800,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "line_bot_webhook",
+        "model": "gpt-6.1-terra",
+        "seconds": 122.75,
+        "input_tokens": 238542,
+        "output_tokens": 4099,
+        "total_tokens": 242641,
+        "cache_read_tokens": 213376,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "line_bot_postback",
+        "model": "gpt-6.1-terra",
+        "seconds": 120.82,
+        "input_tokens": 217361,
+        "output_tokens": 3306,
+        "total_tokens": 220667,
+        "cache_read_tokens": 198272,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "line_bot",
+        "model": "gpt-6.1-terra",
+        "seconds": 490.61,
+        "input_tokens": 1262799,
+        "output_tokens": 3692,
+        "total_tokens": 1266491,
+        "cache_read_tokens": 1224960,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "users_and_location_settings_backend",
+        "model": "gpt-6.1-terra",
+        "seconds": 106.26,
+        "input_tokens": 226402,
+        "output_tokens": 3895,
+        "total_tokens": 230297,
+        "cache_read_tokens": 198528,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "users_and_location_settings_liff",
+        "model": "gpt-6.1-terra",
+        "seconds": 104.87,
+        "input_tokens": 224606,
+        "output_tokens": 3637,
+        "total_tokens": 228243,
+        "cache_read_tokens": 204672,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "users_and_location_settings",
+        "model": "gpt-6.1-terra",
+        "seconds": 295.31,
+        "input_tokens": 890336,
+        "output_tokens": 3460,
+        "total_tokens": 893796,
+        "cache_read_tokens": 844672,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "weather_queries",
+        "model": "gpt-6.1-terra",
+        "seconds": 111.96,
+        "input_tokens": 218619,
+        "output_tokens": 3713,
+        "total_tokens": 222332,
+        "cache_read_tokens": 180096,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "database_migrations",
+        "model": "gpt-6.1-terra",
+        "seconds": 104.64,
+        "input_tokens": 260818,
+        "output_tokens": 3576,
+        "total_tokens": 264394,
+        "cache_read_tokens": 223872,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "release_and_version_management",
+        "model": "gpt-6.1-terra",
+        "seconds": 239.14,
+        "input_tokens": 436267,
+        "output_tokens": 10515,
+        "total_tokens": 446782,
+        "cache_read_tokens": 406528,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "health_and_performance_checks",
+        "model": "gpt-6.1-terra",
+        "seconds": 139.41,
+        "input_tokens": 269741,
+        "output_tokens": 5302,
+        "total_tokens": 275043,
+        "cache_read_tokens": 234752,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "dependency_security_audit",
+        "model": "gpt-6.1-terra",
+        "seconds": 134.42,
+        "input_tokens": 221513,
+        "output_tokens": 3447,
+        "total_tokens": 224960,
+        "cache_read_tokens": 202240,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "documentation_utilities",
+        "model": "gpt-6.1-terra",
+        "seconds": 83.61,
+        "input_tokens": 211487,
+        "output_tokens": 2932,
+        "total_tokens": 214419,
+        "cache_read_tokens": 184576,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "git_branch_and_worktree_management",
+        "model": "gpt-6.1-terra",
+        "seconds": 120.96,
+        "input_tokens": 245529,
+        "output_tokens": 3921,
+        "total_tokens": 249450,
+        "cache_read_tokens": 217600,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "modules",
+        "kind": "module_agent",
+        "target": "line_rich_menu_management",
+        "model": "gpt-6.1-terra",
+        "seconds": 107.49,
+        "input_tokens": 234355,
+        "output_tokens": 3320,
+        "total_tokens": 237675,
+        "cache_read_tokens": 163456,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "parent_modules",
+        "kind": "complete",
+        "target": "operational_and_development_scripts",
+        "model": "gpt-6.1-terra",
+        "seconds": 23.73,
+        "input_tokens": 35568,
+        "output_tokens": 739,
+        "total_tokens": 36307,
+        "cache_read_tokens": 13184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      },
+      {
+        "phase": "overview",
+        "kind": "complete",
+        "target": "WeaMind",
+        "model": "gpt-6.1-terra",
+        "seconds": 31.06,
+        "input_tokens": 36371,
+        "output_tokens": 847,
+        "total_tokens": 37218,
+        "cache_read_tokens": 13184,
+        "cache_write_tokens": 0,
+        "cost_usd": 0.0,
+        "usage_reported": true,
+        "provider": "codex",
+        "cost_source": "unknown"
+      }
+    ]
+  }
+};
+        // Translated page titles (first heading of each page), keyed by module name
+        const PAGE_TITLES = {"overview": "WeaMind 專案概覽", "application_core": "應用程式核心", "build_deployment_and_configuration": "建置、部署與設定", "build_deployment_and_configuration_automation": "建置、部署與設定自動化", "build_deployment_and_configuration_containers": "容器建置、部署與設定", "build_deployment_and_configuration_quality": "依賴管理與程式碼品質", "database_migrations": "資料庫遷移", "dependency_security_audit": "依賴安全稽核", "documentation_utilities": "文件維護工具", "git_branch_and_worktree_management": "Git 分支與工作樹管理", "health_and_performance_checks": "健康與效能檢查", "line_bot": "LINE Bot 模組", "line_bot_postback": "LINE PostBack 動作處理", "line_bot_replies": "LINE 回覆模組", "line_bot_webhook": "LINE webhook 事件處理", "line_rich_menu_management": "LINE 圖文選單管理", "operational_and_development_scripts": "維運與開發腳本", "release_and_version_management": "發布與版本管理", "users_and_location_settings": "使用者與地點設定", "users_and_location_settings_backend": "使用者與地點設定後端", "users_and_location_settings_liff": "LIFF 地點設定頁面", "weather_queries": "天氣查詢"};
+        if (PAGE_TITLES.overview) {
+            document.getElementById('nav-overview').textContent = '📄 ' + PAGE_TITLES.overview;
+        }
+        const DOCS_BASE_PATH = '';
+        // Module name -> page path relative to the docs folder. Pages may sit in
+        // folders mirroring the module tree (auth.md, auth/login.md) or all in
+        // the docs root (--flat); a name missing here falls back to <name>.md.
+        const DOC_PATHS = {"overview": "overview.md", "build_deployment_and_configuration": "build_deployment_and_configuration.md", "application_core": "application_core.md", "line_bot": "line_bot.md", "users_and_location_settings": "users_and_location_settings.md", "weather_queries": "weather_queries.md", "database_migrations": "database_migrations.md", "operational_and_development_scripts": "operational_and_development_scripts.md", "release_and_version_management": "operational_and_development_scripts/release_and_version_management.md", "health_and_performance_checks": "operational_and_development_scripts/health_and_performance_checks.md", "dependency_security_audit": "operational_and_development_scripts/dependency_security_audit.md", "documentation_utilities": "operational_and_development_scripts/documentation_utilities.md", "git_branch_and_worktree_management": "operational_and_development_scripts/git_branch_and_worktree_management.md", "line_rich_menu_management": "operational_and_development_scripts/line_rich_menu_management.md", "users_and_location_settings_backend": "users_and_location_settings/users_and_location_settings_backend.md", "users_and_location_settings_liff": "users_and_location_settings/users_and_location_settings_liff.md", "line_bot_replies": "line_bot/line_bot_replies.md", "line_bot_webhook": "line_bot/line_bot_webhook.md", "line_bot_postback": "line_bot/line_bot_postback.md", "build_deployment_and_configuration_quality": "build_deployment_and_configuration/build_deployment_and_configuration_quality.md", "build_deployment_and_configuration_automation": "build_deployment_and_configuration/build_deployment_and_configuration_automation.md", "build_deployment_and_configuration_containers": "build_deployment_and_configuration/build_deployment_and_configuration_containers.md"};
+
+        function docFileFor(key) {
+            return Object.prototype.hasOwnProperty.call(DOC_PATHS, key) ? DOC_PATHS[key] : key + '.md';
+        }
+
+        // Resolve a relative link found on page `fromFile` to a docs-relative path.
+        function resolveDocLink(fromFile, href) {
+            const parts = (fromFile || '').split('/').slice(0, -1).concat(href.split('/'));
+            const out = [];
+            for (const part of parts) {
+                if (part === '..') {
+                    out.pop();
+                } else if (part && part !== '.') {
+                    out.push(part);
+                }
+            }
+            const resolved = out.join('/');
+            const known = Object.values(DOC_PATHS);
+            if (known.length === 0 || known.indexOf(resolved) !== -1) {
+                return resolved;
+            }
+            // A link that misses its page: match the page by module name.
+            const stem = resolved.split('/').pop().replace(/\.md$/i, '');
+            return Object.prototype.hasOwnProperty.call(DOC_PATHS, stem) ? DOC_PATHS[stem] : resolved;
+        }
+
+        // Router / rendering state
+        let currentFile = null;
+        let loadToken = 0;
+        let scrollSpyObserver = null;
+
+        // Initialize marked. headerIds/mangle were removed in marked v5+;
+        // GitHub-compatible heading ids come from the marked-gfm-heading-id
+        // extension (wraps github-slugger), matching the anchors used in
+        // cross-document links inside the generated docs.
+        marked.setOptions({
+            breaks: true,
+            gfm: true
+        });
+        if (typeof markedGfmHeadingId !== 'undefined') {
+            marked.use(markedGfmHeadingId.gfmHeadingId());
+        }
+
+        if (typeof hljs !== 'undefined') {
+            hljs.configure({ ignoreUnescapedHTML: true });
+        }
+
+        function isDarkTheme() {
+            return document.documentElement.getAttribute('data-theme') === 'dark';
+        }
+
+        function initMermaid() {
+            const config = {
+                startOnLoad: false,
+                suppressErrorRendering: true,
+                theme: isDarkTheme() ? 'dark' : 'default',
+                flowchart: { htmlLabels: true, curve: 'basis' },
+                sequence: { mirrorActors: true, useMaxWidth: true }
+            };
+            if (!isDarkTheme()) {
+                config.themeVariables = {
+                    primaryColor: '#2563eb',
+                    primaryTextColor: '#334155',
+                    primaryBorderColor: '#e2e8f0',
+                    lineColor: '#64748b',
+                    secondaryColor: '#f1f5f9',
+                    tertiaryColor: '#f8fafc'
+                };
+            }
+            mermaid.initialize(config);
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (MODULE_TREE) {
+                buildNavigation();
+            }
+
+            setupNavFilter();
+            setupThemeToggle();
+            setupMobileDrawer();
+            setupLinkInterception();
+            initMermaid();
+
+            window.addEventListener('hashchange', onHashChange);
+            if (!location.hash) {
+                history.replaceState(null, '', buildHash('overview.md'));
+            }
+            onHashChange();
+        });
+
+        // ---------- Hash routing ----------
+        // URL scheme: #/<encodeURIComponent(filename)> or
+        //             #/<encodeURIComponent(filename)>:<heading-slug>
+        // encodeURIComponent escapes both '&' and ':' in filenames, and GitHub
+        // slugs never contain ':', so splitting on the first ':' is unambiguous.
+        // The leading '#/' distinguishes router hashes from plain in-page anchors.
+
+        function buildHash(file, anchor) {
+            return '#/' + encodeURIComponent(file) + (anchor ? ':' + anchor : '');
+        }
+
+        function parseHash() {
+            const hash = location.hash;
+            if (hash && hash.indexOf('#/') === 0) {
+                const raw = hash.slice(2);
+                const sep = raw.indexOf(':');
+                const filePart = sep === -1 ? raw : raw.slice(0, sep);
+                const anchor = sep === -1 ? null : raw.slice(sep + 1);
+                try {
+                    const file = decodeURIComponent(filePart);
+                    if (file) {
+                        return { file: file, anchor: anchor || null };
+                    }
+                } catch (e) {
+                    // Malformed hash: fall through to the overview
+                }
+            }
+            return { file: 'overview.md', anchor: null };
+        }
+
+        function navigateTo(file, anchor) {
+            closeDrawer();
+            const target = buildHash(file, anchor);
+            if (location.hash === target) {
+                // Same URL (e.g. clicking the current link again): re-run manually
+                onHashChange();
+            } else {
+                location.hash = target;
+            }
+        }
+
+        function onHashChange() {
+            const route = parseHash();
+            if (route.file !== currentFile) {
+                loadDocument(route.file, route.anchor);
+            } else if (route.anchor) {
+                scrollToAnchor(route.anchor);
+            } else {
+                window.scrollTo(0, 0);
+            }
+            setActiveNav(route.file);
+        }
+
+        function scrollToAnchor(anchor) {
+            if (!anchor) return;
+            const el = document.getElementById(anchor);
+            if (el) {
+                el.scrollIntoView({ block: 'start' });
+            }
+        }
+
+        // ---------- Sidebar navigation ----------
+
+        function buildNavigation() {
+            const nav = document.getElementById('navigation');
+            let html = '';
+
+            for (const [key, data] of Object.entries(MODULE_TREE)) {
+                html += buildNavItem(key, data, 0);
+            }
+
+            nav.innerHTML = html;
+
+            // Delegated handlers for nav items and collapse toggles
+            document.getElementById('sidebar').addEventListener('click', function(e) {
+                const toggle = e.target.closest('.nav-toggle');
+                if (toggle) {
+                    toggle.closest('.nav-group').classList.toggle('collapsed');
+                    return;
+                }
+                const item = e.target.closest('.nav-item');
+                if (item) {
+                    const file = item.getAttribute('data-file');
+                    if (file) {
+                        navigateTo(file);
+                    }
+                }
+            });
+        }
+
+        function buildNavItem(key, data, depth) {
+            const fileName = docFileFor(key);
+            const hasChildren = data.children && Object.keys(data.children).length > 0;
+            const hasComponents = data.components && data.components.length > 0;
+
+            // Every module in the tree has a generated doc (parents get a
+            // synthesized overview), so render a link whenever the node has
+            // components or children. Only the synthetic fallback tree's bare
+            // top-level node stays a plain header.
+            let inner;
+            if (depth === 0 && !hasChildren && !hasComponents) {
+                inner = '<h3>' + escapeHtml(formatNavTitle(key)) + '</h3>';
+            } else {
+                const parentClass = depth === 0 && hasChildren ? ' nav-parent' : '';
+                inner = '<div class="nav-item' + parentClass + '" data-file="' + escapeHtml(fileName) + '">' +
+                    escapeHtml(formatNavTitle(key)) + '</div>';
+            }
+
+            if (!hasChildren) {
+                return '<div class="nav-leaf">' + inner + '</div>';
+            }
+
+            let childrenHtml = '';
+            for (const [childKey, childData] of Object.entries(data.children)) {
+                childrenHtml += buildNavItem(childKey, childData, depth + 1);
+            }
+
+            // Top-level groups start expanded, deeper groups collapsed
+            const collapsed = depth >= 1 ? ' collapsed' : '';
+            return '<div class="nav-group' + collapsed + '">' +
+                '<div class="nav-row">' + inner +
+                '<button class="nav-toggle" type="button" aria-label="Toggle section">▸</button></div>' +
+                '<div class="nav-children">' + childrenHtml + '</div></div>';
+        }
+
+        function formatNavTitle(key) {
+            if (Object.prototype.hasOwnProperty.call(PAGE_TITLES, key)) {
+                return PAGE_TITLES[key];
+            }
+            return key
+                .replace(/_/g, ' ')
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ');
+        }
+
+        function setActiveNav(filename) {
+            let active = null;
+            document.querySelectorAll('.nav-item').forEach(item => {
+                const isActive = item.getAttribute('data-file') === filename;
+                item.classList.toggle('active', isActive);
+                if (isActive) active = item;
+            });
+
+            // Reveal the active item by expanding its ancestor groups
+            let group = active && active.closest('.nav-group');
+            while (group) {
+                group.classList.remove('collapsed');
+                group = group.parentElement && group.parentElement.closest('.nav-group');
+            }
+        }
+
+        function setupNavFilter() {
+            const input = document.getElementById('nav-filter');
+            const nav = document.getElementById('navigation');
+
+            input.addEventListener('input', function() {
+                const query = this.value.trim().toLowerCase();
+                nav.classList.toggle('filtering', !!query);
+
+                nav.querySelectorAll('.nav-group, .nav-leaf').forEach(node => {
+                    if (!query) {
+                        node.classList.remove('nav-hidden', 'filter-open');
+                        return;
+                    }
+                    // A node stays visible if its own title or any descendant
+                    // title matches; matching groups are force-expanded.
+                    const items = node.querySelectorAll('.nav-item');
+                    let anyMatch = false;
+                    items.forEach(item => {
+                        if (item.textContent.toLowerCase().includes(query)) {
+                            anyMatch = true;
+                        }
+                    });
+                    node.classList.toggle('nav-hidden', !anyMatch);
+                    if (node.classList.contains('nav-group')) {
+                        node.classList.toggle('filter-open', anyMatch);
+                    }
+                });
+            });
+        }
+
+        // ---------- Document loading & rendering ----------
+
+        async function loadDocument(filename, anchor) {
+            const token = ++loadToken;
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+
+            closeMermaidLightbox();
+
+            loading.style.display = 'flex';
+            content.style.display = 'none';
+
+            try {
+                const docPath = DOCS_BASE_PATH ? DOCS_BASE_PATH + '/' + filename : filename;
+                const response = await fetch(docPath);
+                if (!response.ok) {
+                    throw new Error('Failed to load ' + filename);
+                }
+
+                const markdown = await response.text();
+                if (token !== loadToken) return; // superseded by a newer navigation
+
+                content.innerHTML = renderMarkdown(markdown);
+                loading.style.display = 'none';
+                content.style.display = 'block';
+                currentFile = filename;
+
+                highlightCodeBlocks();
+                addCopyButtons();
+
+                await renderMermaidDiagrams();
+                if (token !== loadToken) return;
+
+                buildTOC();
+                renderPagerLinks(filename);
+
+                // Scroll after diagrams render, since they shift the layout
+                if (anchor) {
+                    scrollToAnchor(anchor);
+                } else {
+                    window.scrollTo(0, 0);
+                }
+
+            } catch (error) {
+                console.error('Error loading document:', error);
+                if (token === loadToken) {
+                    showError('Failed to load document: ' + filename);
+                }
+            }
+        }
+
+        function setupLinkInterception() {
+            // One delegated listener covers markdown content, the TOC and
+            // any other internal links.
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('a');
+                if (!link) return;
+
+                const href = link.getAttribute('href');
+                if (!href) return;
+
+                // Router hashes (e.g. pager links): let the browser update the
+                // hash and the hashchange handler do the rest.
+                if (href.indexOf('#/') === 0) return;
+
+                // Plain in-page anchors (TOC, intra-document links): scroll and
+                // keep the URL shareable without triggering a reload.
+                if (href.charAt(0) === '#') {
+                    e.preventDefault();
+                    const slug = safeDecode(href.slice(1));
+                    scrollToAnchor(slug);
+                    if (currentFile && slug) {
+                        history.replaceState(null, '', buildHash(currentFile, slug));
+                    }
+                    return;
+                }
+
+                // Relative markdown links, optionally with an anchor
+                // (e.g. "Other_Module.md#some-section")
+                if (/^https?:/i.test(href)) return;
+                if (/^[a-z][a-z0-9+.-]*:/i.test(href) || href.charAt(0) === '/') return;
+                const mdMatch = href.match(/^([^#?]*\.md)(?:#(.*))?$/i);
+                if (mdMatch) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const filename = resolveDocLink(currentFile || 'overview.md', safeDecode(mdMatch[1]));
+                    const anchor = mdMatch[2] ? safeDecode(mdMatch[2]) : null;
+                    navigateTo(filename, anchor);
+                }
+            });
+        }
+
+        function safeDecode(text) {
+            try {
+                return decodeURIComponent(text);
+            } catch (e) {
+                return text;
+            }
+        }
+
+        function renderMarkdown(markdown) {
+            // Convert markdown to HTML using marked
+            let html = marked.parse(markdown);
+
+            // Process mermaid code blocks
+            html = html.replace(
+                /<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g,
+                (match, code) => {
+                    const decodedCode = code
+                        .replace(/&lt;/g, '<')
+                        .replace(/&gt;/g, '>')
+                        .replace(/&amp;/g, '&')
+                        .replace(/&quot;/g, '"')
+                        .replace(/&#39;/g, "'");
+                    return '<div class="mermaid">' + decodedCode + '</div>';
+                }
+            );
+
+            return html;
+        }
+
+        function highlightCodeBlocks() {
+            if (typeof hljs === 'undefined') return;
+            // Only highlight fences with an explicit language tag —
+            // auto-detection miscolors untagged output/log blocks.
+            document.querySelectorAll('#content pre code[class*="language-"]').forEach(el => {
+                if (el.classList.contains('language-mermaid')) return;
+                hljs.highlightElement(el);
+            });
+        }
+
+        function addCopyButtons() {
+            if (!navigator.clipboard) return; // requires a secure context
+
+            document.querySelectorAll('#content pre').forEach(pre => {
+                if (pre.closest('.mermaid') || pre.closest('.mermaid-error') || pre.closest('.code-block')) return;
+
+                // Wrap so the button doesn't scroll with wide code
+                const wrapper = document.createElement('div');
+                wrapper.className = 'code-block';
+                pre.parentNode.insertBefore(wrapper, pre);
+                wrapper.appendChild(pre);
+
+                const btn = document.createElement('button');
+                btn.className = 'copy-btn';
+                btn.type = 'button';
+                btn.textContent = 'Copy';
+                btn.addEventListener('click', function() {
+                    const code = pre.querySelector('code');
+                    const text = code ? code.innerText : pre.innerText;
+                    navigator.clipboard.writeText(text).then(() => {
+                        btn.textContent = 'Copied!';
+                        btn.classList.add('copied');
+                        setTimeout(() => {
+                            btn.textContent = 'Copy';
+                            btn.classList.remove('copied');
+                        }, 1500);
+                    });
+                });
+                wrapper.appendChild(btn);
+            });
+        }
+
+        async function renderMermaidDiagrams() {
+            const mermaidElements = document.querySelectorAll('#content .mermaid');
+
+            for (let i = 0; i < mermaidElements.length; i++) {
+                const element = mermaidElements[i];
+                // Keep the source around so diagrams can re-render on theme change
+                if (!element.dataset.src) {
+                    element.dataset.src = element.textContent;
+                }
+
+                try {
+                    const renderId = 'mermaid-svg-' + Date.now() + '-' + i;
+                    const { svg } = await mermaid.render(renderId, element.dataset.src);
+                    element.innerHTML = svg;
+                    makeMermaidZoomable(element);
+                } catch (error) {
+                    console.error('Mermaid rendering error:', error);
+                    element.innerHTML = '<div class="mermaid-error">⚠️ Diagram failed to render' +
+                        '<details><summary>Show source</summary><pre>' +
+                        escapeHtml(element.dataset.src) + '</pre></details></div>';
+                }
+            }
+        }
+
+        // ---------- Mermaid full-screen lightbox with pan & zoom ----------
+
+        let lightboxEl = null;
+        const lightboxState = { scale: 1, tx: 0, ty: 0, width: 0, height: 0 };
+
+        function makeMermaidZoomable(element) {
+            element.classList.add('zoomable');
+
+            const btn = document.createElement('button');
+            btn.className = 'mermaid-expand';
+            btn.type = 'button';
+            btn.title = 'Expand diagram';
+            btn.setAttribute('aria-label', 'Expand diagram');
+            btn.textContent = '⛶';
+            element.appendChild(btn);
+
+            element.addEventListener('click', function(e) {
+                if (e.target.closest('a')) return; // keep links inside diagrams working
+                openMermaidLightbox(element);
+            });
+        }
+
+        function ensureLightbox() {
+            if (lightboxEl) return lightboxEl;
+
+            lightboxEl = document.createElement('div');
+            lightboxEl.className = 'mermaid-lightbox';
+            lightboxEl.setAttribute('role', 'dialog');
+            lightboxEl.setAttribute('aria-label', 'Diagram viewer');
+            lightboxEl.innerHTML =
+                '<div class="lightbox-canvas"><div class="lightbox-stage"></div></div>' +
+                '<div class="lightbox-toolbar">' +
+                '<button type="button" data-action="zoom-out" title="Zoom out" aria-label="Zoom out">−</button>' +
+                '<button type="button" data-action="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>' +
+                '<button type="button" data-action="reset" title="Reset view" aria-label="Reset view">Fit</button>' +
+                '<button type="button" data-action="close" title="Close (Esc)" aria-label="Close">✕</button>' +
+                '</div>' +
+                '<div class="lightbox-hint">Scroll to zoom · drag to pan · Esc to close</div>';
+            document.body.appendChild(lightboxEl);
+
+            const canvas = lightboxEl.querySelector('.lightbox-canvas');
+
+            lightboxEl.querySelector('.lightbox-toolbar').addEventListener('click', function(e) {
+                const button = e.target.closest('button');
+                if (!button) return;
+                const action = button.getAttribute('data-action');
+                const cx = canvas.clientWidth / 2;
+                const cy = canvas.clientHeight / 2;
+                if (action === 'zoom-in') zoomLightboxAt(cx, cy, 1.4);
+                else if (action === 'zoom-out') zoomLightboxAt(cx, cy, 1 / 1.4);
+                else if (action === 'reset') fitLightbox();
+                else if (action === 'close') closeMermaidLightbox();
+            });
+
+            // Wheel zoom centred on the cursor (trackpad pinch arrives as
+            // ctrl+wheel and is covered by the same handler)
+            canvas.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+                zoomLightboxAt(e.clientX - rect.left, e.clientY - rect.top, factor);
+            }, { passive: false });
+
+            // Drag to pan; two pointers pinch to zoom (touch)
+            const pointers = new Map();
+            let lastPinchDist = 0;
+
+            canvas.addEventListener('pointerdown', function(e) {
+                canvas.setPointerCapture(e.pointerId);
+                pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+                if (pointers.size === 1) canvas.classList.add('dragging');
+                if (pointers.size === 2) {
+                    const pts = Array.from(pointers.values());
+                    lastPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                }
+            });
+
+            canvas.addEventListener('pointermove', function(e) {
+                if (!pointers.has(e.pointerId)) return;
+                const prev = pointers.get(e.pointerId);
+                pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                if (pointers.size === 1) {
+                    lightboxState.tx += e.clientX - prev.x;
+                    lightboxState.ty += e.clientY - prev.y;
+                    applyLightboxTransform();
+                } else if (pointers.size === 2) {
+                    const pts = Array.from(pointers.values());
+                    const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+                    if (lastPinchDist > 0) {
+                        const rect = canvas.getBoundingClientRect();
+                        const midX = (pts[0].x + pts[1].x) / 2 - rect.left;
+                        const midY = (pts[0].y + pts[1].y) / 2 - rect.top;
+                        zoomLightboxAt(midX, midY, dist / lastPinchDist);
+                    }
+                    lastPinchDist = dist;
+                }
+            });
+
+            function releasePointer(e) {
+                pointers.delete(e.pointerId);
+                lastPinchDist = 0;
+                if (pointers.size === 0) canvas.classList.remove('dragging');
+            }
+            canvas.addEventListener('pointerup', releasePointer);
+            canvas.addEventListener('pointercancel', releasePointer);
+
+            // Double-click to zoom in on a spot
+            canvas.addEventListener('dblclick', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                zoomLightboxAt(e.clientX - rect.left, e.clientY - rect.top, 2);
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && lightboxEl.classList.contains('open')) {
+                    closeMermaidLightbox();
+                }
+            });
+
+            return lightboxEl;
+        }
+
+        function openMermaidLightbox(element) {
+            const svg = element.querySelector('svg');
+            if (!svg) return;
+
+            const lb = ensureLightbox();
+            const stage = lb.querySelector('.lightbox-stage');
+            stage.innerHTML = '';
+
+            const clone = svg.cloneNode(true);
+            let width = 800;
+            let height = 600;
+            const vb = clone.viewBox && clone.viewBox.baseVal;
+            if (vb && vb.width && vb.height) {
+                width = vb.width;
+                height = vb.height;
+            }
+            // Give the clone its natural size; scaling happens via transform
+            clone.style.maxWidth = 'none';
+            clone.style.width = width + 'px';
+            clone.style.height = height + 'px';
+            clone.setAttribute('width', width);
+            clone.setAttribute('height', height);
+            stage.style.width = width + 'px';
+            stage.style.height = height + 'px';
+            stage.appendChild(clone);
+
+            lightboxState.width = width;
+            lightboxState.height = height;
+
+            lb.classList.add('open');
+            document.body.style.overflow = 'hidden';
+            fitLightbox();
+        }
+
+        function fitLightbox() {
+            const canvas = lightboxEl.querySelector('.lightbox-canvas');
+            const cw = canvas.clientWidth;
+            const ch = canvas.clientHeight;
+            // Fill most of the screen — small diagrams get scaled UP
+            const fit = Math.min(cw * 0.9 / lightboxState.width, ch * 0.85 / lightboxState.height);
+            lightboxState.scale = Math.min(Math.max(fit, 0.1), 10);
+            lightboxState.tx = (cw - lightboxState.width * lightboxState.scale) / 2;
+            lightboxState.ty = (ch - lightboxState.height * lightboxState.scale) / 2;
+            applyLightboxTransform();
+        }
+
+        function zoomLightboxAt(x, y, factor) {
+            const newScale = Math.min(Math.max(lightboxState.scale * factor, 0.1), 12);
+            const applied = newScale / lightboxState.scale;
+            lightboxState.tx = x - (x - lightboxState.tx) * applied;
+            lightboxState.ty = y - (y - lightboxState.ty) * applied;
+            lightboxState.scale = newScale;
+            applyLightboxTransform();
+        }
+
+        function applyLightboxTransform() {
+            const stage = lightboxEl.querySelector('.lightbox-stage');
+            stage.style.transform = 'translate(' + lightboxState.tx + 'px, ' + lightboxState.ty + 'px) scale(' + lightboxState.scale + ')';
+        }
+
+        function closeMermaidLightbox() {
+            if (!lightboxEl) return;
+            lightboxEl.classList.remove('open');
+            lightboxEl.querySelector('.lightbox-stage').innerHTML = '';
+            document.body.style.overflow = '';
+        }
+
+        // ---------- On-page table of contents ----------
+
+        function buildTOC() {
+            const toc = document.getElementById('toc');
+            const contentInner = document.querySelector('.content-inner');
+            const headings = Array.from(document.querySelectorAll('#content h2, #content h3'))
+                .filter(h => h.id);
+
+            if (scrollSpyObserver) {
+                scrollSpyObserver.disconnect();
+                scrollSpyObserver = null;
+            }
+
+            if (headings.length < 3) {
+                toc.innerHTML = '';
+                contentInner.classList.add('no-toc');
+                return;
+            }
+
+            contentInner.classList.remove('no-toc');
+            let html = '<div class="toc-title">On this page</div>';
+            headings.forEach(h => {
+                html += '<a class="toc-link toc-' + h.tagName.toLowerCase() + '" href="#' +
+                    escapeHtml(h.id) + '">' + escapeHtml(h.textContent) + '</a>';
+            });
+            toc.innerHTML = html;
+
+            setupScrollSpy(headings);
+        }
+
+        function setupScrollSpy(headings) {
+            scrollSpyObserver = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const id = entry.target.id;
+                    document.querySelectorAll('.toc-link').forEach(a => {
+                        a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+                    });
+                });
+            }, { rootMargin: '0px 0px -70% 0px' });
+
+            headings.forEach(h => scrollSpyObserver.observe(h));
+        }
+
+        // ---------- Prev/next pager ----------
+
+        function flattenModuleTree() {
+            const order = ['overview.md'];
+
+            function walk(tree, depth) {
+                for (const [key, data] of Object.entries(tree)) {
+                    const hasChildren = data.children && Object.keys(data.children).length > 0;
+                    const hasComponents = data.components && data.components.length > 0;
+                    // Mirror buildNavItem: skip bare headers without a doc
+                    if (depth > 0 || hasChildren || hasComponents) {
+                        order.push(docFileFor(key));
+                    }
+                    if (hasChildren) {
+                        walk(data.children, depth + 1);
+                    }
+                }
+            }
+
+            if (MODULE_TREE) {
+                walk(MODULE_TREE, 0);
+            }
+            return order;
+        }
+
+        const DOC_ORDER = flattenModuleTree();
+
+        function pageTitleFor(filename) {
+            const base = filename.split('/').pop().replace(/\.md$/i, '');
+            if (base === 'overview') {
+                return PAGE_TITLES.overview || 'Overview';
+            }
+            return formatNavTitle(base);
+        }
+
+        function renderPagerLinks(filename) {
+            const pager = document.getElementById('pager');
+            const idx = DOC_ORDER.indexOf(filename);
+
+            if (idx === -1) {
+                pager.innerHTML = '';
+                return;
+            }
+
+            const prev = idx > 0 ? DOC_ORDER[idx - 1] : null;
+            const next = idx < DOC_ORDER.length - 1 ? DOC_ORDER[idx + 1] : null;
+
+            let html = '';
+            if (prev) {
+                html += '<a class="pager-link pager-prev" href="' + buildHash(prev) + '">' +
+                    '<span class="pager-label">← Previous</span>' +
+                    '<span class="pager-title">' + escapeHtml(pageTitleFor(prev)) + '</span></a>';
+            }
+            if (next) {
+                html += '<a class="pager-link pager-next" href="' + buildHash(next) + '">' +
+                    '<span class="pager-label">Next →</span>' +
+                    '<span class="pager-title">' + escapeHtml(pageTitleFor(next)) + '</span></a>';
+            }
+            pager.innerHTML = html;
+        }
+
+        // ---------- Theme ----------
+
+        function setupThemeToggle() {
+            syncThemeAssets();
+
+            document.getElementById('theme-toggle').addEventListener('click', async function() {
+                const dark = !isDarkTheme();
+                document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+                try {
+                    localStorage.setItem('codewiki-theme', dark ? 'dark' : 'light');
+                } catch (e) {
+                    // Storage unavailable (private mode etc.) — theme just won't persist
+                }
+
+                syncThemeAssets();
+                initMermaid();
+                closeMermaidLightbox();
+
+                // Re-render diagrams from their stored source in the new theme
+                document.querySelectorAll('#content .mermaid').forEach(el => {
+                    if (el.dataset.src) el.innerHTML = '';
+                });
+                await renderMermaidDiagrams();
+            });
+        }
+
+        function syncThemeAssets() {
+            const dark = isDarkTheme();
+            document.getElementById('theme-toggle').textContent = dark ? '☀️' : '🌙';
+
+            const lightCss = document.getElementById('hljs-theme-light');
+            const darkCss = document.getElementById('hljs-theme-dark');
+            if (lightCss) lightCss.disabled = dark;
+            if (darkCss) darkCss.disabled = !dark;
+        }
+
+        // ---------- Mobile drawer ----------
+
+        function setupMobileDrawer() {
+            document.getElementById('menu-toggle').addEventListener('click', function() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('open');
+                document.getElementById('backdrop').classList.toggle('visible', sidebar.classList.contains('open'));
+            });
+
+            document.getElementById('backdrop').addEventListener('click', closeDrawer);
+        }
+
+        function closeDrawer() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('backdrop').classList.remove('visible');
+        }
+
+        // ---------- Utilities ----------
+
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function showError(message) {
+            const loading = document.getElementById('loading');
+            const content = document.getElementById('content');
+
+            loading.style.display = 'none';
+            content.style.display = 'block';
+            content.innerHTML = '<div class="error"><h3>⚠️ Error</h3><p>' +
+                escapeHtml(message) + '</p></div>';
+            document.getElementById('pager').innerHTML = '';
+            document.getElementById('toc').innerHTML = '';
+            document.querySelector('.content-inner').classList.add('no-toc');
+        }
+    </script>
+</body>
+</html>

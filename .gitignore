@@ -187,3 +187,4 @@ cython_debug/
 
 # Security scanning reports
 security-reports/
+docs/wiki/temp/
