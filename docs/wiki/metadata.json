@@ -1,0 +1,19 @@
+{
+    "generation_info": {
+        "timestamp": "2026-11-06T01:10:36.420499+00:00",
+        "main_model": "gpt-6.1-terra",
+        "generator_version": "1.0.1",
+        "repo_path": "/Users/kyo/Code/WeaMind",
+        "commit_id": "64c73939f769b7567411aef8072bfdc6987755bf"
+    },
+    "statistics": {
+        "total_components": 210,
+        "leaf_nodes": 41,
+        "max_depth": 3
+    },
+    "files_generated": [
+        "overview.md",
+        "module_tree.json",
+        "first_module_tree.json"
+    ]
+}
