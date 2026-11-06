@@ -90,5 +90,5 @@ Hetzner 託管憑證不支援 Cloudflare DNS，改用 cert-manager 搭配 DNS-01
 ## Related Resources
 
 - **主應用程式**：[WeaMind](https://github.com/kyomind/weamind) - LINE Bot FastAPI application
-- **DeepWiki 技術文件**：[deepwiki.com/kyomind/weamind-infra](https://deepwiki.com/kyomind/weamind-infra)
+- **技術文件 Wiki**：[kyomind.github.io/weamind-infra/wiki](https://kyomind.github.io/weamind-infra/wiki/)
 - **專案介紹文章**：〈WeaMind 專案介紹：技術選型與架構〉（撰寫中）

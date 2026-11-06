@@ -90,4 +90,4 @@ Takes effect in seconds with no DNS propagation delay. K8s and single-server env
 ## Related Resources
 
 - **Main application**: [WeaMind](https://github.com/kyomind/weamind) — LINE Bot FastAPI application
-- **DeepWiki docs**: [deepwiki.com/kyomind/weamind-infra](https://deepwiki.com/kyomind/weamind-infra)
+- **Wiki docs**: [kyomind.github.io/weamind-infra/wiki](https://kyomind.github.io/weamind-infra/wiki/)
