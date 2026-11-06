@@ -57,7 +57,7 @@ flowchart TD
 | 狀態或方法 | 用途 |
 | --- | --- |
 | `adminData`、`hasAdminData()` | 保存行政區對照，判斷是否已有資料。 |
-| `isInitialized`、`setupEventListeners()` | 避免重複繫結事件；此旗標表示事件已繫結，不代表 LIFF 或資料已初始化完成。 |
+| `isInitialized`、`setupEventListeners()` | 避免重複繫結事件；此旗標只表示事件已繫結。 |
 | `isLoadingAdminData` | 防止 `ensureDataLoaded()` 與 `forceRecover()` 重複啟動受此旗標保護的載入。 |
 | `retryCount`、`maxRetries` | 記錄上述兩種復原方法的失敗次數，預設門檻為 2；成功後歸零。 |
 | `updateDistricts()` | 根據所選縣市排序並填入行政區；沒有有效縣市時停用行政區欄位。 |
@@ -116,4 +116,4 @@ Authorization: Bearer <accessToken>
 
 提交完成或失敗都會在 `finally` 還原表單。`showMessage()` 對成功與錯誤訊息設定 5 秒隱藏，資訊訊息則為 3 秒；SDK 等待逾時的直接顯示路徑不使用此計時器。
 
-維護時應留意 LIFF ID、行政區資料網址和 API 網址目前寫在 `app.js`，而頁面 DOM ID 與事件處理程式彼此相依。`index.html` 為 CSS 與 JavaScript 加上版本查詢參數；相關版本管理流程見[發布與版本管理](../operational_and_development_scripts/release_and_version_management.md)。修改介面或資料契約時，應一併檢查頁面載入、登入返回、縣市連動、重試，以及成功和各種失敗回應。
+維護時應留意 LIFF ID、行政區資料網址和 API 網址目前寫在 `app.js`，而頁面 DOM ID 與事件處理程式彼此相依。`index.html` 為 CSS 與 JavaScript 加上版本查詢參數；相關版本管理流程見[發布與版本管理](../operational_and_development_scripts/release_and_version_management.md)。

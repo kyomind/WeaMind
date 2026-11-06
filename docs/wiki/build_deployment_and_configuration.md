@@ -1,6 +1,6 @@
 # 建置、部署與設定
 
-本模組涵蓋 WeaMind 的 Python 依賴、容器映像、Compose 環境、品質與安全檢查，以及 GitHub Actions 發布流程。應用程式本身的啟動與設定詳見[應用程式核心](application_core.md)，資料庫結構變更詳見[資料庫遷移](database_migrations.md)。
+本模組涵蓋 WeaMind 的 Python 相依套件、容器映像、Compose 環境、品質與安全檢查，以及 GitHub Actions 發布流程。應用程式本身的啟動與設定詳見[應用程式核心](application_core.md)，資料庫結構變更詳見[資料庫遷移](database_migrations.md)。
 
 ## 架構概覽
 
@@ -20,13 +20,13 @@ flowchart LR
     Compose --> App["FastAPI 與 LINE Bot"]
 ```
 
-`pyproject.toml` 定義 Python 3.12 以上的套件需求及開發工具設定，`uv.lock` 固定解析結果。Dockerfile 使用 uv Python 3.12 映像，以 `uv sync --locked --no-dev` 安裝執行時依賴，再複製專案內容；實際啟動命令由 Compose 指定。應用程式功能分別見 [LINE Bot](line_bot.md)、[使用者與地點設定](users_and_location_settings.md)及[天氣查詢](weather_queries.md)。
+`pyproject.toml` 定義 Python 3.12 以上的套件需求及開發工具設定，`uv.lock` 固定解析結果。Dockerfile 使用 uv Python 3.12 映像，以 `uv sync --locked --no-dev` 安裝執行時相依套件，再複製專案內容；實際啟動命令由 Compose 指定。應用程式功能分別見 [LINE Bot](line_bot.md)、[使用者與地點設定](users_and_location_settings.md)及[天氣查詢](weather_queries.md)。
 
 ## 主要部分
 
 - **[容器與部署](build_deployment_and_configuration/build_deployment_and_configuration_containers.md)**：`Dockerfile`、`docker-compose.yml` 與環境覆寫檔定義映像、服務、網路與持久化儲存；`Makefile` 提供操作入口。
 - **[持續整合與發布](build_deployment_and_configuration/build_deployment_and_configuration_automation.md)**：`.github/workflows/` 包含 CI、CodeQL、映像發布、GitHub Release、Pages 與定期稽核工作流程。
-- **[依賴與品質設定](build_deployment_and_configuration/build_deployment_and_configuration_quality.md)**：`pyproject.toml`、`.pre-commit-config.yaml`、`bandit.yaml`、`.github/dependabot.yml` 和 `skills-lock.json` 記錄依賴、檢查規則或工具來源。
+- **[依賴與品質設定](build_deployment_and_configuration/build_deployment_and_configuration_quality.md)**：`pyproject.toml`、`.pre-commit-config.yaml`、`bandit.yaml`、`.github/dependabot.yml` 和 `skills-lock.json` 記錄相依套件、檢查規則或工具來源。
 - **遷移與維運**：`alembic.ini` 指向 `migrations`，`Makefile` 將遷移及其他任務接到容器命令或腳本；腳本內容見[維運與開發腳本](operational_and_development_scripts.md)。
 
 ## 容器與環境
@@ -61,8 +61,8 @@ flowchart TD
 
 ## 品質、安全與其他設定
 
-- `.pre-commit-config.yaml` 設定一般檔案檢查、Ruff、uv lock、detect-secrets 及本機 Pyright，Bandit 在 pre-push 階段執行。CI 另依 `bandit.yaml` 掃描 `app`，並以 pip-audit 檢查依賴。
+- `.pre-commit-config.yaml` 設定一般檔案檢查、Ruff、uv lock、detect-secrets 及本機 Pyright，Bandit 在 pre-push 階段執行。CI 另依 `bandit.yaml` 掃描 `app`，並以 pip-audit 檢查相依套件。
 - `.github/dependabot.yml` 每週檢查 pip 與 GitHub Actions，兩類各最多開啟五個 PR。`.github/workflows/check-pip-audit-ignores.yml` 每週或手動執行忽略項目檢查；實作見[依賴安全稽核](operational_and_development_scripts/dependency_security_audit.md)。
 - `.github/workflows/codeql.yml` 在 `main` push、PR 及每週排程分析 Actions 和 Python。`.github/workflows/pages.yml` 在 `docs/site/**` 變更推送至 `main` 或手動觸發時，只部署 `docs/site/`。
-- `alembic.ini` 指定遷移目錄和日誌，資料庫 URL 未在該檔中設定。`skills-lock.json` 記錄 agent skills 的來源、路徑和雜湊，並非應用程式執行時依賴。
+- `alembic.ini` 指定遷移目錄和日誌，資料庫 URL 未在該檔中設定。`skills-lock.json` 記錄 agent skills 的來源、路徑和雜湊。
 - `Makefile` 也包裝 worktree、分支清理、文件、版本、安全掃描與 LINE Rich Menu 操作；各腳本職責見[維運與開發腳本](operational_and_development_scripts.md)。

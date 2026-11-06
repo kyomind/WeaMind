@@ -80,5 +80,4 @@ flowchart TD
 
 1. 在儲存庫根目錄執行上述 `make` 目標；腳本使用相對路徑，並依賴 `zsh` 及各自使用的系統命令。
 2. 若需要保存目前文件，可先執行 `make export-docs` 並檢查輸出，再視需要執行 `make clean-docs`。這是操作順序建議，腳本本身沒有建立依賴或自動備份。
-3. 執行 `make tree` 後檢查 `docs/Tree.md` 的差異；執行清理前確認候選清單，匯出失敗則檢查是否留下部分內容。
-4. 保留清單、匯出路徑與排除模式都寫在各自腳本內，調整行為時應直接檢查對應的 `scripts/clean_docs.sh`、`scripts/export_branch_docs.sh` 或 `scripts/gen_tree.sh`。
+3. 保留清單、匯出路徑與排除模式都寫在各自腳本內，調整行為時應直接檢查對應的 `scripts/clean_docs.sh`、`scripts/export_branch_docs.sh` 或 `scripts/gen_tree.sh`。

@@ -58,7 +58,7 @@ flowchart TD
 
 ### 模擬資料與距離計算
 
-`MockLocation` 是含 `full_name`、`latitude`、`longitude` 的 `NamedTuple`。`generate_mock_taiwan_locations()` 從腳本內建的行政區座標樣本產生五組帶有小幅經緯度偏移與名稱字尾的資料，再取前 368 筆；這些資料用於模擬運算量，並非完整的正式行政區資料。
+`MockLocation` 是含 `full_name`、`latitude`、`longitude` 的 `NamedTuple`。`generate_mock_taiwan_locations()` 從腳本內建的行政區座標樣本產生五組帶有小幅經緯度偏移與名稱字尾的資料，再取前 368 筆；這些資料只用於模擬運算量。
 
 `test_haversine_performance()` 以 `(25.0478, 121.5170)` 為測試座標，執行 50 次完整掃描。每次以 `time.perf_counter()` 計時，逐筆呼叫 `app.weather.location_resolution._distance`，保留距離最小的地點；該函式以 Haversine 公式計算公里距離。每隔 10 次輸出一次耗時與最近地點，最後列出平均數、中位數、最小值、最大值和樣本標準差，單位皆為毫秒。
 
@@ -85,7 +85,7 @@ flowchart TD
 21.9 <= lat <= 26.5 and 118.0 <= lon <= 122.0
 ```
 
-它輸出每組座標的內外判斷，以及五批平均耗時換算出的每次微秒數。此處的比較式與目前正式程式相同，但腳本直接複製判斷邏輯，未呼叫正式的座標解析函式；修改正式邊界時應一併檢查此腳本。此矩形範圍是初步篩選，並非精確的地理邊界。
+它輸出每組座標的內外判斷，以及五批平均耗時換算出的每次微秒數。此處的比較式與目前正式程式相同，但腳本直接複製判斷邏輯，未呼叫正式的座標解析函式；修改正式邊界時應一併檢查此腳本。此矩形範圍只是初步篩選。
 
 ## 結果判讀與限制
 

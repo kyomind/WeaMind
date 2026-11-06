@@ -134,6 +134,4 @@ flowchart TD
 ## 維護重點
 
 - 修改設定或部署環境時，核對必要環境變數、資料庫 URL、Redis URL 與 `static`、`logs` 路徑；容器細節見[建置、部署與設定](build_deployment_and_configuration.md)。
-- `/health` 成功只能表示端點有回應；外部相依服務需要另外監控。
-- 行政區資料載入失敗及 Redis fail-open 都可能讓服務持續運作，應檢查日誌以辨識功能降級。
 - 正式環境使用 ID Token 時，應保持簽章驗證啟用並設定 `LINE_CHANNEL_ID`；JWKS 與行政區資料是行程內狀態，多 worker 間不共享。
