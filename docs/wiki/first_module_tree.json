@@ -1,1 +1,237 @@
-{}
+{
+    "build_deployment_and_configuration": {
+        "path": "",
+        "components": [
+            ".github/dependabot.yml::dependabot.yml",
+            ".github/workflows/auto-release.yml::auto-release.yml",
+            ".github/workflows/auto-release.yml::release",
+            ".github/workflows/check-pip-audit-ignores.yml::check-pip-audit-ignores",
+            ".github/workflows/check-pip-audit-ignores.yml::check-pip-audit-ignores.yml",
+            ".github/workflows/ci.yml::ci.yml",
+            ".github/workflows/ci.yml::code-quality-check",
+            ".github/workflows/ci.yml::docker-build-validate",
+            ".github/workflows/codeql.yml::analyze",
+            ".github/workflows/codeql.yml::codeql.yml",
+            ".github/workflows/pages.yml::deploy",
+            ".github/workflows/pages.yml::pages.yml",
+            ".github/workflows/publish-ghcr.yml::build-and-push",
+            ".github/workflows/publish-ghcr.yml::publish-ghcr.yml",
+            ".github/workflows/publish-release.yml::build-and-push",
+            ".github/workflows/publish-release.yml::publish-release.yml",
+            ".pre-commit-config.yaml::.pre-commit-config.yaml",
+            "Dockerfile::Dockerfile",
+            "Makefile::Makefile",
+            "Makefile::changelog-help",
+            "Makefile::changelog-prepare",
+            "Makefile::changelog-release",
+            "Makefile::changelog-status",
+            "Makefile::check",
+            "Makefile::clean",
+            "Makefile::clean-docs",
+            "Makefile::deploy",
+            "Makefile::dev-up",
+            "Makefile::down",
+            "Makefile::export-docs",
+            "Makefile::migrate",
+            "Makefile::prune",
+            "Makefile::revision",
+            "Makefile::rollback",
+            "Makefile::setup-prod",
+            "Makefile::tree",
+            "Makefile::up",
+            "Makefile::update-liff-version",
+            "Makefile::update-static-version",
+            "Makefile::upgrade-pyright",
+            "Makefile::worktree-add",
+            "Makefile::worktree-clean",
+            "Makefile::worktree-list",
+            "Makefile::worktree-remove",
+            "alembic.ini::alembic.ini",
+            "bandit.yaml::bandit.yaml",
+            "docker-compose.dev.yml::app",
+            "docker-compose.dev.yml::db",
+            "docker-compose.dev.yml::docker-compose.dev.yml",
+            "docker-compose.dev.yml::redis",
+            "docker-compose.prod.yml::app",
+            "docker-compose.prod.yml::db",
+            "docker-compose.prod.yml::docker-compose.prod.yml",
+            "docker-compose.prod.yml::redis",
+            "docker-compose.yml::app",
+            "docker-compose.yml::db",
+            "docker-compose.yml::docker-compose.yml",
+            "docker-compose.yml::redis",
+            "pyproject.toml::pyproject.toml",
+            "skills-lock.json::skills-lock.json"
+        ],
+        "children": {}
+    },
+    "application_core": {
+        "path": "app",
+        "components": [
+            "app/__init__.py::__file__",
+            "app/core/__init__.py::__file__",
+            "app/core/admin_divisions.py::AdminDivisionsManager",
+            "app/core/auth.py::_base64url_decode_nopad",
+            "app/core/config.py::Settings",
+            "app/core/database.py::Base",
+            "app/core/processing_lock.py::ProcessingLockService",
+            "app/main.py::health"
+        ],
+        "children": {}
+    },
+    "line_bot": {
+        "path": "app/line",
+        "components": [
+            "app/line/__init__.py::__file__",
+            "app/line/messaging.py::InMemoryReplyMessenger",
+            "app/line/messaging.py::LineSdkReplyMessenger",
+            "app/line/messaging.py::LocationRequestRecipe",
+            "app/line/messaging.py::MessageChoice",
+            "app/line/messaging.py::MessageChoicesRecipe",
+            "app/line/messaging.py::ReplyMessenger",
+            "app/line/messaging.py::SendErrorCategory",
+            "app/line/messaging.py::SendResult",
+            "app/line/messaging.py::SentReply",
+            "app/line/messaging.py::TextRecipe",
+            "app/line/messaging.py::UriChoice",
+            "app/line/messaging.py::UriChoicesRecipe",
+            "app/line/metrics.py::extract_event_types_from_body",
+            "app/line/postback.py::CurrentWeatherAction",
+            "app/line/postback.py::InvalidAction",
+            "app/line/postback.py::LocationSettingsAction",
+            "app/line/postback.py::OtherMenuAction",
+            "app/line/postback.py::PostbackPlan",
+            "app/line/postback.py::PresetWeatherAction",
+            "app/line/postback.py::RecentQueriesAction",
+            "app/line/router.py::line_webhook",
+            "app/line/sdk_dispatch.py::LineSdkWebhookDispatcher",
+            "app/line/sdk_dispatch.py::ParsedWebhookPayload",
+            "app/line/service.py::_handle_follow_event_callback",
+            "app/line/weather_presentation.py::QueryKind"
+        ],
+        "children": {}
+    },
+    "users_and_location_settings": {
+        "path": "",
+        "components": [
+            "app/user/__init__.py::__file__",
+            "app/user/models.py::User",
+            "app/user/models.py::UserQuery",
+            "app/user/router.py::set_user_location",
+            "app/user/schemas.py::LocationSettingRequest",
+            "app/user/schemas.py::LocationSettingResponse",
+            "app/user/service.py::create_user_if_not_exists",
+            "static/liff/location/app.js::LocationApp"
+        ],
+        "children": {}
+    },
+    "weather_queries": {
+        "path": "app/weather",
+        "components": [
+            "app/weather/__init__.py::__file__",
+            "app/weather/location_resolution.py::InvalidInputReason",
+            "app/weather/location_resolution.py::LocationResolution",
+            "app/weather/location_resolution.py::QueryOutcome",
+            "app/weather/location_resolution.py::ResolvedLocation",
+            "app/weather/models.py::Location",
+            "app/weather/models.py::Task",
+            "app/weather/models.py::Weather",
+            "app/weather/service.py::WeatherService",
+            "app/weather/workflow.py::ForecastData",
+            "app/weather/workflow.py::WeatherQueryResult"
+        ],
+        "children": {}
+    },
+    "database_migrations": {
+        "path": "migrations",
+        "components": [
+            "migrations/env.py::run_migrations_offline",
+            "migrations/versions/1a4a3abc97f6_add_task_table_for_wea_data_monitoring.py::downgrade",
+            "migrations/versions/526d69e2321e_restrict_wea_bot_weather_permissions.py::downgrade",
+            "migrations/versions/67c6acf6e8df_setup_database_permissions.py::downgrade",
+            "migrations/versions/69db147baaec_grant_location_insert_update_.py::downgrade",
+            "migrations/versions/7f11c9b6d545_feature_liff_location_settings_20250816_.py::downgrade",
+            "migrations/versions/8ef96c483fc9_setup_task_table_permissions.py::downgrade",
+            "migrations/versions/8fda37b4a59c_optimize_weather_table_indexes.py::downgrade",
+            "migrations/versions/b05ddf47e04e_create_user_table.py::downgrade",
+            "migrations/versions/bcec2f9b0ea0_remove_user_display_name.py::downgrade",
+            "migrations/versions/cdb5dd844b83_feature_user_query_history_20250824_.py::downgrade",
+            "migrations/versions/d2d7367827f4_remove_weather_created_updated_timestamps.py::downgrade",
+            "migrations/versions/f557a1959851_create_location_weather_tables.py::downgrade"
+        ],
+        "children": {}
+    },
+    "operational_and_development_scripts": {
+        "path": "scripts",
+        "components": [
+            "scripts/changelog.sh::changelog.sh",
+            "scripts/check_liff_health.sh::check_liff_health.sh",
+            "scripts/check_pip_audit_ignores.py::AdvisoryStatus",
+            "scripts/check_pip_audit_ignores.py::IgnoreHit",
+            "scripts/clean_docs.sh::clean_docs.sh",
+            "scripts/cleanup_local_branches.sh::cleanup_local_branches.sh",
+            "scripts/cleanup_local_branches_preview.sh::cleanup_local_branches_preview.sh",
+            "scripts/export_branch_docs.sh::export_branch_docs.sh",
+            "scripts/gen_tree.sh::gen_tree.sh",
+            "scripts/open_infra_version_pr.sh::open_infra_version_pr.sh",
+            "scripts/performance_test.py::MockLocation",
+            "scripts/rich_menu_manager.py::create_rich_menu",
+            "scripts/update_liff_version.sh::update_liff_version.sh",
+            "scripts/update_static_pages_version.sh::update_static_pages_version.sh",
+            "scripts/worktree_add.sh::worktree_add.sh",
+            "scripts/worktree_clean.sh::worktree_clean.sh",
+            "scripts/worktree_list.sh::worktree_list.sh",
+            "scripts/worktree_remove.sh::worktree_remove.sh"
+        ],
+        "children": {
+            "release_and_version_management": {
+                "components": [
+                    "scripts/changelog.sh::changelog.sh",
+                    "scripts/open_infra_version_pr.sh::open_infra_version_pr.sh",
+                    "scripts/update_liff_version.sh::update_liff_version.sh",
+                    "scripts/update_static_pages_version.sh::update_static_pages_version.sh"
+                ],
+                "children": {}
+            },
+            "health_and_performance_checks": {
+                "components": [
+                    "scripts/check_liff_health.sh::check_liff_health.sh",
+                    "scripts/performance_test.py::MockLocation"
+                ],
+                "children": {}
+            },
+            "dependency_security_audit": {
+                "components": [
+                    "scripts/check_pip_audit_ignores.py::AdvisoryStatus",
+                    "scripts/check_pip_audit_ignores.py::IgnoreHit"
+                ],
+                "children": {}
+            },
+            "documentation_utilities": {
+                "components": [
+                    "scripts/clean_docs.sh::clean_docs.sh",
+                    "scripts/export_branch_docs.sh::export_branch_docs.sh",
+                    "scripts/gen_tree.sh::gen_tree.sh"
+                ],
+                "children": {}
+            },
+            "git_branch_and_worktree_management": {
+                "components": [
+                    "scripts/cleanup_local_branches.sh::cleanup_local_branches.sh",
+                    "scripts/cleanup_local_branches_preview.sh::cleanup_local_branches_preview.sh",
+                    "scripts/worktree_add.sh::worktree_add.sh",
+                    "scripts/worktree_clean.sh::worktree_clean.sh",
+                    "scripts/worktree_list.sh::worktree_list.sh",
+                    "scripts/worktree_remove.sh::worktree_remove.sh"
+                ],
+                "children": {}
+            },
+            "line_rich_menu_management": {
+                "components": [
+                    "scripts/rich_menu_manager.py::create_rich_menu"
+                ],
+                "children": {}
+            }
+        }
+    }
+}
