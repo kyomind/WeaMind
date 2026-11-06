@@ -2199,7 +2199,7 @@ wheels = [
 
 [[package]]
 name = "weamind"
-version = "1.2.5"
+version = "1.2.6"
 source = { virtual = "." }
 dependencies = [
     { name = "alembic" },
