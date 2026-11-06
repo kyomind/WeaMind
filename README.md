@@ -2,7 +2,6 @@
 [![CodeQL](https://github.com/kyomind/WeaMind/actions/workflows/codeql.yml/badge.svg)](https://github.com/kyomind/WeaMind/security/code-scanning)
 [![codecov](https://codecov.io/gh/kyomind/WeaMind/branch/main/graph/badge.svg)](https://codecov.io/gh/kyomind/WeaMind)
 [![SonarCloud](https://sonarcloud.io/api/project_badges/measure?project=kyomind_WeaMind&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=kyomind_WeaMind)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/kyomind/WeaMind)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 
@@ -114,4 +113,4 @@ WeaMind 是一個智慧天氣 LINE Bot，透過簡單的操作或文字查詢，
 進一步了解：
 - 專案介紹：[WeaMind 專案解析：從單機 LINE Bot 到 K8s 叢集](https://blog.kyomind.tw/weamind)
 - 系列文章：[WeaMind 系列文章](https://blog.kyomind.tw/weamind-series/)
-- 開發者文件：[WeaMind DeepWiki](https://deepwiki.com/kyomind/WeaMind)
+- 開發者文件：[WeaMind Wiki](https://kyomind.github.io/WeaMind/wiki/)
