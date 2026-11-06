@@ -4,7 +4,7 @@
 
 ## 系統位置與依賴
 
-此腳本是維運工具，使用 Python 標準函式庫讀取本機檔案與呼叫 GitHub Advisory API，並輸出文字報告及程序結束碼。排程由 `.github/workflows/check-pip-audit-ignores.yml` 執行；獨立的 CI 則執行 `pip-audit`。工作流程的其他設定見[建置與部署自動化](../build_deployment_and_configuration/build_deployment_and_configuration_automation.md)，工具與依賴設定見[品質與依賴設定](../build_deployment_and_configuration/build_deployment_and_configuration_quality.md)，其他維運腳本見[維運與開發腳本](../operational_and_development_scripts.md)。
+此腳本是維運工具，使用 Python 標準函式庫讀取本機檔案與呼叫 GitHub Advisory API，並輸出文字報告及行程結束碼。排程由 `.github/workflows/check-pip-audit-ignores.yml` 執行；獨立的 CI 則執行 `pip-audit`。工作流程的其他設定見[建置與部署自動化](../build_deployment_and_configuration/build_deployment_and_configuration_automation.md)，工具與依賴設定見[品質與依賴設定](../build_deployment_and_configuration/build_deployment_and_configuration_quality.md)，其他維運腳本見[維運與開發腳本](../operational_and_development_scripts.md)。
 
 ```mermaid
 flowchart LR
@@ -48,7 +48,7 @@ flowchart TD
 3. `IGNORE_PATTERN` 搜尋 `--ignore-vuln=` 後緊接 `GHSA-` 與三段小寫英數識別碼的字面文字；不解析設定檔語法，也不辨識其他忽略格式或其他公告識別碼。同一公告的所有位置都會保留，但查詢前會依識別碼去重。
 4. `fetch_advisory` 對每個識別碼依序呼叫 `https://api.github.com/advisories/{advisory_id}`，設定 GitHub JSON 接受格式、API 版本 `2022-11-28` 與 30 秒逾時。若環境變數 `GITHUB_TOKEN` 有值，會以 Bearer token 隨請求送出。
 5. `parse_advisory` 從每個 `vulnerabilities` 項目收集非空的 `first_patched_version`，轉成字串、去重並排序；同時讀取摘要、公告網址與撤回時間。
-6. `print_report` 先列出所有命中位置，再依公告狀態輸出結果。查詢或解析例外未在 `main` 中捕捉，程序會失敗，而非產生完整狀態報告。
+6. `print_report` 先列出所有命中位置，再依公告狀態輸出結果。查詢或解析例外未在 `main` 中捕捉，腳本會失敗，而非產生完整狀態報告。
 
 ## 執行與結果
 
@@ -73,4 +73,4 @@ uv run python scripts/check_pip_audit_ignores.py
 - 掃描以文字為準，註解、文件或測試資料中的符合字串也可能成為命中項目；它不會確認該選項是否真的由 `pip-audit` 使用。
 - 腳本不會限制公告中的修補版本對應特定套件，也不會檢查目前依賴版本；多個受影響項目的修補版本會合併呈現。
 - API 呼叫逐一進行，沒有重試或快取；網路、授權、速率限制或服務錯誤可能使整次檢查失敗。其他檔案讀取錯誤也可能中止執行。
-- 報告反映執行當下的工作目錄與 GitHub API 回應；沒有符合項目不代表依賴沒有漏洞。
+- 報告反映執行當下的工作目錄與 GitHub API 回應。

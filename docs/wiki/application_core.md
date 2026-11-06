@@ -74,7 +74,7 @@ flowchart TD
 
 `setup_logging()` 建立專案根目錄下的 `logs`，同時輸出至標準輸出及 `logs/app.log`。`DEBUG=True` 或正式環境的根記錄層級為 `DEBUG`，其餘為 `INFO`；SQLAlchemy engine 在 `DEBUG=True` 時為 `INFO`，否則為 `WARNING`。Uvicorn 與其 access logger 設為 `INFO`，並加入檔案 handler。
 
-例如，`docker-compose.yml` 將 `.env` 提供給 app 並宣告 db、redis；`docker-compose.prod.yml` 設定 `ENV=production`、兩個 Uvicorn worker 及日誌目錄掛載。容器工作目錄與程式碼複製方式見 `Dockerfile`。各 worker 的記憶體快取各自獨立，Redis 鎖則可跨程序共享。
+例如，`docker-compose.yml` 將 `.env` 提供給 app 並宣告 db、redis；`docker-compose.prod.yml` 設定 `ENV=production`、兩個 Uvicorn worker 及日誌目錄掛載。容器工作目錄與程式碼複製方式見 `Dockerfile`。各 worker 的記憶體快取各自獨立，Redis 鎖則可跨行程共享。
 
 ## 資料庫連線與工作階段
 
@@ -108,9 +108,9 @@ sequenceDiagram
 
 ## 臺灣行政區
 
-`AdminDivisionsManager` 是程序內單例，從 `static/data/tw_admin_divisions.json` 讀取縣市到鄉鎮市區的對應，將每個縣市與區名串接成集合，例如 `臺北市信義區`。`is_valid_taiwan_division()` 執行精確集合查詢，`get_valid_divisions_count()` 回傳載入數量。
+`AdminDivisionsManager` 是行程內單例，從 `static/data/tw_admin_divisions.json` 讀取縣市到鄉鎮市區的對應，將每個縣市與區名串接成集合，例如 `臺北市信義區`。`is_valid_taiwan_division()` 執行精確集合查詢，`get_valid_divisions_count()` 回傳載入數量。
 
-檔案不存在或讀取、解析失敗時會記錄錯誤並使用空集合，因此驗證皆為 `False`，應用程式仍可繼續啟動。初始化呼叫不會重新載入已設為空集合的單例；更換資料後需重新啟動程序。天氣查詢的地址解析會先將「台」正規化為「臺」，驗證後再查詢資料庫中的地點；詳細解析流程見[天氣查詢](weather_queries.md)。
+檔案不存在或讀取、解析失敗時會記錄錯誤並使用空集合，因此驗證皆為 `False`，應用程式仍可繼續啟動。初始化呼叫不會重新載入已設為空集合的單例；更換資料後需重新啟動應用程式。天氣查詢的地址解析會先將「台」正規化為「臺」，驗證後再查詢資料庫中的地點；詳細解析流程見[天氣查詢](weather_queries.md)。
 
 ## Redis 處理鎖
 
@@ -129,11 +129,9 @@ flowchart TD
     E -->|Redis 不可用或操作錯誤| F
 ```
 
-鎖以 `SET key 1 EX TTL NX` 原子取得，靠 TTL 自動到期，沒有手動釋放。因此 TTL 是抑制短時間重複請求的窗口，不保證涵蓋整個處理時間。停用鎖、未設定 Redis URL 或 Redis 連線／操作錯誤時採取 fail-open，允許處理繼續，代價是可能重複處理。更多事件與回覆行為見 [LINE Bot](line_bot.md)。
+鎖以 `SET key 1 EX TTL NX` 原子取得，靠 TTL 自動到期，沒有手動釋放。因此 TTL 是抑制短時間重複請求的時間窗，不保證涵蓋整個處理時間。停用鎖、未設定 Redis URL 或 Redis 連線／操作錯誤時採取 fail-open，允許處理繼續，代價是可能重複處理。更多事件與回覆行為見 [LINE Bot](line_bot.md)。
 
 ## 維護重點
 
 - 修改設定或部署環境時，核對必要環境變數、資料庫 URL、Redis URL 與 `static`、`logs` 路徑；容器細節見[建置、部署與設定](build_deployment_and_configuration.md)。
-- `/health` 成功只能表示端點有回應；外部相依服務需要另外監控。
-- 行政區資料載入失敗及 Redis fail-open 都可能讓服務持續運作，應檢查日誌以辨識功能降級。
-- 正式環境使用 ID Token 時，應保持簽章驗證啟用並設定 `LINE_CHANNEL_ID`；JWKS 與行政區資料是程序內狀態，多 worker 間不共享。
+- 正式環境使用 ID Token 時，應保持簽章驗證啟用並設定 `LINE_CHANNEL_ID`；JWKS 與行政區資料是行程內狀態，多 worker 間不共享。

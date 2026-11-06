@@ -90,6 +90,6 @@ flowchart TD
 
 LINE 選單建立後不能修改 JSON 設定；要變更區域、動作或其他設定，需建立新選單並視需要切換預設。圖片可獨立更新，但目前 CLI 沒有只更新圖片的動作；程式提供 `upload_rich_menu_image(rich_menu_id, image_path)` 供程式呼叫。腳本文件記載每個帳號最多 1000 個 Rich Menu，舊選單可在確認後刪除。
 
-HTTP 錯誤會記錄例外並轉成上述回傳值。`list` 的空清單同時代表沒有選單或 HTTP 請求失敗，因此畫面顯示「沒有找到 Rich Menu」時也要查看日誌。缺少圖片會回報上傳失敗；設定檔不存在、JSON 無效、圖片讀取失敗、設定初始化失敗或回應 JSON 格式異常等非 `httpx.HTTPError` 例外則可能直接終止程式。腳本以一般 `return` 結束多數失敗分支，不能只靠程序結束碼判斷操作成功。
+HTTP 錯誤會記錄例外並轉成上述回傳值。`list` 的空清單同時代表沒有選單或 HTTP 請求失敗，因此畫面顯示「沒有找到 Rich Menu」時也要查看日誌。缺少圖片會回報上傳失敗；設定檔不存在、JSON 無效、圖片讀取失敗、設定初始化失敗或回應 JSON 格式異常等非 `httpx.HTTPError` 例外則可能直接終止程式。腳本以一般 `return` 結束多數失敗分支，不能只靠行程結束碼判斷操作成功。
 
 相關腳本的整體索引見[操作與開發腳本](../operational_and_development_scripts.md)。

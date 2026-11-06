@@ -110,7 +110,7 @@ sequenceDiagram
 | `TRANSPORT` | `HTTPError` 或 `OSError` |
 | `INTERNAL` | 建立請求或傳送過程中的其他例外 |
 
-API 拒絕會記錄類別與狀態碼；傳輸及非預期錯誤會記錄例外。成功結果表示 SDK 的傳送呼叫未拋出例外，不代表使用者已閱讀訊息。現有事件處理器呼叫 `reply` 後不依 `SendResult` 重試。
+API 拒絕會記錄類別與狀態碼；傳輸及非預期錯誤會記錄例外。成功結果表示 SDK 的傳送呼叫未拋出例外。現有事件處理器呼叫 `reply` 後不依 `SendResult` 重試。
 
 ## 測試介面
 
