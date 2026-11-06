@@ -17,7 +17,7 @@ flowchart LR
     G --> E
 ```
 
-使用者資料以 LINE user ID 對應帳號，住家和公司分別透過外鍵參照共用的 `Location`。LINE Bot 管理追蹤狀態及最近查詢選單；天氣查詢讀取預設地點，也會直接建立查詢紀錄。系統邊界與依賴可參考[應用程式核心](application_core.md)、[LINE Bot](line_bot.md)、[天氣查詢](weather_queries.md)與[資料庫遷移](database_migrations.md)。
+使用者資料以 LINE user ID 對應帳號，住家和公司分別透過外鍵參照共用的 `Location`。LINE Bot 管理追蹤狀態及最近查詢選單；天氣查詢讀取預設地點，也會直接建立查詢紀錄。系統邊界與相依關係可參考[應用程式核心](application_core.md)、[LINE Bot](line_bot.md)、[天氣查詢](weather_queries.md)與[資料庫遷移](database_migrations.md)。
 
 ## 子模組
 

@@ -119,4 +119,4 @@ sequenceDiagram
 2. 完成工作後，確認工作樹內的變更已妥善處理，再使用 `make worktree-remove` 並核對選取路徑。若有過期紀錄，可使用 `make worktree-clean`。
 3. 如需清理本地分支，先執行 `make check` 檢查候選與 fetch 結果，再視需要執行 `make prune`；完成後重新檢查分支狀態。
 
-這些步驟是人工操作建議，腳本不會自動串接、備份或回滾。若要匯出分支文件，另見[文件維護工具](documentation_utilities.md)。
+這些步驟是人工操作建議，腳本不會自動串接、備份或復原。若要匯出分支文件，另見[文件維護工具](documentation_utilities.md)。

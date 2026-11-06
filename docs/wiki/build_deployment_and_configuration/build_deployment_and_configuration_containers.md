@@ -20,7 +20,7 @@ flowchart LR
   Redis --> RedisVol["Redis 資料 volume"]
 ```
 
-三個服務使用外部網路 `wea-net`。共用設定的 `app` 以 `depends_on` 宣告依賴 `db` 和 `redis`，但沒有服務健康檢查或等待依賴就緒的條件。`app` 的 `8000` 和 PostgreSQL 的 `5432` 分別發布至主機 `8000` 和 `5433`；正式覆寫檔另將 Redis 的 `6379` 綁定至主機 `10.0.0.2:6379`。實際可達性仍取決於主機與網路設定。
+三個服務使用外部網路 `wea-net`。共用設定的 `app` 以 `depends_on` 宣告依賴 `db` 和 `redis`，但沒有服務健康檢查或等待相依服務就緒的條件。`app` 的 `8000` 和 PostgreSQL 的 `5432` 分別發布至主機 `8000` 和 `5433`；正式覆寫檔另將 Redis 的 `6379` 繫結至主機 `10.0.0.2:6379`。實際可達性仍取決於主機與網路設定。
 
 | 檔案 | 職責 |
 | --- | --- |
@@ -54,7 +54,7 @@ flowchart TD
 | 項目 | 開發環境 | 正式環境 |
 | --- | --- | --- |
 | 啟動參數 | `uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload` | `uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 --proxy-headers --loop uvloop --http httptools` |
-| 程式碼 | `.:/code` 綁定主機原始碼 | 使用映像內程式碼 |
+| 程式碼 | `.:/code` 掛載主機原始碼 | 使用映像內程式碼 |
 | 虛擬環境 | `app-venv-dev:/code/.venv`，避免主機虛擬環境覆蓋容器環境 | 使用映像內的 `/code/.venv` |
 | 日誌 | `./logs:/code/logs` | `./logs:/code/logs` |
 | PostgreSQL | `wea-db-data-dev` | 外部 volume `wea-db-data-prod` |
@@ -72,7 +72,7 @@ flowchart TD
 
 - `make dev-up`：合併共用與開發設定，在背景啟動服務。
 - `make clean`：以開發設定執行 `down -v`，移除 Compose 管理的開發 volume，包括資料庫、Redis 資料和容器虛擬環境；執行前應確認資料不再需要。
-- 原始碼透過綁定掛載供 `--reload` 使用；依賴變更時，應確認容器內具名虛擬環境的內容也已更新。
+- 原始碼透過綁定掛載供 `--reload` 使用；相依套件變更時，應確認容器內具名虛擬環境的內容也已更新。
 
 ### 正式環境
 

@@ -80,11 +80,11 @@ uv run pre-commit run --all-files
 
 ## 安全與依賴更新
 
-`bandit.yaml` 列出 `B102` 至 `B703` 範圍中的指定檢查，涵蓋危險執行、硬編碼密碼、不安全密碼學、TLS、程序呼叫、SQL 與模板等問題；`skips` 下只有註解，並未列出實際略過項目。設定檔排除 `migrations`、`tests`、`.venv`、`__pycache__` 和 `coverage_html_report`，並列出 `*.py`。檔案也寫有 `confidence` 和 `severity` 的 HIGH、MEDIUM 清單；實際執行命令沒有傳入對應的 CLI 門檻，不能僅憑這些欄位假定輸出已依門檻過濾。
+`bandit.yaml` 列出 `B102` 至 `B703` 範圍中的指定檢查，涵蓋危險執行、硬編碼密碼、不安全密碼學、TLS、子行程呼叫、SQL 與模板等問題；`skips` 下只有註解，並未列出實際略過項目。設定檔排除 `migrations`、`tests`、`.venv`、`__pycache__` 和 `coverage_html_report`，並列出 `*.py`。檔案也寫有 `confidence` 和 `severity` 的 HIGH、MEDIUM 清單；實際執行命令沒有傳入對應的 CLI 門檻，不能僅憑這些欄位假定輸出已依門檻過濾。
 
-Bandit 掃描程式碼，`pip-audit` 掃描依賴弱點，`detect-secrets` 則比對機密基準；三者範圍不同。CI 執行 `uv run bandit -c bandit.yaml -r app` 與 `uv run pip-audit --progress-spinner=off`。本機亦可用 `make security-bandit`、`make security-audit` 或 `make security-all`；前兩者先輸出 JSON 至 `security-reports/`，再執行終端機報告，前一步失敗時後續命令可能不會執行。參見 `Makefile`。
+Bandit 掃描程式碼，`pip-audit` 掃描相依套件弱點，`detect-secrets` 則比對機密基準；三者範圍不同。CI 執行 `uv run bandit -c bandit.yaml -r app` 與 `uv run pip-audit --progress-spinner=off`。本機亦可用 `make security-bandit`、`make security-audit` 或 `make security-all`；前兩者先輸出 JSON 至 `security-reports/`，再執行終端機報告，前一步失敗時後續命令可能不會執行。參見 `Makefile`。
 
-`.github/dependabot.yml` 對根目錄的 `pip` 和 `github-actions` 各設每週排程、最多五個開啟中的 PR 與自動 rebase；commit 前綴分別為 `chore(deps)`、`chore(actions)`，並包含 scope。另一個排程或手動工作流程檢查 pip-audit 忽略項目，詳見[依賴安全稽核](../operational_and_development_scripts/dependency_security_audit.md)。
+`.github/dependabot.yml` 對根目錄的 `pip` 和 `github-actions` 各設每週排程、最多五個開啟中的 PR 與自動 rebase；commit 字首分別為 `chore(deps)`、`chore(actions)`，並包含 scope。另一個排程或手動工作流程檢查 pip-audit 忽略項目，詳見[依賴安全稽核](../operational_and_development_scripts/dependency_security_audit.md)。
 
 ## 檢查流程與系統位置
 

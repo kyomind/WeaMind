@@ -33,7 +33,7 @@ flowchart LR
 
 `docker-compose.yml` 定義 `app`、`db`、`redis`，三者加入外部網路 `wea-net`；`app` 與 `db` 從 `.env` 讀取環境變數。基底設定使用 `ghcr.io/kyomind/weamind:latest`、PostgreSQL 17.5 與 Redis 8.2.8，並對外映射應用程式的 8000 埠及 PostgreSQL 的 5433 埠。
 
-開發覆寫檔以 `--reload` 啟動 Uvicorn，掛載原始碼和日誌，另用具名 volume 隔離容器內的 `.venv`。正式環境覆寫檔設定兩個 worker、`uvloop`、`httptools`、`--proxy-headers` 和自動重啟，資料庫與 Redis 使用外部 volumes；Redis 綁定至 `10.0.0.2:6379`。參見 `docker-compose.dev.yml`、`docker-compose.prod.yml`。
+開發覆寫檔以 `--reload` 啟動 Uvicorn，掛載原始碼和日誌，另用具名 volume 隔離容器內的 `.venv`。正式環境覆寫檔設定兩個 worker、`uvloop`、`httptools`、`--proxy-headers` 和自動重啟，資料庫與 Redis 使用外部 volumes；Redis 繫結至 `10.0.0.2:6379`。參見 `docker-compose.dev.yml`、`docker-compose.prod.yml`。
 
 `make dev-up` 建立並啟動開發組合；`make clean` 會連同開發組合的 volumes 一起移除。正式環境的 `make setup-prod` 建立 PostgreSQL volume 和網路，但正式 Redis 外部 volume 仍須事先存在。`make up` 以前景模式啟動正式組合，`make down` 停止並移除容器。
 

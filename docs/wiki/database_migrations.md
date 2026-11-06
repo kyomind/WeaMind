@@ -1,6 +1,6 @@
 # 資料庫遷移
 
-`database_migrations` 使用 Alembic 管理 PostgreSQL 結構及部分角色權限的版本變更。`migrations/env.py` 載入應用程式設定與 SQLAlchemy 模型，`migrations/versions/` 則以有順序的 revision 記錄升級與回滾操作。這些變更為使用者、地點、天氣及資料處理監測提供資料表；模型與業務行為分別見[使用者與地點設定](users_and_location_settings.md)及[天氣查詢](weather_queries.md)。
+`database_migrations` 使用 Alembic 管理 PostgreSQL 結構及部分角色權限的版本變更。`migrations/env.py` 載入應用程式設定與 SQLAlchemy 模型，`migrations/versions/` 則以有順序的 revision 記錄升級與降版操作。這些變更為使用者、地點、天氣及資料處理監測提供資料表；模型與業務行為分別見[使用者與地點設定](users_and_location_settings.md)及[天氣查詢](weather_queries.md)。
 
 ## 架構與依賴
 
@@ -48,9 +48,9 @@ flowchart TD
 
 ## 版本順序與結構演進
 
-以下依 `down_revision` 排列，從最初版本到目前程式碼中的 `head`；回滾時依相反順序執行。
+以下依 `down_revision` 排列，從最初版本到目前程式碼中的 `head`；降版時依相反順序執行。
 
-| 版本 | 升級內容 | 回滾重點 |
+| 版本 | 升級內容 | 降版重點 |
 | --- | --- | --- |
 | `b05ddf47e04e` | 建立 `user`、`line_user_id` 唯一約束及唯一索引。 | 刪除索引與資料表。 |
 | `f557a1959851` | 建立 `location`、`weather`、索引及約束；移除 `user_line_user_id_key`，保留既有唯一索引。 | 重建該唯一約束並刪除兩張表。 |
@@ -84,10 +84,10 @@ flowchart LR
 
 `8ef96c483fc9` 使用固定角色名稱 `wea_data`、`wea_bot`，而非環境變數：前者取得 `task` 的 `SELECT`、`INSERT`、`UPDATE`、`DELETE` 與 `task_id_seq` 的 `USAGE`、`SELECT`；後者撤銷寫入並授予 `SELECT`。執行前須確認這些角色存在且執行者有足夠權限。表格擁有者等身分可能影響實際有效權限，應以目標資料庫的角色與權限設定為準。
 
-## 回滾與維護注意事項
+## 降版與維護注意事項
 
-- 回滾會刪除資料表或欄位時連同其中資料一起移除；重新新增 `display_name` 或時間戳欄位不會還原原值。操作前應確認備份與相依服務。
-- `7f11c9b6d545` 的回滾對兩個外鍵呼叫 `drop_constraint(None, ...)`，未指定名稱；應先在目標 PostgreSQL 環境驗證可否執行並確認實際約束名稱。
-- `67c6acf6e8df` 的回滾不會撤銷先前授予的序列權限或移除 `CREATEROLE`；角色若仍有相依權限，`DROP USER` 可能失敗。`8ef96c483fc9` 的回滾也只是撤銷指定權限，並不完整還原升級前狀態。
-- 權限版本以字串直接組合 SQL，且部分版本透過 `os.getenv` 讀取環境變數，而非從 `Settings` 取得；執行容器的環境必須提供所需值，角色名稱與密碼也須適合這些 SQL 語句。
-- 修改 ORM 模型後，確認所有新模型均已匯入 `migrations/env.py`，檢查自動產生的升級與回滾，並在適當的測試資料庫驗證。遷移記錄描述程式碼意圖；實際資料庫版本及有效權限仍須在目標環境確認。
+- 降版會刪除資料表或欄位時連同其中資料一起移除；重新新增 `display_name` 或時間戳欄位不會還原原值。操作前應確認備份與相依服務。
+- `7f11c9b6d545` 的降版對兩個外鍵呼叫 `drop_constraint(None, ...)`，未指定名稱；應先在目標 PostgreSQL 環境驗證可否執行並確認實際約束名稱。
+- `67c6acf6e8df` 的降版不會撤銷先前授予的序列權限或移除 `CREATEROLE`；角色若仍有相依權限，`DROP USER` 可能失敗。`8ef96c483fc9` 的降版也只是撤銷指定權限，並不完整還原升級前狀態。
+- 權限版本以字串直接組合 SQL，且部分版本透過 `os.getenv` 讀取環境變數，而非從 `Settings` 取得；執行容器的環境必須提供所需值，角色名稱與密碼也須適合這些 SQL 敘述。
+- 修改 ORM 模型後，確認所有新模型均已匯入 `migrations/env.py`，檢查自動產生的升級與降版，並在適當的測試資料庫驗證。遷移記錄描述程式碼意圖；實際資料庫版本及有效權限仍須在目標環境確認。

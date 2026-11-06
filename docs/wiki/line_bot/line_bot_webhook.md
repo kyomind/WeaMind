@@ -79,11 +79,11 @@ sequenceDiagram
 | `PostbackEvent` | `_handle_postback_event_callback` 呼叫 `handle_postback_event`，準備並執行選單動作 |
 | 其他事件 | `handle_default_event` 記錄未處理事件類型 |
 
-文字與地點訊息缺少 `reply_token` 或訊息類型不符時直接返回；查詢或產生回覆發生例外時，改用系統忙碌文字。Postback 在有使用者 ID 和回覆 token 時準備動作，必要且啟用時先取得處理鎖；鎖被拒絕則回覆該動作的拒絕訊息。天氣查詢、選單動作及回覆格式分別見[天氣查詢](../weather_queries.md)、[LINE Postback](line_bot_postback.md)及 [LINE 回覆](line_bot_replies.md)。
+文字與地點訊息缺少 `reply_token` 或訊息類型不符時直接結束；查詢或產生回覆發生例外時，改用系統忙碌文字。Postback 在有使用者 ID 和回覆 token 時準備動作，必要且啟用時先取得處理鎖；鎖被拒絕則回覆該動作的拒絕訊息。天氣查詢、選單動作及回覆格式分別見[天氣查詢](../weather_queries.md)、[LINE Postback](line_bot_postback.md)及 [LINE 回覆](line_bot_replies.md)。
 
 ### 加入與封鎖好友
 
-`handle_follow_event` 先從 `event.source` 取得 `user_id`；缺少時記錄警告並返回。接著在 `SessionLocal` 的 session 中呼叫 `create_user_if_not_exists`，建立新使用者或重新啟用既有帳號。離開 session 後，若有 `reply_token`，才傳送歡迎訊息，避免等待 LINE API 時占用資料庫連線。例外由處理器記錄並攔截。`handle_unfollow_event` 同樣要求 `user_id`，呼叫 `deactivate_user`；查無使用者時記錄警告。使用者資料規則見[使用者與地點設定](../users_and_location_settings.md)。
+`handle_follow_event` 先從 `event.source` 取得 `user_id`；缺少時記錄警告並結束。接著在 `SessionLocal` 的 session 中呼叫 `create_user_if_not_exists`，建立新使用者或重新啟用既有帳號。離開 session 後，若有 `reply_token`，才傳送歡迎訊息，避免等待 LINE API 時占用資料庫連線。例外由處理器記錄並攔截。`handle_unfollow_event` 同樣要求 `user_id`，呼叫 `deactivate_user`；查無使用者時記錄警告。使用者資料規則見[使用者與地點設定](../users_and_location_settings.md)。
 
 ## 指標與錯誤邊界
 
@@ -92,7 +92,7 @@ sequenceDiagram
 | 指標 | 標籤 | 記錄時機 |
 | --- | --- | --- |
 | `line_webhook_events_total` | `event_type` | 路由完成簽章驗證及分類後，依分類結果逐項遞增 |
-| `line_webhook_events_success_total` | `event_type` | 事件找到處理器且呼叫正常返回 |
+| `line_webhook_events_success_total` | `event_type` | 事件找到處理器且呼叫正常結束 |
 | `line_webhook_events_error_total` | `event_type`、`error_type` | 解析或處理器呼叫拋出例外 |
 | `line_webhook_event_duration_seconds` | `event_type` | 每個已開始分派事件的耗時；解析失敗時記錄解析耗時 |
 
@@ -104,7 +104,7 @@ flowchart TD
     B -->|否| C["依備用標籤記錄錯誤與解析耗時"]
     C --> D["重新拋出例外並結束背景工作"]
     B -->|是| E["依序分派事件"]
-    E --> F{"找到處理器且正常返回？"}
+    E --> F{"找到處理器且正常結束？"}
     F -->|是| G["記錄成功與耗時"]
     F -->|沒有處理器| H["記錄耗時與日誌"]
     F -->|拋出例外| I["記錄錯誤與耗時"]
@@ -113,9 +113,9 @@ flowchart TD
     H --> J
 ```
 
-解析失敗時使用路由提供的分類作為備用標籤，未提供或為空時使用 `unknown`。SDK 的 `InvalidSignatureError` 記為 `signature_error`，其他例外記為 `handler_error`；例外會向外傳播至背景工作邊界。逐事件處理時，任何未攔截的例外都會終止同一 payload 中後續事件的處理。未找到處理器時只記錄耗時；預設處理器若存在並正常返回，也算分派成功。
+解析失敗時使用路由提供的分類作為備用標籤，未提供或為空時使用 `unknown`。SDK 的 `InvalidSignatureError` 記為 `signature_error`，其他例外記為 `handler_error`；例外會向外傳播至背景工作邊界。逐事件處理時，任何未攔截的例外都會終止同一 payload 中後續事件的處理。未找到處理器時只記錄耗時；預設處理器若存在並正常結束，也算分派成功。
 
-成功指標衡量的是處理器呼叫正常返回：處理器可能因缺少資料而提早返回，或自行捕捉例外；回覆介面也可能以 `SendResult` 表示傳送失敗而不拋出例外。因此它不等同於業務操作或訊息送達成功。入口驗證失敗則發生在接收計數之前，不計入這些背景錯誤指標。
+成功指標衡量的是處理器呼叫正常結束：處理器可能因缺少資料而提早結束，或自行捕捉例外；回覆介面也可能以 `SendResult` 表示傳送失敗而不拋出例外。因此它不等同於業務操作或訊息送達成功。入口驗證失敗則發生在接收計數之前，不計入這些背景錯誤指標。
 
 ## 設定與維護
 

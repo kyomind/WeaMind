@@ -31,7 +31,7 @@ flowchart TD
     A["DOMContentLoaded"] --> B["waitForLIFF 等待 SDK"]
     B -->|"最多等待約 5 秒"| C{"SDK 已載入？"}
     C -->|"否"| D["顯示 SDK 載入失敗"]
-    C -->|"是"| E["建立 LocationApp 並綁定事件"]
+    C -->|"是"| E["建立 LocationApp 並繫結事件"]
     E --> F["liff.init"]
     F --> G["ensureAuth 檢查登入與 Token"]
     G --> H{"需要登入？"}
@@ -45,21 +45,21 @@ flowchart TD
     M -->|"否"| O["等待使用者操作"]
 ```
 
-1. `waitForLIFF()` 每 100 毫秒檢查一次全域 `liff`，最多 50 次；逾時時直接在 `message` 顯示錯誤。`LocationApp` 建構時先綁定事件，再呼叫 `init()`。
+1. `waitForLIFF()` 每 100 毫秒檢查一次全域 `liff`，最多 50 次；逾時時直接在 `message` 顯示錯誤。`LocationApp` 建構時先繫結事件，再呼叫 `init()`。
 2. `init()` 以程式內的 LIFF ID `2007938807-GQzRrDoy` 呼叫 `liff.init()`。`ensureAuth()` 檢查 `liff.isLoggedIn()` 與 `liff.getAccessToken()`，未登入、缺少 Token 或取用失敗時，以目前頁面網址作為 `redirectUri` 呼叫 `liff.login()`。
-3. `ensureData()` 在 `adminData` 已有內容時直接返回，否則由 `loadAdminData()` 取得 `https://api.kyomind.tw/static/data/tw_admin_divisions.json`。資料必須是非空物件，且每個縣市的值都必須是非空陣列；載入或驗證失敗會向上拋出例外。`populateCounties()` 依 `localeCompare()` 排序縣市。
-4. 初始化完成後延遲 500 毫秒檢查資料；若仍為空，`tryResumeFlowWithPolling()` 預設每 300 毫秒檢查登入與 Token，最多約 5 秒。登入恢復後嘗試載入資料，逾時則顯示可重試的提示。
+3. `ensureData()` 在 `adminData` 已有內容時直接結束，否則由 `loadAdminData()` 取得 `https://api.kyomind.tw/static/data/tw_admin_divisions.json`。資料必須是非空物件，且每個縣市的值都必須是非空陣列；載入或驗證失敗會向上拋出例外。`populateCounties()` 依 `localeCompare()` 排序縣市。
+4. 初始化完成後延遲 500 毫秒檢查資料；若仍為空，`tryResumeFlowWithPolling()` 預設每 300 毫秒檢查登入與 Token，最多約 5 秒。登入完成後嘗試載入資料，逾時則顯示可重試的提示。
 
-`ensureAuth()` 呼叫登入後只從自身返回，並不提供成功或失敗結果給呼叫者；若頁面尚未導向，呼叫端仍會繼續執行資料載入。此外，初始化發生例外時會顯示錯誤，該次 `init()` 不會排定上述延遲輪詢；使用者仍可透過縣市欄位觸發資料恢復。
+`ensureAuth()` 呼叫登入後只從自身結束，並不提供成功或失敗結果給呼叫者；若頁面尚未導向，呼叫端仍會繼續執行資料載入。此外，初始化發生例外時會顯示錯誤，該次 `init()` 不會排定上述延遲輪詢；使用者仍可透過縣市欄位觸發資料復原。
 
 ## 表單與狀態管理
 
 | 狀態或方法 | 用途 |
 | --- | --- |
 | `adminData`、`hasAdminData()` | 保存行政區對照，判斷是否已有資料。 |
-| `isInitialized`、`setupEventListeners()` | 避免重複綁定事件；此旗標表示事件已綁定，不代表 LIFF 或資料已初始化完成。 |
+| `isInitialized`、`setupEventListeners()` | 避免重複繫結事件；此旗標表示事件已繫結，不代表 LIFF 或資料已初始化完成。 |
 | `isLoadingAdminData` | 防止 `ensureDataLoaded()` 與 `forceRecover()` 重複啟動受此旗標保護的載入。 |
-| `retryCount`、`maxRetries` | 記錄上述兩種恢復方法的失敗次數，預設門檻為 2；成功後歸零。 |
+| `retryCount`、`maxRetries` | 記錄上述兩種復原方法的失敗次數，預設門檻為 2；成功後歸零。 |
 | `updateDistricts()` | 根據所選縣市排序並填入行政區；沒有有效縣市時停用行政區欄位。 |
 | `validateForm()` | 地點類型、縣市與行政區皆有值才啟用提交按鈕。 |
 | `resetForm()` | 將類型重設為 `home`，清空縣市與行政區、停用行政區與提交按鈕並隱藏訊息；不會清除已載入的資料。 |
@@ -82,7 +82,7 @@ sequenceDiagram
     L-->>P: 回傳 Access Token
     P->>A: POST /users/locations 與 Bearer Token
     A-->>P: 回傳設定結果或錯誤狀態
-    P-->>U: 顯示結果並恢復表單
+    P-->>U: 顯示結果並還原表單
 ```
 
 `submitForm()` 先隱藏表單、顯示載入畫面，再檢查 `location_type` 是否為 `home` 或 `work`、縣市是否存在，以及行政區是否屬於該縣市。前端驗證後，從 LIFF 取得 Access Token，並發送 JSON：
@@ -114,6 +114,6 @@ Authorization: Bearer <accessToken>
 | 其他非成功狀態或請求錯誤 | 顯示一般設定失敗訊息，或由 `handleError()` 顯示例外訊息。 |
 | 行政區載入失敗或輪詢逾時 | 更新縣市提示，提供重試或稍後再試的提示。 |
 
-提交完成或失敗都會在 `finally` 恢復表單。`showMessage()` 對成功與錯誤訊息設定 5 秒隱藏，資訊訊息則為 3 秒；SDK 等待逾時的直接顯示路徑不使用此計時器。
+提交完成或失敗都會在 `finally` 還原表單。`showMessage()` 對成功與錯誤訊息設定 5 秒隱藏，資訊訊息則為 3 秒；SDK 等待逾時的直接顯示路徑不使用此計時器。
 
 維護時應留意 LIFF ID、行政區資料網址和 API 網址目前寫在 `app.js`，而頁面 DOM ID 與事件處理程式彼此相依。`index.html` 為 CSS 與 JavaScript 加上版本查詢參數；相關版本管理流程見[發布與版本管理](../operational_and_development_scripts/release_and_version_management.md)。修改介面或資料契約時，應一併檢查頁面載入、登入返回、縣市連動、重試，以及成功和各種失敗回應。
