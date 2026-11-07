@@ -58,17 +58,17 @@ sequenceDiagram
     loop 依序處理每個事件
         B->>D: dispatch(event, payload)
         D->>H: 呼叫已註冊處理器
-        H-->>D: 處理結束
-        D-->>B: 回傳是否找到處理器
+        H-->>D: 回傳 EventOutcome
+        D-->>B: 回傳明確處理結果
         B->>M: 記錄結果與耗時
     end
 ```
 
 ## 解析與事件分派
 
-`process_webhook_events` 透過 `LineSdkWebhookDispatcher.parse` 呼叫 SDK parser，以 `as_payload=True` 再次驗證並解析簽章及 body。回傳值符合 `ParsedWebhookPayload` protocol，提供 `events: list[object]` 與可為 `None` 的 `destination`；原始 payload 也傳給 SDK 處理器。
+`process_webhook_events` 透過 `LineSdkWebhookDispatcher.parse` 呼叫 SDK parser，以 `as_payload=True` 再次驗證並解析簽章及 body。回傳值符合 `ParsedWebhookPayload` protocol，提供 `events: list[object]` 與可為 `None` 的 `destination`；本專案的 callback 只接收單一事件。
 
-分派器對 `MessageEvent` 先查事件類別與訊息類別的組合，再查事件類別，最後使用 SDK 的預設處理器。找到處理器時呼叫並回傳 `True`，否則回傳 `False`。實作使用 SDK 的私有處理器表、鍵值產生與呼叫方法；升級 `line-bot-sdk` 時應檢查相容性。依賴宣告見 `pyproject.toml`。
+分派器對 `MessageEvent` 先查事件類別與訊息類別的組合，再查事件類別，最後使用 SDK 的預設處理器。找到處理器時直接呼叫並保留其 `EventOutcome`，否則回傳 `SKIPPED`。SDK 的呼叫方法會丟棄回傳值，因此不再使用；實作仍使用 SDK 的私有處理器表與鍵值產生方法；升級 `line-bot-sdk` 時應檢查相容性。依賴宣告見 `pyproject.toml`。
 
 | 事件 | 註冊處理器與後續工作 |
 | --- | --- |
@@ -92,8 +92,8 @@ sequenceDiagram
 | 指標 | 標籤 | 記錄時機 |
 | --- | --- | --- |
 | `line_webhook_events_total` | `event_type` | 路由完成簽章驗證及分類後，依分類結果逐項遞增 |
-| `line_webhook_events_success_total` | `event_type` | 事件找到處理器且呼叫正常結束 |
-| `line_webhook_events_error_total` | `event_type`、`error_type` | 解析或處理器呼叫拋出例外 |
+| `line_webhook_events_success_total` | `event_type` | 事件回傳 `EventOutcome.SUCCESS` |
+| `line_webhook_events_error_total` | `event_type`、`error_type` | 解析／處理器拋出例外，或事件回傳業務／回覆失敗結果 |
 | `line_webhook_event_duration_seconds` | `event_type` | 每個已開始分派事件的耗時；解析失敗時記錄解析耗時 |
 
 事件類型包括 `message_text`、`message_location`、`follow`、`unfollow`、`postback`、`default` 與 `unknown`。原始 body 分類時，無法解析的 JSON、缺少或空的 `events` 清單，以及沒有任何物件事件的清單，會得到一個 `unknown`；混合清單中的非物件項目會被略過。SDK 解析後則根據事件物件屬性分類。
@@ -104,18 +104,20 @@ flowchart TD
     B -->|否| C["依備用標籤記錄錯誤與解析耗時"]
     C --> D["重新拋出例外並結束背景工作"]
     B -->|是| E["依序分派事件"]
-    E --> F{"找到處理器且正常結束？"}
-    F -->|是| G["記錄成功與耗時"]
-    F -->|沒有處理器| H["記錄耗時與日誌"]
+    E --> F{"事件結果？"}
+    F -->|SUCCESS| G["記錄成功與耗時"]
+    F -->|SKIPPED| H["記錄耗時與日誌"]
+    F -->|HANDLER_ERROR 或 REPLY_ERROR| K["記錄錯誤與耗時"]
+    K --> J
     F -->|拋出例外| I["記錄錯誤與耗時"]
     I --> D
     G --> J["處理下一個事件"]
     H --> J
 ```
 
-解析失敗時使用路由提供的分類作為備用標籤，未提供或為空時使用 `unknown`。SDK 的 `InvalidSignatureError` 記為 `signature_error`，其他例外記為 `handler_error`；例外會向外傳播至背景工作邊界。逐事件處理時，任何未攔截的例外都會終止同一 payload 中後續事件的處理。未找到處理器時只記錄耗時；預設處理器若存在並正常結束，也算分派成功。
+解析失敗時使用路由提供的分類作為備用標籤，未提供或為空時使用 `unknown`。SDK 的 `InvalidSignatureError` 記為 `signature_error`，其他例外記為 `handler_error`；例外會向外傳播至背景工作邊界。逐事件處理時，任何未攔截的例外都會終止同一 payload 中後續事件的處理。未找到處理器或走到預設處理器時回傳 `SKIPPED`，只記錄耗時。明確回傳的業務失敗記為 `handler_error`，回覆失敗記為 `reply_error`，兩者都會繼續處理下一個事件。
 
-成功指標衡量的是處理器呼叫正常結束：處理器可能因缺少資料而提早結束，或自行捕捉例外；回覆介面也可能以 `SendResult` 表示傳送失敗而不拋出例外。入口驗證失敗則發生在接收計數之前，不計入這些背景錯誤指標。
+成功指標衡量的是業務完成：需要回覆的事件必須取得成功的 `SendResult`。查詢或 DB 失敗即使成功送出錯誤提示，仍記為業務失敗；缺少必要資料也不再誤計成功。Follow 沒有回覆 token 時只要求 DB 操作成功；Unfollow 查無使用者視為已達成停用狀態。入口驗證失敗則發生在接收計數之前，不計入這些背景錯誤指標。
 
 ## 設定與維護
 

@@ -39,3 +39,14 @@ PostBack 執行層原本會吞掉查詢例外並回傳普通 recipe；現在由�
 Prometheus metric 名稱不變，新增低基數 error_type `reply_error`。如果外部 dashboard／告警只篩選 `handler_error`，需確認是否應納入此分類；本次沒有讀寫外部監控設定。既有指標是累積值，修正不會回填歷史計數。default handler 由誤計 success 改成 skipped，因此 received 不應直接等同 success + error。
 
 本次修正與本機檢查已完成；本紀錄隨修正、測試與稽核證據一併提交，尚未 push、建立 PR 或部署。後續可獨立處理批次隔離，並在需要時檢查監控查詢；不屬於本次修正的未完成實作。
+
+
+## PR 前監控查詢檢查
+
+2026-11-07 唯讀檢查 WeaMind 與 weamind-infra 原始碼及文件。infra 的 `learning/lessons/2026-04-26-observability-counter-semantics-and-closeout/06-implementation.md:448` 記錄查詢：
+
+```promql
+sum by (event_type, error_type) (increase(line_webhook_events_error_total[5m]))
+```
+
+此查詢未限定 error_type，能納入 reply_error，無需修改。infra 的最小監控規格也已列出 reply_error 分類。沒有找到 repo 管理的對應 dashboard JSON 或以 handler_error 限定的監控規則；本次未連線讀取 Grafana，不能據此確認線上 panel 與文件一致。部署前仍應核對實際 panel／告警。同步更新本 repo 的 webhook 與 PostBack wiki，反映明確事件結果及例外處理責任。
