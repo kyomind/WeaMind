@@ -9,9 +9,9 @@
 
 > A production-grade LINE chatbot for real-time Taiwan weather queries, built with FastAPI.
 
-| 📖 中文版 | 🚀 K8s Deployment | 📝 Blog Series |
-| --- | --- | --- |
-| [README.md](README.md) | [weamind-infra](https://github.com/kyomind/weamind-infra) | [Posts](https://blog.kyomind.tw/weamind-series/) |
+| 📖 中文版 | 📚 Wiki | 🚀 K8s Deployment | 📝 Blog Series |
+| --- | --- | --- | --- |
+| [README.md](README.md) | [WeaMind Wiki](https://kyomind.github.io/WeaMind/wiki/) | [weamind-infra](https://github.com/kyomind/weamind-infra) | [Posts](https://blog.kyomind.tw/weamind-series/) |
 
 ## Features
 
@@ -62,8 +62,3 @@
 - **Image build and publishing**: after CI succeeds on `main`, the multi-arch `latest` image is published to [GHCR](https://github.com/kyomind/WeaMind/pkgs/container/weamind); release workflows publish semantic version tags such as `1.2.2`, `1.2`, and `1`.
 - **Triple security scanning**: main CI pipeline + CodeQL + SonarCloud.
 - **Release-driven CD flow**: follows [Semantic Versioning](https://semver.org/); release tags publish versioned images and automatically open a version update PR against [weamind-infra](https://github.com/kyomind/weamind-infra), completing the app repo's delivery responsibilities in CD.
-
----
-
-Further reading:
-- [WeaMind Wiki](https://kyomind.github.io/WeaMind/wiki/)
