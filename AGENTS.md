@@ -15,7 +15,7 @@ For architecture and directory structure, see `README.md` (developer highlights)
 - **Pytest Fixtures**:
   - Helper functions: verb prefix (e.g., `create_user`)
   - Objects/values: noun (e.g., `user`)
-- **Git Branches**: Use feature branches for new features or bug fixes. e.g. `feature/location-settings`(noun)
+- **Git Branches**: Use feature branches for new features and bug fixes, e.g. `feature/location-settings` (noun). Docs, README, and other non-code edits go directly on `main`.
 
 ### Git Commit Messages
 - **Natural English**: Use clear, descriptive English sentences
@@ -33,7 +33,7 @@ For architecture and directory structure, see `README.md` (developer highlights)
 - CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md`
 - Docstring Guidelines: `.github/prompts/docstring-guidelines.prompt.md`
 - Testing Guidelines: `.github/instructions/testing-guidelines.instructions.md`
-- CHANGELOG Guide: `.github/instructions/changelog.instructions.md`
+- CHANGELOG Guide: `.github/prompts/changelog.prompt.md`
 
 ## Scheduled Maintenance
 - `~/Code/agent-scheduler` runs the `weamind-maintenance-codex` job every Saturday 02:00 (Asia/Taipei). It executes `.github/prompts/github-maintenance.prompt.md` unattended in this repo and may merge PRs, push commits, and rerun workflows.
