@@ -47,8 +47,3 @@ For architecture and directory structure, see `README.md` (developer highlights)
 - Lint: `uv run ruff check .`
 - Format: `uv run ruff format .`
 - Type check: `uv run pyright .`
-
-## AGENTS.md as the project main prompt
-
-- Treat `AGENTS.md` as the project's sole main prompt.
-- When main instruction-related changes are needed, edit `AGENTS.md` directly.
