@@ -1,9 +1,12 @@
 """Contain LINE SDK webhook parsing and dispatch implementation details."""
 
+from collections.abc import Callable
 from typing import Protocol, cast
 
 from linebot.v3 import WebhookHandler
 from linebot.v3.webhooks import MessageEvent
+
+from .outcome import EventOutcome
 
 
 class ParsedWebhookPayload(Protocol):
@@ -27,13 +30,17 @@ class LineSdkWebhookDispatcher:
             self._webhook_handler.parser.parse(body_text, signature, as_payload=True),
         )
 
-    def dispatch(self, event: object, payload: ParsedWebhookPayload) -> bool:
-        """Invoke the registered handler and report whether one was available."""
+    def dispatch(self, event: object, payload: ParsedWebhookPayload) -> EventOutcome:
+        """Invoke a project callback and preserve its explicit business outcome."""
         handler = self._resolve_handler(event)
         if handler is None:
-            return False
-        self._webhook_handler._WebhookHandler__invoke_func(handler, event, payload)  # type: ignore[attr-defined]
-        return True
+            return EventOutcome.SKIPPED
+        # Project callbacks accept one event; the SDK invocation helper discards
+        # return values, so call the resolved callback directly.
+        outcome = cast(Callable[[object], EventOutcome], handler)(event)
+        if not isinstance(outcome, EventOutcome):
+            raise TypeError("Webhook callbacks must return EventOutcome")
+        return outcome
 
     def _resolve_handler(self, event: object) -> object | None:
         """Resolve a message-specific, event-specific, or default SDK handler."""

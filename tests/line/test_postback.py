@@ -142,18 +142,20 @@ def test_execute_recent_queries_creates_user_and_returns_choices() -> None:
     )
 
 
-def test_execute_contains_unexpected_exception() -> None:
-    """Always return the action-compatible error recipe after failures."""
+def test_execute_propagates_unexpected_exception() -> None:
+    """Let the event layer report failures and send the fallback recipe."""
     plan = prepare_postback("action=weather&type=home", "user")
     with patch("app.line.postback.query_preset", side_effect=RuntimeError("boom")):
-        assert execute_postback(plan) == TextRecipe("查詢時發生錯誤，請稍後再試。")
+        with pytest.raises(RuntimeError):
+            execute_postback(plan)
 
 
-def test_execute_contains_recent_query_exception() -> None:
-    """Return the generic compatible recipe after a Query History failure."""
+def test_execute_propagates_recent_query_exception() -> None:
+    """Propagate a Query History failure to the event layer."""
     plan = prepare_postback("action=recent_queries", "user")
     with patch("app.line.postback.SessionLocal", side_effect=RuntimeError("database error")):
-        assert execute_postback(plan) == TextRecipe("系統暫時有點忙，請稍後再試一次。")
+        with pytest.raises(RuntimeError):
+            execute_postback(plan)
 
 
 def test_execute_current_location_recipe() -> None:
