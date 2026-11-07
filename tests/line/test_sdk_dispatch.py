@@ -3,6 +3,7 @@
 import inspect
 from unittest.mock import Mock, patch
 
+import pytest
 from linebot.v3 import WebhookHandler
 
 from app.line.outcome import EventOutcome
@@ -110,7 +111,7 @@ def test_sdk_private_dispatch_surface_still_exists() -> None:
 
 
 def test_dispatch_reports_missing_registration() -> None:
-    """Test dispatch reports false when neither a specific nor default handler exists."""
+    """Test dispatch skips events without a specific or default handler."""
     event = object()
     payload = Mock(events=[event])
     webhook_handler = Mock()
@@ -123,3 +124,18 @@ def test_dispatch_reports_missing_registration() -> None:
 
     assert dispatched is EventOutcome.SKIPPED
     webhook_handler._WebhookHandler__invoke_func.assert_not_called()
+
+
+@pytest.mark.parametrize("invalid_outcome", [None, True, "success"])
+def test_dispatch_rejects_implicit_callback_outcomes(invalid_outcome: object) -> None:
+    """Reject missing or ambiguous results instead of silently counting success."""
+    webhook_handler = WebhookHandler("contract-test-secret")
+
+    @webhook_handler.default()
+    def incomplete_callback(event: object) -> object:
+        """Represent a callback that does not follow the explicit outcome contract."""
+        return invalid_outcome
+
+    dispatcher = LineSdkWebhookDispatcher(webhook_handler)
+    with pytest.raises(TypeError, match="Webhook callbacks must return EventOutcome"):
+        dispatcher.dispatch(object(), Mock(events=[]))
