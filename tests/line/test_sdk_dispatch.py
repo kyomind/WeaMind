@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 from linebot.v3 import WebhookHandler
 
+from app.line.outcome import EventOutcome
 from app.line.sdk_dispatch import LineSdkWebhookDispatcher
 
 
@@ -33,7 +34,7 @@ def test_dispatch_prefers_message_specific_registration() -> None:
 
     event = FakeMessageEvent(object())
     payload = Mock(events=[event])
-    registered_handler = object()
+    registered_handler = Mock(return_value=EventOutcome.SUCCESS)
     webhook_handler = Mock()
     webhook_handler._handlers = {"message-key": registered_handler}
     webhook_handler._WebhookHandler__get_handler_key.return_value = "message-key"
@@ -42,13 +43,11 @@ def test_dispatch_prefers_message_specific_registration() -> None:
     with patch("app.line.sdk_dispatch.MessageEvent", FakeMessageEvent):
         dispatched = dispatcher.dispatch(event, payload)
 
-    assert dispatched is True
+    assert dispatched is EventOutcome.SUCCESS
     webhook_handler._WebhookHandler__get_handler_key.assert_called_once_with(
         FakeMessageEvent, object
     )
-    webhook_handler._WebhookHandler__invoke_func.assert_called_once_with(
-        registered_handler, event, payload
-    )
+    registered_handler.assert_called_once_with(event)
 
 
 def test_dispatch_uses_event_registration_after_message_specific_miss() -> None:
@@ -63,7 +62,7 @@ def test_dispatch_uses_event_registration_after_message_specific_miss() -> None:
 
     event = FakeMessageEvent(object())
     payload = Mock(events=[event])
-    registered_handler = object()
+    registered_handler = Mock(return_value=EventOutcome.SUCCESS)
     webhook_handler = Mock()
     webhook_handler._handlers = {"event-key": registered_handler}
     webhook_handler._WebhookHandler__get_handler_key.side_effect = [
@@ -75,21 +74,19 @@ def test_dispatch_uses_event_registration_after_message_specific_miss() -> None:
     with patch("app.line.sdk_dispatch.MessageEvent", FakeMessageEvent):
         dispatched = dispatcher.dispatch(event, payload)
 
-    assert dispatched is True
+    assert dispatched is EventOutcome.SUCCESS
     assert webhook_handler._WebhookHandler__get_handler_key.call_args_list == [
         ((FakeMessageEvent, object),),
         ((FakeMessageEvent,),),
     ]
-    webhook_handler._WebhookHandler__invoke_func.assert_called_once_with(
-        registered_handler, event, payload
-    )
+    registered_handler.assert_called_once_with(event)
 
 
 def test_dispatch_falls_back_to_default_registration() -> None:
     """Test dispatch invokes the SDK default when no event registration exists."""
     event = object()
     payload = Mock(events=[event])
-    default_handler = object()
+    default_handler = Mock(return_value=EventOutcome.SKIPPED)
     webhook_handler = Mock()
     webhook_handler._handlers = {}
     webhook_handler._default = default_handler
@@ -98,10 +95,8 @@ def test_dispatch_falls_back_to_default_registration() -> None:
 
     dispatched = dispatcher.dispatch(event, payload)
 
-    assert dispatched is True
-    webhook_handler._WebhookHandler__invoke_func.assert_called_once_with(
-        default_handler, event, payload
-    )
+    assert dispatched is EventOutcome.SKIPPED
+    default_handler.assert_called_once_with(event)
 
 
 def test_sdk_private_dispatch_surface_still_exists() -> None:
@@ -109,7 +104,6 @@ def test_sdk_private_dispatch_surface_still_exists() -> None:
     webhook_handler = WebhookHandler("contract-test-secret")
 
     assert hasattr(webhook_handler, "_WebhookHandler__get_handler_key")
-    assert hasattr(webhook_handler, "_WebhookHandler__invoke_func")
     assert hasattr(webhook_handler, "_handlers")
     assert hasattr(webhook_handler, "_default")
     assert "as_payload" in inspect.signature(webhook_handler.parser.parse).parameters
@@ -127,5 +121,5 @@ def test_dispatch_reports_missing_registration() -> None:
 
     dispatched = dispatcher.dispatch(event, payload)
 
-    assert dispatched is False
+    assert dispatched is EventOutcome.SKIPPED
     webhook_handler._WebhookHandler__invoke_func.assert_not_called()

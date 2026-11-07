@@ -18,6 +18,7 @@ from app.line.metrics import (
     record_webhook_received,
     record_webhook_success,
 )
+from app.line.outcome import EventOutcome
 from app.line.service import process_webhook_events
 
 
@@ -145,7 +146,9 @@ class TestLineMetrics:
         payload = Mock(events=[first_event, second_event])
 
         with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
-            with patch("app.line.service.webhook_dispatcher.dispatch", return_value=True):
+            with patch(
+                "app.line.service.webhook_dispatcher.dispatch", return_value=EventOutcome.SUCCESS
+            ):
                 with patch("app.line.service.line_metrics.record_webhook_success") as mock_success:
                     with patch(
                         "app.line.service.line_metrics.record_webhook_duration"
@@ -194,7 +197,9 @@ class TestLineMetrics:
         payload = Mock(events=[event])
 
         with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
-            with patch("app.line.service.webhook_dispatcher.dispatch", return_value=False):
+            with patch(
+                "app.line.service.webhook_dispatcher.dispatch", return_value=EventOutcome.SKIPPED
+            ):
                 with patch("app.line.service.line_metrics.record_webhook_success") as mock_success:
                     with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:
                         with patch(
@@ -240,7 +245,7 @@ class TestLineMetrics:
         with patch("app.line.service.webhook_dispatcher.parse", return_value=payload):
             with patch(
                 "app.line.service.webhook_dispatcher.dispatch",
-                side_effect=[True, Exception("boom")],
+                side_effect=[EventOutcome.SUCCESS, Exception("boom")],
             ):
                 with patch("app.line.service.line_metrics.record_webhook_success") as mock_success:
                     with patch("app.line.service.line_metrics.record_webhook_error") as mock_error:

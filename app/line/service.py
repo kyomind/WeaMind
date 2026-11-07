@@ -27,7 +27,8 @@ from .messaging import (
     ReplyRecipe,
     TextRecipe,
 )
-from .postback import execute_postback, prepare_postback
+from .outcome import EventOutcome
+from .postback import PresetWeatherAction, execute_postback, prepare_postback
 from .sdk_dispatch import LineSdkWebhookDispatcher
 from .weather_presentation import QueryKind, build_weather_reply
 
@@ -94,10 +95,13 @@ def process_webhook_events(
         event_type = line_metrics.normalize_runtime_event_type(event)
         start_time = time.perf_counter()
         try:
-            if webhook_dispatcher.dispatch(event, payload):
+            outcome = webhook_dispatcher.dispatch(event, payload)
+            if outcome == EventOutcome.SUCCESS:
                 line_metrics.record_webhook_success([event_type])
+            elif outcome == EventOutcome.SKIPPED:
+                logger.info("Skipped LINE event")
             else:
-                logger.info("No handler registered for LINE event")
+                line_metrics.record_webhook_error([event_type], outcome.value)
         except InvalidSignatureError:
             line_metrics.record_webhook_error([event_type], "signature_error")
             raise
@@ -108,7 +112,7 @@ def process_webhook_events(
             line_metrics.record_webhook_duration([event_type], time.perf_counter() - start_time)
 
 
-def handle_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None:
+def handle_message_event(event: MessageEvent, messenger: ReplyMessenger) -> EventOutcome:
     """
     Handle text message events with location parsing functionality.
 
@@ -122,13 +126,13 @@ def handle_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None
     # Ensure reply_token is not empty
     if not event.reply_token:
         logger.warning("Reply token is empty")
-        return
+        return EventOutcome.HANDLER_ERROR
 
     # Type assertion since webhook_handler decorator ensures this is TextMessageContent
     message = event.message
     if not isinstance(message, TextMessageContent):
         logger.warning(f"Unexpected message type: {type(message)}")
-        return
+        return EventOutcome.HANDLER_ERROR
 
     try:
         user_id = getattr(event.source, "user_id", None) if event.source else None
@@ -136,12 +140,13 @@ def handle_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None
         recipe: ReplyRecipe = build_weather_reply(query_result, QueryKind.TEXT)
     except Exception:
         logger.exception(f"Unexpected error parsing location input: {message.text}")
-        recipe = TextRecipe("系統暫時有點忙，請稍後再試一次。")
+        messenger.reply(event.reply_token, TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+        return EventOutcome.HANDLER_ERROR
 
-    messenger.reply(event.reply_token, recipe)
+    return EventOutcome.from_reply(messenger.reply(event.reply_token, recipe))
 
 
-def handle_location_message_event(event: MessageEvent, messenger: ReplyMessenger) -> None:
+def handle_location_message_event(event: MessageEvent, messenger: ReplyMessenger) -> EventOutcome:
     """
     Handle location message events from user location sharing.
 
@@ -151,13 +156,13 @@ def handle_location_message_event(event: MessageEvent, messenger: ReplyMessenger
     # Ensure reply_token is not empty
     if not event.reply_token:
         logger.warning("Reply token is empty for location message")
-        return
+        return EventOutcome.HANDLER_ERROR
 
     # Type assertion since webhook_handler decorator ensures this is LocationMessageContent
     message = event.message
     if not isinstance(message, LocationMessageContent):
         logger.warning(f"Unexpected message type: {type(message)}")
-        return
+        return EventOutcome.HANDLER_ERROR
 
     # Extract GPS coordinates and address information
     lat = message.latitude
@@ -175,12 +180,13 @@ def handle_location_message_event(event: MessageEvent, messenger: ReplyMessenger
         logger.info("Location query completed")
     except Exception:
         logger.exception("Error handling location message from user")
-        recipe = TextRecipe("系統暫時有點忙，請稍後再試一次。")
+        messenger.reply(event.reply_token, TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+        return EventOutcome.HANDLER_ERROR
 
-    messenger.reply(event.reply_token, recipe)
+    return EventOutcome.from_reply(messenger.reply(event.reply_token, recipe))
 
 
-def handle_follow_event(event: FollowEvent, messenger: ReplyMessenger) -> None:
+def handle_follow_event(event: FollowEvent, messenger: ReplyMessenger) -> EventOutcome:
     """
     Handle follow events - create or reactivate user record.
 
@@ -191,7 +197,7 @@ def handle_follow_event(event: FollowEvent, messenger: ReplyMessenger) -> None:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("Follow event without user_id")
-            return
+            return EventOutcome.HANDLER_ERROR
 
         with SessionLocal() as session:
             # Create user if not exists or reactivate if inactive
@@ -200,17 +206,20 @@ def handle_follow_event(event: FollowEvent, messenger: ReplyMessenger) -> None:
 
         # Release the database connection before waiting on the LINE API.
         if event.reply_token:
-            messenger.reply(
-                event.reply_token,
-                TextRecipe("Welcome! You can now start interacting with me."),
+            return EventOutcome.from_reply(
+                messenger.reply(
+                    event.reply_token,
+                    TextRecipe("Welcome! You can now start interacting with me."),
+                )
             )
-
     except Exception:
         logger.exception("Error handling follow event")
+        return EventOutcome.HANDLER_ERROR
+    return EventOutcome.SUCCESS
 
 
 @webhook_handler.add(UnfollowEvent)
-def handle_unfollow_event(event: UnfollowEvent) -> None:
+def handle_unfollow_event(event: UnfollowEvent) -> EventOutcome:
     """
     Handle unfollow events - deactivate user record.
 
@@ -221,7 +230,7 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("Unfollow event without user_id")
-            return
+            return EventOutcome.HANDLER_ERROR
 
         with SessionLocal() as session:
             # Deactivate user
@@ -230,13 +239,14 @@ def handle_unfollow_event(event: UnfollowEvent) -> None:
                 logger.info("User unfollowed - user record deactivated")
             else:
                 logger.warning("Unfollow event for unknown user")
-
     except Exception:
         logger.exception("Error handling unfollow event")
+        return EventOutcome.HANDLER_ERROR
+    return EventOutcome.SUCCESS
 
 
 @webhook_handler.default()
-def handle_default_event(event: object) -> None:
+def handle_default_event(event: object) -> EventOutcome:
     """
     Handle events that don't have specific handlers.
 
@@ -244,59 +254,65 @@ def handle_default_event(event: object) -> None:
         event: The LINE event
     """
     logger.info("Received unhandled event type")
+    return EventOutcome.SKIPPED
 
 
-def handle_postback_event(event: PostbackEvent, messenger: ReplyMessenger) -> None:
+def handle_postback_event(event: PostbackEvent, messenger: ReplyMessenger) -> EventOutcome:
     """
     Handle PostBack events triggered from the LINE rich menu.
 
     Args:
         event: The LINE PostBack event payload
     """
+    error_recipe = TextRecipe("系統暫時有點忙，請稍後再試一次。")
     try:
         if not event.reply_token:
             logger.warning("PostBack event without reply_token")
-            return
+            return EventOutcome.HANDLER_ERROR
 
         user_id = getattr(event.source, "user_id", None) if event.source else None
         if not user_id:
             logger.warning("PostBack event without user_id")
-            return
+            return EventOutcome.HANDLER_ERROR
 
         plan = prepare_postback(event.postback.data, user_id)
+        if isinstance(plan.action, PresetWeatherAction):
+            error_recipe = TextRecipe("查詢時發生錯誤，請稍後再試。")
         if plan.requires_lock and settings.PROCESSING_LOCK_ENABLED:
             lock_key = processing_lock_service.build_lock_key(event.source)
             if lock_key and not processing_lock_service.try_acquire_lock(lock_key):
-                messenger.reply(event.reply_token, plan.lock_denied_recipe)
-                return
+                return EventOutcome.from_reply(
+                    messenger.reply(event.reply_token, plan.lock_denied_recipe)
+                )
 
-        messenger.reply(event.reply_token, execute_postback(plan))
+        return EventOutcome.from_reply(messenger.reply(event.reply_token, execute_postback(plan)))
 
     except Exception:
         logger.exception("Error handling PostBack event")
         if event.reply_token:
-            messenger.reply(event.reply_token, TextRecipe("系統暫時有點忙，請稍後再試一次。"))
+            messenger.reply(event.reply_token, error_recipe)
+        return EventOutcome.HANDLER_ERROR
 
 
 @webhook_handler.add(MessageEvent, message=TextMessageContent)
-def _handle_message_event_callback(event: MessageEvent) -> None:
+def _handle_message_event_callback(event: MessageEvent) -> EventOutcome:
     """Compose the production messenger with the decorated text handler."""
-    handle_message_event(event, production_reply_messenger)
+    return handle_message_event(event, production_reply_messenger)
 
 
 @webhook_handler.add(MessageEvent, message=LocationMessageContent)
-def _handle_location_message_event_callback(event: MessageEvent) -> None:
+def _handle_location_message_event_callback(event: MessageEvent) -> EventOutcome:
     """Compose the production messenger with the decorated location handler."""
-    handle_location_message_event(event, production_reply_messenger)
+    return handle_location_message_event(event, production_reply_messenger)
 
 
 @webhook_handler.add(FollowEvent)
-def _handle_follow_event_callback(event: FollowEvent) -> None:
+def _handle_follow_event_callback(event: FollowEvent) -> EventOutcome:
     """Compose the production messenger with the decorated follow handler."""
-    handle_follow_event(event, production_reply_messenger)
+    return handle_follow_event(event, production_reply_messenger)
 
 
 @webhook_handler.add(PostbackEvent)
-def _handle_postback_event_callback(event: PostbackEvent) -> None:
+def _handle_postback_event_callback(event: PostbackEvent) -> EventOutcome:
     """Compose the production messenger with the decorated PostBack handler."""
-    handle_postback_event(event, production_reply_messenger)
+    return handle_postback_event(event, production_reply_messenger)

@@ -114,47 +114,33 @@ def prepare_postback(raw_data: str, user_id: str) -> PostbackPlan:
 
 
 def execute_postback(plan: PostbackPlan) -> ReplyRecipe:
-    """Execute a prepared action and always return exactly one reply recipe."""
-    try:
-        action = plan.action
-        if isinstance(action, PresetWeatherAction):
-            kind = (
-                QueryKind.PRESET_HOME if action.location_type == "home" else QueryKind.PRESET_OFFICE
-            )
-            return build_weather_reply(query_preset(action.user_id, action.location_type), kind)
-        if isinstance(action, CurrentWeatherAction):
-            return LocationRequestRecipe(
-                text="請點擊地圖上任意位置，將為您查詢該地天氣", label="開啟地圖選擇"
-            )
-        if isinstance(action, LocationSettingsAction):
-            liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
-            return TextRecipe(
-                "地點設定\n\n請點擊下方連結設定您的常用地點：\n"
-                f"{liff_url}\n\n設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
-            )
-        if isinstance(action, RecentQueriesAction):
-            return _execute_recent_queries(action)
-        if isinstance(action, OtherMenuAction):
-            return UriChoicesRecipe(
-                text="請選擇想了解的資訊：",
-                choices=(
-                    UriChoice(
-                        "🔄 更新", "https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md"
-                    ),
-                    UriChoice(
-                        "📖 使用說明", "https://github.com/kyomind/WeaMind/blob/main/README.md"
-                    ),
-                    UriChoice("ℹ️ 專案介紹", "https://api.kyomind.tw/static/about/index.html"),
-                ),
-            )
-        return action.recipe  # noqa: TRY300
-    except Exception:
-        logger.exception(
-            "Error executing PostBack action", extra={"action": type(plan.action).__name__}
+    """Execute an action, leaving failure reporting and fallback replies to the event layer."""
+    action = plan.action
+    if isinstance(action, PresetWeatherAction):
+        kind = QueryKind.PRESET_HOME if action.location_type == "home" else QueryKind.PRESET_OFFICE
+        return build_weather_reply(query_preset(action.user_id, action.location_type), kind)
+    if isinstance(action, CurrentWeatherAction):
+        return LocationRequestRecipe(
+            text="請點擊地圖上任意位置，將為您查詢該地天氣", label="開啟地圖選擇"
         )
-        if isinstance(plan.action, PresetWeatherAction):
-            return TextRecipe("查詢時發生錯誤，請稍後再試。")
-        return TextRecipe("系統暫時有點忙，請稍後再試一次。")
+    if isinstance(action, LocationSettingsAction):
+        liff_url = f"{settings.BASE_URL}/static/liff/location/index.html"
+        return TextRecipe(
+            "地點設定\n\n請點擊下方連結設定您的常用地點：\n"
+            f"{liff_url}\n\n設定完成後，您就可以透過快捷功能查詢住家或公司的天氣了！"
+        )
+    if isinstance(action, RecentQueriesAction):
+        return _execute_recent_queries(action)
+    if isinstance(action, OtherMenuAction):
+        return UriChoicesRecipe(
+            text="請選擇想了解的資訊：",
+            choices=(
+                UriChoice("🔄 更新", "https://github.com/kyomind/WeaMind/blob/main/CHANGELOG.md"),
+                UriChoice("📖 使用說明", "https://github.com/kyomind/WeaMind/blob/main/README.md"),
+                UriChoice("ℹ️ 專案介紹", "https://api.kyomind.tw/static/about/index.html"),
+            ),
+        )
+    return action.recipe
 
 
 def _parse_data(raw_data: str) -> dict[str, str]:
