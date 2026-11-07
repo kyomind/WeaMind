@@ -38,8 +38,7 @@ PostBack 執行層原本會吞掉查詢例外並回傳普通 recipe；現在由�
 
 Prometheus metric 名稱不變，新增低基數 error_type `reply_error`。如果外部 dashboard／告警只篩選 `handler_error`，需確認是否應納入此分類；本次沒有讀寫外部監控設定。既有指標是累積值，修正不會回填歷史計數。default handler 由誤計 success 改成 skipped，因此 received 不應直接等同 success + error。
 
-本次修正與本機檢查已完成；本紀錄隨修正、測試與稽核證據一併提交，尚未 push、建立 PR 或部署。後續可獨立處理批次隔離，並在需要時檢查監控查詢；不屬於本次修正的未完成實作。
-
+本次修正已透過 [PR #145](https://github.com/kyomind/WeaMind/pull/145) 合併至 main，merge commit 為 `7c57192`。本機已切回並同步 main。開發範圍內待辦：沒有。批次隔離與事件去重屬於可另行評估的改善，沒有在本次開工。
 
 ## PR 前監控查詢檢查
 
@@ -50,3 +49,11 @@ sum by (event_type, error_type) (increase(line_webhook_events_error_total[5m]))
 ```
 
 此查詢未限定 error_type，能納入 reply_error，無需修改。infra 的最小監控規格也已列出 reply_error 分類。沒有找到 repo 管理的對應 dashboard JSON 或以 handler_error 限定的監控規則；本次未連線讀取 Grafana，不能據此確認線上 panel 與文件一致。部署前仍應核對實際 panel／告警。同步更新本 repo 的 webhook 與 PostBack wiki，反映明確事件結果及例外處理責任。
+
+## Session 收尾
+
+- Codecov 指出 callback 回傳型別檢查缺少測試；commit `510ffa9` 補上 `None`、布林值與普通字串三個拒絕案例。相關 24 個本機測試通過，dispatch 模組行與分支覆蓋率皆為 100%。Codecov 後續確認所有可覆蓋的變更行都有測試。
+- 合併前 PR 的 CI、Docker build、CodeQL、SonarCloud 與 Codecov 檢查全部通過。
+- 合併 commit `7c57192` 的 [main CI](https://github.com/kyomind/WeaMind/actions/runs/42356021206) 通過：**316 passed**、總覆蓋率 96%；同一 commit 的 CodeQL 與 Pages workflow 亦通過。
+- 收尾檢查時，[自動 GHCR 發布](https://github.com/kyomind/WeaMind/actions/runs/42356089042) 仍在執行。本 session 未手動發布 release、修改 infra 或操作正式環境；映像發布成功亦不等同部署完成。
+- 部署交接：先確認正式環境使用包含此修正的映像，再核對實際 Grafana panel／告警未排除 `reply_error`。這兩項尚未實機驗證，不阻擋本次開發工作結案。
