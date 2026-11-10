@@ -25,6 +25,7 @@ For architecture and directory structure, see `README.md` (developer highlights)
   - "Add location settings feature"
 
 ## References
+- Prompt Index: `.github/prompts/index.md` — start here to find task-specific prompts. After adding/removing a prompt or changing its `description:`, run `make update-prompt-index` and commit the index with the change.
 - Architecture: `docs/Architecture.md`
 - Directory structure: `docs/Tree.md`
 - Todo: `docs/Todo.md` (completed and pending tasks)

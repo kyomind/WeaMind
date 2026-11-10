@@ -48,6 +48,15 @@ revision:
 rollback:
 	docker compose exec $(APP_SERVICE) uv run alembic downgrade -1
 
+# === Prompt Index ===
+# 從各 prompt 的 description: 產生索引；新增、刪除 prompt 或改 description 後重跑並一起 commit。
+.PHONY: update-prompt-index
+update-prompt-index:
+	@{ echo '# Prompt Index'; echo; echo '> 由 `make update-prompt-index` 從各檔 `description:` 產生，不要手改。'; echo; \
+	for f in .github/prompts/*.prompt.md; do \
+		printf -- '- `%s` — %s\n' "$$(basename "$$f" .prompt.md)" "$$(sed -n 's/^description: *//p' "$$f" | head -1 | sed "s/^['\"]//; s/['\"]$$//")"; \
+	done; } > .github/prompts/index.md
+
 # === Package Management ===
 upgrade-pyright:
 	uv lock --upgrade-package pyright
