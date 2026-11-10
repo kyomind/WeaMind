@@ -1,5 +1,6 @@
 ---
 description: 'Python docstring style guide for function documentation'
+applyTo: '**/*.py'
 ---
 
 # Python Docstring Style Guide

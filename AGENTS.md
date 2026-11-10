@@ -7,7 +7,7 @@ For architecture and directory structure, see `README.md` (developer highlights)
 
 ## Coding Standards
 1. **Type Safety**: Always use type hints
-2. **Documentation**: Every function needs a docstring (follow `.github/prompts/docstring-guidelines.prompt.md`)
+2. **Documentation**: Every function needs a docstring (follow `.github/instructions/docstring-guidelines.instructions.md`)
 3. **Comments**: Add comments for important logic to explain design intent
 
 ### Naming Conventions
@@ -28,13 +28,13 @@ For architecture and directory structure, see `README.md` (developer highlights)
 - Prompt Index: `.github/prompts/index.md` — start here to find task-specific prompts. After adding/removing a prompt or changing its `description:`, run `make update-prompt-index` and commit the index with the change.
 - Architecture: `docs/Architecture.md`
 - Directory structure: `docs/Tree.md`
-- Todo: `docs/Todo.md` (completed and pending tasks)
+- Task tracking: GitHub Issues via `docs/agents/issue-tracker.md`; `docs/Todo.md` is historical context
 - PRD documents: `prd/` (internal only)
 - Makefile: `Makefile` (deployment workflows and project-specific shortcuts)
-- CLI Best Practices: `.github/prompts/cli-best-practices.prompt.md`
-- Docstring Guidelines: `.github/prompts/docstring-guidelines.prompt.md`
+- Tool Usage Guidelines: `.github/instructions/tool-usage.instructions.md` (read before running commands)
+- Docstring Guidelines: `.github/instructions/docstring-guidelines.instructions.md`
 - Testing Guidelines: `.github/instructions/testing-guidelines.instructions.md`
-- CHANGELOG Guide: `.github/prompts/changelog.prompt.md`
+- Release Workflow: `.github/prompts/release.prompt.md` (includes the required CHANGELOG approval gate)
 
 ## Scheduled Maintenance
 - `~/Code/agent-scheduler` runs the `weamind-maintenance-codex` job every Saturday 02:00 (Asia/Taipei). It executes `.github/prompts/github-maintenance.prompt.md` unattended in this repo and may merge PRs, push commits, and rerun workflows.

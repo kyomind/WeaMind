@@ -1,8 +1,8 @@
 ---
-description: "Approval-gated CHANGELOG maintenance and release workflow"
+description: "草擬 CHANGELOG 並經核可後執行版本發布與驗證"
 ---
 
-# WeaMind CHANGELOG Maintenance Guide
+# Release WeaMind
 
 ## Purpose
 

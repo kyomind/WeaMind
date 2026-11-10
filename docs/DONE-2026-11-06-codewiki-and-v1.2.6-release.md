@@ -102,7 +102,7 @@ codewiki generate -o docs/wiki \
 
 ## 五、v1.2.6 release 與部署
 
-### Release（照 `.github/prompts/changelog.prompt.md`，需先核可）
+### Release（照 `.github/prompts/release.prompt.md`，需先核可）
 
 流程：`make changelog-status` → `make changelog-prepare VERSION=1.2.6` → 草稿給 Kyo → **明確核可** → 寫入 `CHANGELOG.md` → `make changelog-release VERSION=1.2.6`（會更新 `pyproject.toml`、`uv lock`、分兩個 commit、**直接 push `main` 並推送 tag**，不可逆）→ 驗證。
 
@@ -149,4 +149,4 @@ codewiki generate -o docs/wiki \
 | weamind-infra PR | #8 wiki＋換連結（已合併）、#9 bump 1.2.6（已合併）、#6／#7 已關閉 |
 | 直接推到 `main` 的 commit | `754b79a`（weamind-infra README 副本換連結）、`31b2b2f`＋`de0eae1`（v1.2.6） |
 | 相關文件 | `docs/DONE-2026-11-04-architecture-diagram.md`（架構圖，Pages 根路徑的來源） |
-| 相關 prompt | `.github/prompts/changelog.prompt.md`、`.github/prompts/github-maintenance.prompt.md`（每週六排程維護，**搬移或改名前要先確認**，見 `AGENTS.md`） |
+| 相關 prompt | `.github/prompts/release.prompt.md`、`.github/prompts/github-maintenance.prompt.md`（每週六排程維護，**搬移或改名前要先確認**，見 `AGENTS.md`） |

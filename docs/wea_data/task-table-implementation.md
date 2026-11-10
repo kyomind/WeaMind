@@ -8,7 +8,7 @@
 **分支**: `feature/weather-data`
 **相關文件**:
 - `docs/wea_data/AGENT-pre-preparation.md`
-- `.github/prompts/migrations.prompt.md`
+- `.github/prompts/migrate-database.prompt.md`
 
 ## 為何需要此功能？
 
@@ -263,6 +263,6 @@ session.commit()
 ## 相關文件
 
 - [前置準備規格](./AGENT-pre-preparation.md)
-- [Migration 指引](./../.github/prompts/migrations.prompt.md)
+- [Migration 指引](../../.github/prompts/migrate-database.prompt.md)
 - [專案架構](../Architecture.md)
 - [WeaMind Coding Agent Instructions](../../AGENTS.md)
