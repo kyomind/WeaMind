@@ -39,6 +39,20 @@ For architecture and directory structure, see `README.md` (developer highlights)
 - `~/Code/agent-scheduler` runs the `weamind-maintenance-codex` job every Saturday 02:00 (Asia/Taipei). It executes `.github/prompts/github-maintenance.prompt.md` unattended in this repo and may merge PRs, push commits, and rerun workflows.
 - Before moving, renaming, or restructuring `github-maintenance.prompt.md`, check that the job still works; the job lives in another repository, so confirm with the user before changing it.
 
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in GitHub Issues for `kyomind/WeaMind`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context layout: root `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
+
 ## Core Development Commands
 **Important**: This project uses uv for package and virtual environment management. Always use `uv run` prefix for Python commands.
 
