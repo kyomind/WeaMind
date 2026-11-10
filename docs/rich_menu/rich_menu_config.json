@@ -66,9 +66,8 @@
                 "height": 843
             },
             "action": {
-                "type": "postback",
-                "data": "action=weather&type=current",
-                "displayText": "依地圖查詢天氣"
+                "type": "uri",
+                "uri": "https://line.me/R/nv/location/"
             }
         },
         {
