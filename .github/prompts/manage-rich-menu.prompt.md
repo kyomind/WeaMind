@@ -16,7 +16,7 @@ Manage rich menus through LINE's API using `scripts/rich_menu_manager.py` first.
 ## Inspect and Prepare
 
 1. Read `AGENTS.md`, the current JSON, `docs/rich_menu/README.md`, and the manager script.
-2. Use `make upload-list` to list existing menus. Separately retrieve the current default and any test account's current per-user menu; the list command does not show those associations. Record their IDs for restoration. Distinguish an absent association from an API or authorization failure.
+2. Use `uv run python -m scripts.rich_menu_manager list` to list existing menus. The current `make upload-list` invokes the file directly and has a known `app` import failure; use the module entry point rather than treating that error as an empty list. Separately retrieve the current default and any test account's current per-user menu; the list command does not show those associations. Record their IDs for restoration. Distinguish an absent association from an API or authorization failure.
 3. For uploads, verify the image matches the configured size (currently 2500×1686), is under 1 MB, and uses PNG for the existing script, which sends `image/png`. Do not redesign or regenerate an existing image unnecessarily.
 4. Confirm the environment loads the required settings, including `LINE_CHANNEL_ACCESS_TOKEN`, without exposing credentials.
 
@@ -46,7 +46,7 @@ Relevant endpoints under `https://api.line.me/v2/bot`:
 | Remove API default | `DELETE /user/all/richmenu` |
 
 1. After authorization, bind the new menu only to the designated test user. Leave the global default unchanged.
-2. Have the user test in mobile LINE: open the menu, tap the changed action, send a location, and confirm the weather reply. Check other buttons remain usable. JSON validation or successful upload is not proof of client behavior.
+2. Have the user test in mobile LINE: open the menu, tap the changed action, send a location, and confirm the weather reply. Check other buttons remain usable. For `https://line.me/R/nv/location/`, the observed Android flow includes LINE's native recipient-confirmation dialog after tapping Share. This is not a Bot reply or LIFF page; no documented parameter skips it. Count it in the flow without assuming all LINE versions behave identically. JSON validation or successful upload is not proof of client behavior.
 3. The test uses the production webhook and may create normal Query History. No separate k3s environment is needed for a menu-only change, but it is not an isolated backend test.
 4. Restore the previous per-user menu after testing. If there was no override, remove the test override. Confirm restoration; do not silently leave a personal override that hides later default changes.
 

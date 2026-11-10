@@ -37,9 +37,27 @@ PY
 - 切換後再讀回預設 ID、完整設定與圖片，全部符合預期；也確認舊選單與圖片仍可讀取。
 - GitHub 不允許 squash merge，首次嘗試未合併；改用允許的 merge commit 完成 PR 合併。
 
+## 上線後手機觀察
+
+- Kyo 確認新版入口已生效，可直接開啟地圖，體驗優於中間再提供兩個選項。
+- Android 截圖顯示：選點並按「分享」後，LINE 原生位置畫面會詢問是否將該地址傳送至 WeaMind。確認傳送後才會產生位置訊息並進入 webhook。
+- 此彈窗不是專案程式碼或 LIFF 畫面。官方位置 URL scheme 未提供略過確認的參數，因此設計上保留這一步；官方未保證所有裝置或版本皆呈現相同介面。
+- 參考 [LINE 位置 URL scheme](https://developers.line.biz/en/docs/messaging-api/using-line-url-scheme/#sending-the-location-screen)。
+
 ## 未驗證與限制
 
-- 未做手機實際開圖、送出位置及天氣回覆驗收；API 驗證不代表手機操作已驗證。
+- 上線前跳過手機驗收；上線後已由 Kyo 確認開圖與原生確認彈窗，但尚未明確確認最終天氣回覆。
 - 地圖 URI 僅支援手機 LINE 的官方帳號一對一聊天室。
 - 未變更任何個別使用者綁定；若使用者已有個別選單，其優先序仍高於全體預設。
 - 本次未修正 Makefile 的腳本匯入問題，後續選單操作可使用模組入口；參考 `.github/prompts/manage-rich-menu.prompt.md`。
+
+## v1.3.0 發布與 session 收尾
+
+- [v1.3.0 Release](https://github.com/kyomind/WeaMind/releases/tag/v1.3.0) 已發布；CHANGELOG commit：`aedb37e`，版本 commit：`6a053e3`，annotated tag：`v1.3.0`。
+- 更新檔案：`CHANGELOG.md`、`pyproject.toml`、`uv.lock`。CHANGELOG 只納入面向使用者的地圖入口改善。
+- 本機 316 個測試、Ruff lint/format、Pyright 均通過。版本 commit 的 CI、CodeQL、Auto Release、版本映像與 latest 映像發布 workflow 全部成功。
+- 已讀取 GHCR manifest，確認 `ghcr.io/kyomind/weamind:1.3.0` 包含 `linux/amd64` 與 `linux/arm64`；index digest：`sha256:148ada19189727291eca67668dbce4e9c490892642d88cfcaf9861b7423384ae`。
+- 自動建立的 [weamind-infra PR #10](https://github.com/kyomind/weamind-infra/pull/10) 將部署映像從 `1.2.6` 更新為 `1.3.0`；session 收尾檢查時仍為 OPEN，未合併、未操作 k3s。選單更新已獨立生效，不需等待映像部署。
+- Prompt 已整理為 7 個任務入口與 2 份 instructions，補齊索引、動詞開頭命名及有效引用。`github-maintenance.prompt.md` 因外部排程相容性保留原名與內容。
+- 發布 prompt 已依本次回饋調整：先寫入未提交的 CHANGELOG 供檢視 diff，核可前不更新版本、不 commit/tag/push/release。
+- 後續事項：是否合併 infra PR 由 Kyo 決定；Makefile 匯入問題留待需要時另修。此次不新增其他功能或自動化。

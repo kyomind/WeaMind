@@ -12,8 +12,8 @@ Use this prompt when the user asks to update the CHANGELOG or release a version.
 
 1. Use the Makefile commands first.
 2. Follow the standard release flow in order.
-3. Draft the CHANGELOG entry without editing any files, then wait for explicit user approval.
-4. Do not update files, commit, tag, push, or release until the user approves the exact CHANGELOG content.
+3. Write the proposed entry to `CHANGELOG.md` as an uncommitted draft so the user can review the actual diff, then wait for explicit approval.
+4. Before approval, only edit the CHANGELOG draft; do not change versions, commit, tag, push, or release.
 5. Keep the CHANGELOG user-facing, concise, and focused on product value.
 6. Exclude non-functional changes such as spelling rules, documentation cleanup, routine dependency bumps, CI changes, refactors, and formatting-only edits.
 7. For major or minor releases, write a fuller entry. For patch releases, keep the entry short.
@@ -23,19 +23,19 @@ Use this prompt when the user asks to update the CHANGELOG or release a version.
 After preparing the commit data:
 
 1. Draft the complete CHANGELOG entry, including version, date, sections, and bullets.
-2. Show the exact proposed Markdown to the user.
+2. Write the draft to `CHANGELOG.md` and show the exact diff to the user.
 3. Report which source commits were included and which meaningful candidates were excluded.
 4. Stop and wait for explicit approval such as `核可` or `approved`.
 
 Before approval, do not:
 
-- edit `CHANGELOG.md`
+- commit or publish the CHANGELOG draft
 - edit `pyproject.toml` or `uv.lock`
 - run `make changelog-release`
 - create commits or tags
 - push changes or trigger a release
 
-Silence, a version request, or an ambiguous response is not approval. If the user requests revisions, update the draft, show the full revised Markdown, and wait for approval again.
+Silence, a version request, or an ambiguous response is not approval. If the user requests revisions, update the uncommitted draft, show the revised diff, and wait for approval again.
 
 ## Release Flow
 
@@ -52,9 +52,9 @@ Silence, a version request, or an ambiguous response is not approval. If the use
    - Write in Traditional Chinese.
    - Focus on user value and product impact.
    - Add only meaningful product changes.
-   - Do not edit any files yet.
-4. Present the exact draft and source-commit summary to the user, then stop.
-5. After explicit user approval, write the approved entry to `CHANGELOG.md` without changing its wording.
+   - Write only the draft to `CHANGELOG.md`; leave version files untouched.
+4. Present the exact diff and source-commit summary to the user, then stop.
+5. After explicit user approval, confirm the CHANGELOG diff still matches the approved wording.
 6. Release the version with `make changelog-release VERSION=x.y.z`.
    - Require a clean `main` branch except for the approved `CHANGELOG.md` change.
    - Update the version in `pyproject.toml`.
@@ -131,9 +131,8 @@ Exclude commits that are not user-facing, such as:
 - Run `make changelog-status`.
 - Run `make changelog-prepare VERSION=x.y.z`.
 - Draft the CHANGELOG entry from the prepared commits.
-- Show the exact draft and source commits to the user.
-- Receive explicit user approval.
-- Update `CHANGELOG.md` with the approved content.
+- Write the uncommitted draft to `CHANGELOG.md` and show its diff and source commits.
+- Receive explicit user approval of the current diff.
 - Run `make changelog-release VERSION=x.y.z`.
 - Confirm CI, CodeQL, GitHub Release, GHCR publishing, and infra PR creation succeeded.
 
