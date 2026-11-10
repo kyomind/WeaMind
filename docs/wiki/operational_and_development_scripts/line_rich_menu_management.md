@@ -35,10 +35,10 @@ flowchart LR
 | 中上 | 查公司天氣 | `action=weather&type=office` |
 | 右上 | 最近查過的地點 | `action=recent_queries` |
 | 左下 | 開啟地點設定 | `https://api.kyomind.tw/static/liff/location/index.html` |
-| 中下 | 依地圖查詢天氣 | `action=weather&type=current` |
+| 中下 | 直接開啟 LINE 原生地圖 | `https://line.me/R/nv/location/` |
 | 右下 | 更多資訊 | `action=other&type=menu` |
 
-五個 Postback 區域的 `data` 是與應用程式的介面；修改時應同步確認 [Postback 處理](../line_bot/line_bot_postback.md)。左下區域使用 URI，網址直接寫在 JSON 中，不會由 `BASE_URL` 動態產生。圖片上的視覺區域應與 JSON 的 `bounds` 一致。
+四個 Postback 區域的 `data` 是與應用程式的介面；修改時應同步確認 [Postback 處理](../line_bot/line_bot_postback.md)。左下與中下區域使用 URI，網址直接寫在 JSON 中，不會由 `BASE_URL` 動態產生。中下區域直接開啟位置畫面，送出位置後沿用既有查詢流程；舊選單的 `action=weather&type=current` Postback 處理仍保留。地圖 URI 僅支援手機 LINE 的官方帳號一對一聊天室。圖片上的視覺區域應與 JSON 的 `bounds` 一致。
 
 ## 操作流程
 
