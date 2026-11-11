@@ -1,1 +1,69 @@
-/Users/kyo/Code/dotfiles/.vscode/markdown-preview.css
+.github-markdown-body {
+    --code-comment-color: #789378;
+    background-color: #1e1e1e;
+    color: #ccc;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 45px;
+    font-size: 18px !important;
+}
+
+.github-markdown-body table {
+    background-color: #252526;
+    border-color: #454545;
+}
+
+.github-markdown-body th,
+.github-markdown-body td {
+    color: #e0e0e0;
+    border-color: #454545;
+    padding: 8px 12px;
+}
+
+.github-markdown-body pre {
+    background-color: #242831 !important;
+    line-height: 2 !important;
+}
+
+.github-markdown-body pre code .hljs-comment,
+.github-markdown-body pre code .hljs-quote,
+.github-markdown-body pre code .token.comment,
+.github-markdown-body pre code .token.prolog,
+.github-markdown-body pre code .token.doctype,
+.github-markdown-body pre code .token.cdata,
+.github-markdown-body pre code .pl-c {
+    color: color-mix(in srgb, var(--code-comment-color) 97%, black) !important;
+    font-style: normal !important;
+}
+
+.github-markdown-body h1 {
+    color: #cccccc !important;
+}
+
+.github-markdown-body h2 {
+    color: LightCoral !important;
+}
+
+.github-markdown-body h3 {
+    color: #88e !important;
+}
+
+.github-markdown-body h4 {
+    color: #8ea9cf !important;
+}
+
+.github-markdown-body code:not(pre code) {
+    color: #FF8C00 !important;
+}
+
+.github-markdown-body p,
+.github-markdown-body li,
+.github-markdown-body td {
+    line-height: 2 !important;
+}
+
+.github-markdown-body strong,
+.github-markdown-body b {
+    color: #dcbe00 !important;
+    font-weight: 400 !important;
+}
