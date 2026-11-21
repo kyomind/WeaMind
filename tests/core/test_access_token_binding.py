@@ -19,6 +19,10 @@ FAKE_USER_ID = "U" + "a" * 32
 VERIFY_PATH = "/oauth2/v2.1/verify"
 PROFILE_PATH = "/v2/profile"
 
+NETWORK_ERROR_DETAIL = "Unable to verify token due to network error"
+INVALID_TOKEN_DETAIL = "Invalid LINE Access Token"  # noqa: S105 - fixed error text, not a secret
+LEAKY_URL = f"https://api.line.me/oauth2/v2.1/verify?access_token={FAKE_ACCESS_TOKEN}"
+
 LineApiHandler = Callable[[httpx.Request], httpx.Response]
 
 
@@ -53,7 +57,16 @@ def install_line_api(
         return handlers[0](request)
 
     def build_client(*args: Any, **kwargs: Any) -> httpx.AsyncClient:  # noqa: ANN401
-        """Build a real client wired to the mocked transport."""
+        """
+        Build a real client wired to the mocked transport.
+
+        Args:
+            *args: Positional arguments forwarded to `httpx.AsyncClient`.
+            **kwargs: Keyword arguments forwarded to `httpx.AsyncClient`.
+
+        Returns:
+            A real `httpx.AsyncClient` whose transport is the mocked LINE API.
+        """
         kwargs["transport"] = httpx.MockTransport(handle)
         return real_client_class(*args, **kwargs)
 
@@ -62,7 +75,16 @@ def install_line_api(
 
 
 def make_line_api(verify_json: dict[str, Any], profile_json: dict[str, Any]) -> LineApiHandler:
-    """Create a handler answering LINE verify and profile calls with the given JSON bodies."""
+    """
+    Create a handler answering LINE verify and profile calls with the given JSON bodies.
+
+    Args:
+        verify_json: JSON body returned by the verify endpoint.
+        profile_json: JSON body returned by the profile endpoint.
+
+    Returns:
+        A transport handler; any other path fails the test.
+    """
 
     def handler(request: httpx.Request) -> httpx.Response:
         """Answer verify and profile requests; any other path is a test failure."""
@@ -76,7 +98,15 @@ def make_line_api(verify_json: dict[str, Any], profile_json: dict[str, Any]) -> 
 
 
 def requested_paths(line_requests: list[httpx.Request]) -> list[str]:
-    """Return the URL paths requested so far, in order."""
+    """
+    Return the URL paths requested so far, in order.
+
+    Args:
+        line_requests: Requests collected at the mocked LINE boundary.
+
+    Returns:
+        The request paths in the order they were made.
+    """
     return [request.url.path for request in line_requests]
 
 
@@ -147,6 +177,7 @@ async def test_token_from_configured_channel_returns_user_id(
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("line_login_channel_id")
 @pytest.mark.parametrize(
     "verify_json",
     [
@@ -166,13 +197,11 @@ async def test_token_from_configured_channel_returns_user_id(
     ],
 )
 async def test_unbound_or_expired_token_is_rejected_before_profile_lookup(
-    line_login_channel_id: str,
     install_line_api: Callable[[LineApiHandler], None],
     line_requests: list[httpx.Request],
     verify_json: dict[str, Any],
 ) -> None:
     """Absent, empty, malformed client_id or an expired token gives 401 without a profile call."""
-    assert line_login_channel_id == LINE_LOGIN_CHANNEL_ID  # noqa: S101 - channel is configured
     install_line_api(make_line_api(verify_json, {"userId": FAKE_USER_ID}))
 
     with pytest.raises(HTTPException) as exc_info:
@@ -182,13 +211,17 @@ async def test_unbound_or_expired_token_is_rejected_before_profile_lookup(
     assert requested_paths(line_requests) == [VERIFY_PATH]  # noqa: S101
 
 
-NETWORK_ERROR_DETAIL = "Unable to verify token due to network error"
-INVALID_TOKEN_DETAIL = "Invalid LINE Access Token"  # noqa: S105 - fixed error text, not a secret
-LEAKY_URL = f"https://api.line.me/oauth2/v2.1/verify?access_token={FAKE_ACCESS_TOKEN}"
-
-
 def make_failing_line_api(failing_path: str, error: Exception) -> LineApiHandler:
-    """Create a handler that raises `error` on `failing_path` and succeeds elsewhere."""
+    """
+    Create a handler that raises `error` on `failing_path` and succeeds elsewhere.
+
+    Args:
+        failing_path: URL path on which the handler raises.
+        error: Exception raised from the transport on `failing_path`.
+
+    Returns:
+        A transport handler answering like a healthy LINE API on every other path.
+    """
 
     def handler(request: httpx.Request) -> httpx.Response:
         """Raise the error on the failing path; otherwise answer like a healthy LINE API."""
@@ -202,6 +235,7 @@ def make_failing_line_api(failing_path: str, error: Exception) -> LineApiHandler
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures("line_login_channel_id")
 @pytest.mark.parametrize("failing_path", [VERIFY_PATH, PROFILE_PATH])
 @pytest.mark.parametrize(
     ("error", "expected_status", "expected_detail"),
@@ -233,7 +267,6 @@ def make_failing_line_api(failing_path: str, error: Exception) -> LineApiHandler
     ],
 )
 async def test_failures_return_and_log_generic_text_without_credentials(
-    line_login_channel_id: str,
     install_line_api: Callable[[LineApiHandler], None],
     caplog: pytest.LogCaptureFixture,
     failing_path: str,
@@ -242,7 +275,6 @@ async def test_failures_return_and_log_generic_text_without_credentials(
     expected_detail: str,
 ) -> None:
     """Transport or data errors keep their status but never expose the token or exception text."""
-    assert line_login_channel_id == LINE_LOGIN_CHANNEL_ID  # noqa: S101 - channel is configured
     install_line_api(make_failing_line_api(failing_path, error))
     caplog.set_level(logging.DEBUG, logger=auth_module.logger.name)
 
@@ -263,3 +295,35 @@ async def test_failures_return_and_log_generic_text_without_credentials(
     formatter = logging.Formatter()
     auth_output = "\n".join(formatter.format(record) for record in auth_records)
     assert FAKE_ACCESS_TOKEN not in auth_output  # noqa: S101
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("line_login_channel_id")
+@pytest.mark.parametrize("failing_path", [VERIFY_PATH, PROFILE_PATH])
+async def test_non_json_response_body_is_rejected_without_exposing_credentials(
+    install_line_api: Callable[[LineApiHandler], None],
+    caplog: pytest.LogCaptureFixture,
+    failing_path: str,
+) -> None:
+    """A 200 response whose body is not JSON gives a generic 401 and no credential in logs."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        """Return a non-JSON body (echoing the token) on the failing path."""
+        if request.url.path == failing_path:
+            return httpx.Response(200, content=f"<html>{FAKE_ACCESS_TOKEN}</html>".encode())
+        return httpx.Response(200, json={"client_id": LINE_LOGIN_CHANNEL_ID, "expires_in": 60})
+
+    install_line_api(handler)
+    caplog.set_level(logging.DEBUG, logger=auth_module.logger.name)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await verify_line_access_token(FAKE_ACCESS_TOKEN)
+
+    assert exc_info.value.status_code == 401  # noqa: S101
+    assert exc_info.value.detail == INVALID_TOKEN_DETAIL  # noqa: S101
+    auth_records = [record for record in caplog.records if record.name == auth_module.logger.name]
+    assert auth_records  # noqa: S101 - the failure must still be logged
+    formatter = logging.Formatter()
+    auth_output = "\n".join(formatter.format(record) for record in auth_records)
+    assert FAKE_ACCESS_TOKEN not in auth_output  # noqa: S101
+    assert all(record.exc_info is None for record in auth_records)  # noqa: S101

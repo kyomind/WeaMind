@@ -255,8 +255,6 @@ async def verify_line_access_token(access_token: str) -> str:
                 raise _AccessTokenRejectedError("Token was not issued to the configured channel")
 
             expires_in = verify_data.get("expires_in", 0)
-            if isinstance(expires_in, bool) or not isinstance(expires_in, int | float):
-                raise _AccessTokenRejectedError("Token expiry is missing or malformed")
             if expires_in <= 0:
                 raise _AccessTokenRejectedError("Token expired")
 
