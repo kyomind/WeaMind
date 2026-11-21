@@ -79,9 +79,10 @@ settings = Settings()  # type: ignore
 def setup_logging() -> None:
     """Setup application logging configuration."""
     # Determine log level based on environment and debug settings
-    if settings.DEBUG:
-        log_level = logging.DEBUG
-    elif settings.is_production:
+    # Production never goes below INFO, even if DEBUG is accidentally enabled
+    if settings.is_production:
+        log_level = logging.INFO
+    elif settings.DEBUG:
         log_level = logging.DEBUG
     else:
         log_level = logging.INFO
@@ -111,6 +112,11 @@ def setup_logging() -> None:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
     else:
         logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+
+    # httpx logs every request URL at INFO (httpcore adds DEBUG detail), which can include
+    # query-string credentials, so keep both at WARNING in every mode, DEBUG included
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     # Set uvicorn logging level
     uvicorn_logger = logging.getLogger("uvicorn")

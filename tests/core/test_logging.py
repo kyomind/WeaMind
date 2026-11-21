@@ -84,6 +84,6 @@ class TestSetupLogging:
         # Verify basicConfig was called
         mock_logging.basicConfig.assert_called_once()
 
-        # Get the call args to verify DEBUG level was used (production also uses DEBUG)
+        # Get the call args to verify INFO level was used (production never logs DEBUG)
         call_args = mock_logging.basicConfig.call_args
-        assert call_args[1]["level"] == 10  # DEBUG level
+        assert call_args[1]["level"] == 20  # INFO level
