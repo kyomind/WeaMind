@@ -203,6 +203,14 @@ def _get_signing_key_for_kid(kid: str) -> Any:  # noqa: ANN401 - crypto key
         ) from e
 
 
+class _AccessTokenRejectedError(Exception):
+    """
+    Raised when LINE rejects an access token or returns unusable data.
+
+    Only fixed, credential-free reasons are used as the message, so it is safe to log.
+    """
+
+
 async def verify_line_access_token(access_token: str) -> str:
     """
     Verify LINE Access Token using LINE Platform API and extract LINE user ID.
@@ -214,8 +222,19 @@ async def verify_line_access_token(access_token: str) -> str:
         LINE user ID
 
     Raises:
-        HTTPException: If token is invalid
+        HTTPException: 500 if `LINE_CHANNEL_ID` is not configured, 503 on network errors,
+            401 if the token is invalid or was not issued to the configured channel
     """
+    # Fail closed in every mode when the expected channel is unknown. This guard sits outside
+    # the try block so the broad handler below can never remap a server misconfiguration to 401.
+    expected_channel_id = (settings.LINE_CHANNEL_ID or "").strip()
+    if not expected_channel_id:
+        logger.error("LINE_CHANNEL_ID is not configured; cannot verify LINE Access Token")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Server configuration error: LINE Login channel is not configured",
+        )
+
     try:
         # Verify access token using LINE Platform API
         async with httpx.AsyncClient() as client:
@@ -227,17 +246,19 @@ async def verify_line_access_token(access_token: str) -> str:
 
             if verify_response.status_code != 200:
                 logger.warning(f"Token verification failed: {verify_response.status_code}")
-                raise ValueError("Access token verification failed")
+                raise _AccessTokenRejectedError("LINE verify endpoint rejected the token")
 
             verify_data = verify_response.json()
 
-            # Check if the token is valid and matches our LIFF app
-            if not verify_data.get("client_id"):
-                raise ValueError("Invalid token response")
+            # The token must have been issued to our LINE Login (LIFF) channel
+            if verify_data.get("client_id") != expected_channel_id:
+                raise _AccessTokenRejectedError("Token was not issued to the configured channel")
 
             expires_in = verify_data.get("expires_in", 0)
+            if isinstance(expires_in, bool) or not isinstance(expires_in, int | float):
+                raise _AccessTokenRejectedError("Token expiry is missing or malformed")
             if expires_in <= 0:
-                raise ValueError("Token expired")
+                raise _AccessTokenRejectedError("Token expired")
 
             logger.info(f"Access token verified successfully, expires in: {expires_in} seconds")
 
@@ -251,29 +272,37 @@ async def verify_line_access_token(access_token: str) -> str:
 
             if profile_response.status_code != 200:
                 logger.warning(f"Profile retrieval failed: {profile_response.status_code}")
-                raise ValueError("Failed to retrieve user profile")
+                raise _AccessTokenRejectedError("LINE profile endpoint rejected the token")
 
             profile_data = profile_response.json()
             line_user_id = profile_data.get("userId")
 
             if not line_user_id:
-                raise ValueError("No user ID in profile")
+                raise _AccessTokenRejectedError("Profile response has no user ID")
 
             logger.info("Access token verified successfully")
             return line_user_id
 
-    except httpx.RequestError as e:
-        logger.exception("Network error during token verification")
+    # The handlers below deliberately avoid exception strings, request URLs and exc_info: httpx
+    # errors and parsing errors may embed the access token, which must never reach logs or clients.
+    except httpx.RequestError:
+        logger.warning("Network error during LINE Access Token verification")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="Unable to verify token due to network error",
-        ) from e
-    except Exception as e:
-        logger.warning(f"Token verification failed: {e}")
+        ) from None
+    except _AccessTokenRejectedError as e:
+        logger.warning("LINE Access Token rejected: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid LINE Access Token: {str(e)}",
-        ) from e
+            detail="Invalid LINE Access Token",
+        ) from None
+    except Exception:  # noqa: BLE001
+        logger.warning("LINE Access Token verification failed on unexpected response data")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid LINE Access Token",
+        ) from None
 
 
 def verify_line_id_token(token: str) -> str:

@@ -10,6 +10,7 @@ import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
 
+from app.core import auth as auth_module
 from app.core.auth import (
     get_current_line_user_id,
     get_current_line_user_id_from_access_token,
@@ -18,11 +19,19 @@ from app.core.auth import (
 )
 
 
+@pytest.fixture
+def line_login_channel_id(monkeypatch: pytest.MonkeyPatch) -> str:
+    """Configure the fake expected LINE Login channel and restore settings at teardown."""
+    channel_id = "test_client_id"
+    monkeypatch.setattr(auth_module.settings, "LINE_CHANNEL_ID", channel_id)
+    return channel_id
+
+
 class TestVerifyLineAccessToken:
     """Test LINE Access Token verification."""
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_success(self) -> None:
+    async def test_verify_line_access_token_success(self, line_login_channel_id: str) -> None:
         """Test successful LINE Access Token verification."""
         access_token = "test_access_token"
         line_user_id = str(uuid4())
@@ -31,7 +40,7 @@ class TestVerifyLineAccessToken:
         verify_response_mock = Mock()
         verify_response_mock.status_code = 200
         verify_response_mock.json.return_value = {
-            "client_id": "test_client_id",
+            "client_id": line_login_channel_id,
             "expires_in": 3600,
         }
 
@@ -52,7 +61,7 @@ class TestVerifyLineAccessToken:
             assert mock_client_instance.get.call_count == 2
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_verify_failed(self) -> None:
+    async def test_verify_line_access_token_verify_failed(self, line_login_channel_id: str) -> None:
         """Test LINE Access Token verification when verify API fails."""
         access_token = "invalid_token"
 
@@ -71,7 +80,7 @@ class TestVerifyLineAccessToken:
             assert "Invalid LINE Access Token" in exc_info.value.detail
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_no_client_id(self) -> None:
+    async def test_verify_line_access_token_no_client_id(self, line_login_channel_id: str) -> None:
         """Test LINE Access Token verification when response has no client_id."""
         access_token = "test_access_token"
 
@@ -90,14 +99,14 @@ class TestVerifyLineAccessToken:
             assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_expired(self) -> None:
+    async def test_verify_line_access_token_expired(self, line_login_channel_id: str) -> None:
         """Test LINE Access Token verification when token is expired."""
         access_token = "expired_token"
 
         verify_response_mock = Mock()
         verify_response_mock.status_code = 200
         verify_response_mock.json.return_value = {
-            "client_id": "test_client_id",
+            "client_id": line_login_channel_id,
             "expires_in": 0,  # Expired
         }
 
@@ -112,14 +121,16 @@ class TestVerifyLineAccessToken:
             assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_profile_failed(self) -> None:
+    async def test_verify_line_access_token_profile_failed(
+        self, line_login_channel_id: str
+    ) -> None:
         """Test LINE Access Token verification when profile API fails."""
         access_token = "test_access_token"
 
         verify_response_mock = Mock()
         verify_response_mock.status_code = 200
         verify_response_mock.json.return_value = {
-            "client_id": "test_client_id",
+            "client_id": line_login_channel_id,
             "expires_in": 3600,
         }
 
@@ -137,14 +148,14 @@ class TestVerifyLineAccessToken:
             assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_no_user_id(self) -> None:
+    async def test_verify_line_access_token_no_user_id(self, line_login_channel_id: str) -> None:
         """Test LINE Access Token verification when profile has no userId."""
         access_token = "test_access_token"
 
         verify_response_mock = Mock()
         verify_response_mock.status_code = 200
         verify_response_mock.json.return_value = {
-            "client_id": "test_client_id",
+            "client_id": line_login_channel_id,
             "expires_in": 3600,
         }
 
@@ -163,7 +174,7 @@ class TestVerifyLineAccessToken:
             assert exc_info.value.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_verify_line_access_token_network_error(self) -> None:
+    async def test_verify_line_access_token_network_error(self, line_login_channel_id: str) -> None:
         """Test LINE Access Token verification with network error."""
         access_token = "test_access_token"
 
