@@ -92,7 +92,7 @@ def make_line_api(verify_json: dict[str, Any], profile_json: dict[str, Any]) -> 
             return httpx.Response(200, json=verify_json)
         if request.url.path == PROFILE_PATH:
             return httpx.Response(200, json=profile_json)
-        pytest.fail(f"Unexpected LINE request: {request.url.path}")
+        raise AssertionError(f"Unexpected LINE request: {request.url.path}")
 
     return handler
 
