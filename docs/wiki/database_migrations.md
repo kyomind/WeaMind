@@ -37,14 +37,14 @@ flowchart TD
 
 離線模式使用 `literal_binds=True` 和 `paramstyle=named`，在交易區塊中產生 SQL；線上模式透過 `engine_from_config` 與 `pool.NullPool` 建立連線，再於交易區塊執行遷移。離線產生的 SQL 可能包含權限版本中插入的密碼，應妥善保護輸出。
 
-`Makefile` 提供以下入口，均在執行中的 `app` 容器內呼叫 Alembic：
+`Makefile` 提供以下 Alembic 入口；`revision`、`migrate`、`rollback` 在執行中的 `app` 容器內呼叫，而 `deploy` 改以一次性的 `app` 容器執行：
 
 | 指令 | 行為 |
 | --- | --- |
 | `make revision` | 以 `alembic revision --autogenerate` 比較資料庫與模型；訊息包含目前 Git 分支及時間。產生後仍須檢查遷移內容，特別是權限與資料處理。 |
 | `make migrate` | 執行 `uv run alembic upgrade head`。 |
 | `make rollback` | 執行 `uv run alembic downgrade -1`，回退一個版本。 |
-| `make deploy` | 啟動服務並等待資料庫就緒後嘗試升級至 `head`；遷移失敗時會印出警告，之後仍印出部署完成訊息，因此須另行確認遷移結果。 |
+| `make deploy` | 啟動資料層（`db`、`redis`）並等待資料庫就緒後，拉取 `app` 映像並以一次性 `app` 容器（`--profile app run --rm --no-deps`）執行 `uv run alembic upgrade head`，不建立常駐 `app` 容器；成功時印出部署完成，遷移失敗時則印出警告並提示遷移未完成。 |
 
 ## 版本順序與結構演進
 
