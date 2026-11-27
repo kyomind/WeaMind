@@ -1,5 +1,8 @@
 services:
   app:
+    # Keep prod app disabled by default (production app runs on k3s); opt in with `--profile app` for one-off tasks
+    profiles:
+      - app
     command:
       - uvicorn
       - app.main:app

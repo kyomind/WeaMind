@@ -20,23 +20,17 @@ down:
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml down
 
 deploy:
-	@echo "🚀 開始部署..."
+	@echo "🚀 開始部署資料層..."
 	@echo "📥 拉取最新 image..."
-	docker compose -f docker-compose.yml -f docker-compose.prod.yml pull app
+	docker compose -f docker-compose.yml -f docker-compose.prod.yml pull db redis
 	@echo "📦 啟動容器..."
 	docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 	@echo "⏳ 等待資料庫服務啟動..."
-	@until docker compose exec db pg_isready -U wea_bot -d weamind -q; do \
+	@until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec db pg_isready -U wea_bot -d weamind -q; do \
 		echo "等待資料庫準備中..."; \
 		sleep 2; \
 	done
-	@echo "🔄 執行資料庫遷移..."
-	@if docker compose exec $(APP_SERVICE) uv run alembic upgrade head; then \
-		echo "✅ 資料庫遷移完成"; \
-	else \
-		echo "⚠️  資料庫遷移失敗，請檢查是否有新的遷移檔案或資料庫連線"; \
-	fi
-	@echo "✅ 部署完成！"
+	@echo "✅ 資料層部署完成！"
 
 # === Database Migration ===
 migrate:
