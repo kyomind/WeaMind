@@ -28,10 +28,19 @@ services:
   redis:
     container_name: wea-redis-prod
     restart: always
+    # Require ACL authentication; see redis/README.md for the aclfile format
+    command: ["redis-server", "--aclfile", "/usr/local/etc/redis/users.acl"]
     ports:
       - "10.0.0.2:6379:6379"
     volumes:
       - wea-redis-data-prod:/data
+      # Host-local aclfile kept outside the repo; fail instead of creating a directory if missing
+      - type: bind
+        source: /etc/weamind/redis/users.acl
+        target: /usr/local/etc/redis/users.acl
+        read_only: true
+        bind:
+          create_host_path: false
 
 volumes:
   wea-db-data-prod:

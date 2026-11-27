@@ -1,0 +1,2 @@
+user default off resetpass resetkeys resetchannels -@all
+user weamind on #<sha256-hex-of-password> ~* &* +@all
